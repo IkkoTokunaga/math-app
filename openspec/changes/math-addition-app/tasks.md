@@ -20,12 +20,12 @@
 - [x] 3.2 セッション内での問題重複禁止を実装する
 - [x] 3.3 レベル解放判定ロジックを実装する (lib/levels.ts)
 - [x] 3.4 プレイヤー選択画面 (/) を作成する
-- [x] 3.5 クイズ画面 (/play) を作成する（テンキー入力・不正解時は再回答を促す・正解で次へ）
+- [x] 3.5 クイズ画面 (/play) を作成する（算式の ? 位置に入力表示・テンキー・Backspace/Delete/Enter・不正解時は再回答を促す・正解で次へ）
 - [x] 3.6 startSession / submitAnswer Server Actions を実装する
 
 ## 4. スコアリング (score-tracking)
 
-- [x] 4.1 得点計算ロジックを実装する (lib/scoring.ts) — max(0, 10 - 不正解回数) / 問
+- [x] 4.1 得点計算ロジックを実装する (lib/scoring.ts) — level×10 + 時間ボーナス / 問
 - [x] 4.2 星評価・連続正解ボーナス・完璧ボーナスを実装する
 - [x] 4.3 前回比成長メッセージ生成を実装する
 - [x] 4.4 completeSession Server Action（スコア計算 + DB 保存）を実装する

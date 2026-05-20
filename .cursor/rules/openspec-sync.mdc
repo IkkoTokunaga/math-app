@@ -1,0 +1,34 @@
+---
+description: 実装変更時は OpenSpec 仕様書を必ず同期する
+alwaysApply: true
+---
+
+# OpenSpec 仕様同期
+
+コードや UI の挙動を変更したら、**同じ作業内で** OpenSpec 仕様書も更新する。
+
+## 対象
+
+- `openspec/changes/**/specs/**/*.md` — 要件・シナリオ
+- 必要に応じて `design.md` / `proposal.md` / `tasks.md`
+
+## 手順
+
+1. 変更内容が仕様に影響するか判断する（UI、スコア、解放条件、入力方法など）
+2. 影響がある場合、該当 change の spec を **実装に合わせて** 更新する
+3. 新しい挙動は Requirement + Scenario 形式で追記する
+4. 古くなった記述（例: 20問、星3段階）は削除または修正する
+
+## 例
+
+| 実装変更 | 更新先 |
+|----------|--------|
+| 入力表示を式の `?` に統合 | `addition-quiz/spec.md` |
+| Delete キーで削除 | `addition-quiz/spec.md` |
+| 星評価・得点ロジック変更 | `score-tracking/spec.md` |
+| レベル解放条件変更 | `addition-quiz/spec.md`, `progress-dashboard/spec.md` |
+
+## 禁止
+
+- 仕様と実装が食い違ったままコミットしない
+- 「後で直す」として spec 更新を省略しない

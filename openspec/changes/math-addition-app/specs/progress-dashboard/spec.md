@@ -34,11 +34,20 @@ The system SHALL track consecutive calendar days on which the player completed a
 
 ### Requirement: Level progress summary
 
-The system SHALL display the player's current unlocked level and the number of ★★+ sessions at the current level toward the next unlock.
+The system SHALL display the player's current unlocked level and progress toward the next unlock. Progress SHALL show:
+
+1. **Instant unlock**: ★★★★★ (満点) ですぐ解放
+2. **Accumulated unlock**: ★★★★ を N 回（current/required count）
+
+Unlock requires either one perfect session or 3 sessions with ★★★★ at the current level.
 
 #### Scenario: Progress toward next level
-- **WHEN** a player is at level 1 with 2 ★★+ sessions
-- **THEN** the dashboard shows "次のレベルまで あと 1 回 ★★ 以上"
+- **WHEN** a player is at level 1 with 2 ★★★★ sessions and no perfect session
+- **THEN** the dashboard shows remaining ★★★★ sessions needed (e.g. あと 1 回 2/3)
+
+#### Scenario: Perfect session achieved
+- **WHEN** a player has completed a perfect session at the current level
+- **THEN** the dashboard indicates that the next level can be unlocked (e.g. 満点を とれたよ！)
 
 ### Requirement: Frequently missed combinations
 

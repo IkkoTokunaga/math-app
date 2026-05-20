@@ -5,7 +5,7 @@
 ## Goals / Non-Goals
 
 **Goals:**
-- 20問セッションの足し算クイズ（4レベル）を提供する
+- 10問セッションの足し算クイズ（4レベル）を提供する
 - 星・得点・連続正解ボーナス・前回比メッセージでモチベーションを維持する
 - セッション結果を Neon PostgreSQL に永続化する
 - 履歴・週平均・連続学習日数・苦手な組み合わせを表示する
@@ -91,10 +91,10 @@ sessions
 ├── id            UUID PK
 ├── player_id     UUID FK → players
 ├── level         SMALLINT (1–4)
-├── total_questions SMALLINT (default 20)
+├── total_questions SMALLINT (default 10)
 ├── correct_answers SMALLINT
 ├── accuracy      SMALLINT (0–100)
-├── stars         SMALLINT (0–3)
+├── stars         SMALLINT (0–5)
 ├── base_score    SMALLINT
 ├── bonus_score   SMALLINT
 ├── total_score   SMALLINT
@@ -109,7 +109,7 @@ question_logs
 ├── user_answer   SMALLINT
 ├── correct_answer SMALLINT
 ├── incorrect_count SMALLINT   -- 正解までの不正解回数
-├── points_earned SMALLINT   -- max(0, 10 - incorrect_count)
+├── points_earned SMALLINT   -- level×10 + 時間ボーナス
 ├── is_first_attempt_correct BOOLEAN
 └── answered_at   TIMESTAMP
 ```
@@ -128,7 +128,7 @@ question_logs
 
 ```
 /                     → プレイヤー選択
-/play                 → クイズ画面（テンキー入力・不正解時は再回答）
+/play                 → クイズ画面（算式の ? 位置に入力表示・テンキー・キーボード・不正解時は再回答）
 /result/[sessionId]   → セッション結果（星・得点・成長メッセージ）
 /progress             → 進捗ダッシュボード
 ```
@@ -136,23 +136,36 @@ question_logs
 ## Scoring Logic (Reference)
 
 ```
-questionPoints     = max(0, 10 - incorrectSubmissionCount)  // 正解時に確定
-baseScore          = sum of all questionPoints              // 最大 200
-streakBonus        = sum of bonuses at streak milestones (初回正解のみ連続、3→+5, 5→+10, ...)
-perfectBonus       = all first-attempt correct ? +30 : 0
-totalScore         = baseScore + streakBonus + perfectBonus
-stars              = first-attempt accuracy thresholds (90%→3, 70%→2, 50%→1, else 0)
+basePoints         = level × 10                                    // 正解時
+timeBonus          = level × remainingSeconds (within 10s)         // 正解時
+questionPoints     = basePoints + timeBonus
+baseScore          = sum of (level × 10) per question              // 時間ボーナス除く
+bonusScore         = timeBonus sum + streakBonus
+streakBonus        = milestones at 3→+5, 5→+10, 7→+15, 10→+20 (初回正解連続)
+totalScore         = sum of questionPoints + streakBonus
+stars              = totalScore ÷ maxPossibleScore (90%→★5, 18%刻みで★0〜4)
+maxPossibleScore   = 理論最大（公表しない）
 ```
 
-### 得点例（1問あたり）
+### クイズ UI
 
-| 不正解回数（正解前） | 得点 |
-|----------------------|------|
-| 0回 | 10点 |
-| 1回 | 9点 |
-| 2回 | 8点 |
-| … | … |
-| 10回以上 | 0点 |
+- 算式: `operandA + operandB = ?` — 入力値は `?` 位置にインライン表示
+- テンキー: 電卓配列 + 削除ボタン + 「答える」
+- キーボード: 0–9 入力、Backspace / Delete で末尾削除、Enter で送信
+
+### レベル解放
+
+- 満点セッション（★5 または理論最大得点）→ 即次レベル解放
+- または ★4 を同一レベルで 3 回
+
+### 得点例（1問あたり・Lv1・10秒以内正解）
+
+| 条件 | 得点 |
+|------|------|
+| 即答（0秒） | 20点（基本10 + 時間ボーナス10） |
+| 5秒で正解 | 15点（基本10 + 時間ボーナス5） |
+| 10秒以上 | 10点（基本のみ） |
+| 不正解後に正解 | 再回答回数は減点しない（正解時の経過時間で計算） |
 
 ## Risks / Trade-offs
 

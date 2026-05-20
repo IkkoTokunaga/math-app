@@ -21,7 +21,7 @@ The system SHALL require a display name before starting the first guest session.
 The system SHALL store in-progress and completed quiz sessions in localStorage. The system SHALL NOT write guest session data to PostgreSQL.
 
 #### Scenario: Guest completes a session
-- **WHEN** a guest finishes 20 questions
+- **WHEN** a guest finishes 10 questions
 - **THEN** the completed session and per-question logs are appended to localStorage and no server persistence occurs
 
 #### Scenario: Guest closes browser mid-session
@@ -33,7 +33,7 @@ The system SHALL store in-progress and completed quiz sessions in localStorage. 
 Guest sessions SHALL use the same question generation, scoring, level unlock, and retry rules as authenticated play (existing addition-quiz and score-tracking logic).
 
 #### Scenario: Guest level unlock
-- **WHEN** a guest achieves the required ★★+ sessions at a level in localStorage
+- **WHEN** a guest achieves a perfect session or 3 × ★★★★ at a level in localStorage
 - **THEN** the next level becomes selectable using the same unlock rules as authenticated players
 
 ### Requirement: Guest progress view

@@ -1,0 +1,40 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { players } from "@/lib/db/schema";
+import { getUserIdFromCookie } from "./session";
+
+export type AuthState =
+  | { loggedIn: false }
+  | {
+      loggedIn: true;
+      userId: string;
+      playerId: string;
+      playerName: string;
+    };
+
+export async function getAuthState(): Promise<AuthState> {
+  const userId = await getUserIdFromCookie();
+  if (!userId) {
+    return { loggedIn: false };
+  }
+
+  const [player] = await db
+    .select({
+      id: players.id,
+      name: players.name,
+    })
+    .from(players)
+    .where(eq(players.userId, userId))
+    .limit(1);
+
+  if (!player) {
+    return { loggedIn: false };
+  }
+
+  return {
+    loggedIn: true,
+    userId,
+    playerId: player.id,
+    playerName: player.name,
+  };
+}

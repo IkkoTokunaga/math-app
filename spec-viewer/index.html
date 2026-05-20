@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>math-addition-app 仕様書</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --sidebar: #1e293b;
+      --sidebar-text: #e2e8f0;
+      --sidebar-active: #3b82f6;
+      --content-bg: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+    nav {
+      width: 280px;
+      background: var(--sidebar);
+      color: var(--sidebar-text);
+      padding: 1.5rem 0;
+      flex-shrink: 0;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    nav h1 {
+      font-size: 1rem;
+      padding: 0 1.25rem 1rem;
+      border-bottom: 1px solid #334155;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    nav h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      padding: 0.75rem 1.25rem 0.25rem;
+    }
+    nav a {
+      display: block;
+      padding: 0.5rem 1.25rem;
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 0.9rem;
+      border-left: 3px solid transparent;
+    }
+    nav a:hover { background: #334155; }
+    nav a.active {
+      background: #334155;
+      border-left-color: var(--sidebar-active);
+      color: #fff;
+    }
+    main {
+      flex: 1;
+      padding: 2rem 3rem;
+      max-width: 900px;
+      overflow-y: auto;
+    }
+    .loading { color: var(--muted); }
+    .error { color: #dc2626; }
+    #content {
+      background: var(--content-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      line-height: 1.7;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+    }
+    #content h1 { font-size: 1.75rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); }
+    #content h2 { font-size: 1.35rem; margin: 1.75rem 0 0.75rem; color: #0f172a; }
+    #content h3 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; color: #334155; }
+    #content h4 { font-size: 1rem; margin: 1rem 0 0.5rem; color: #475569; }
+    #content p { margin: 0.75rem 0; }
+    #content ul, #content ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+    #content li { margin: 0.35rem 0; }
+    #content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    #content th, #content td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    #content th { background: #f1f5f9; font-weight: 600; }
+    #content code {
+      background: #f1f5f9;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.875em;
+    }
+    #content pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+    }
+    #content pre code { background: none; padding: 0; color: inherit; }
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      nav { width: 100%; height: auto; position: static; }
+      main { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <h1>math-addition-app<br><small style="font-weight:normal;color:#94a3b8">OpenSpec 仕様書</small></h1>
+    <h2>概要</h2>
+    <a href="#" data-file="../openspec/changes/math-addition-app/proposal.md">proposal.md</a>
+    <a href="#" data-file="../openspec/changes/math-addition-app/design.md">design.md</a>
+    <a href="#" data-file="../openspec/changes/math-addition-app/tasks.md">tasks.md</a>
+    <h2>機能 Spec</h2>
+    <a href="#" data-file="../openspec/changes/math-addition-app/specs/addition-quiz/spec.md">addition-quiz</a>
+    <a href="#" data-file="../openspec/changes/math-addition-app/specs/score-tracking/spec.md">score-tracking</a>
+    <a href="#" data-file="../openspec/changes/math-addition-app/specs/progress-dashboard/spec.md">progress-dashboard</a>
+  </nav>
+  <main>
+    <div id="content"><p class="loading">読み込み中…</p></div>
+  </main>
+  <script>
+    const content = document.getElementById("content");
+    const links = document.querySelectorAll("nav a[data-file]");
+
+    async function loadDoc(path, link) {
+      links.forEach((a) => a.classList.remove("active"));
+      if (link) link.classList.add("active");
+      content.innerHTML = '<p class="loading">読み込み中…</p>';
+      try {
+        const res = await fetch(path);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const md = await res.text();
+        content.innerHTML = marked.parse(md);
+        history.replaceState(null, "", `?doc=${encodeURIComponent(path)}`);
+      } catch (e) {
+        content.innerHTML = `<p class="error">読み込み失敗: ${e.message}</p>`;
+      }
+    }
+
+    links.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        loadDoc(link.dataset.file, link);
+      });
+    });
+
+    const params = new URLSearchParams(location.search);
+    const doc = params.get("doc") || "../openspec/changes/math-addition-app/proposal.md";
+    const active = [...links].find((l) => l.dataset.file === doc) || links[0];
+    loadDoc(doc, active);
+  </script>
+</body>
+</html>

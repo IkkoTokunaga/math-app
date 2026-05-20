@@ -1,0 +1,56 @@
+---
+description: Run development commands inside Docker containers
+alwaysApply: true
+---
+
+# Docker-first development
+
+All development commands MUST run inside Docker containers unless impossible (e.g. `docker compose` itself, Git, editing files).
+
+## Command patterns
+
+Containers already running (`docker compose up`):
+
+```bash
+docker compose exec app <command>
+```
+
+One-off command (containers not running):
+
+```bash
+docker compose run --rm app <command>
+```
+
+## Examples
+
+```bash
+# Install dependencies
+docker compose run --rm app npm install
+
+# Create Next.js project
+docker compose run --rm app npx create-next-app@latest . --typescript --tailwind --app --no-git
+
+# Dev server (via compose up)
+docker compose up
+
+# Migrations
+docker compose exec app npm run db:migrate
+
+# Tests / lint
+docker compose exec app npm test
+docker compose exec app npm run lint
+```
+
+## Rules for the agent
+
+- Do NOT run `npm`, `npx`, `node`, migration, or test commands on the host.
+- Execute them via `docker compose exec app` or `docker compose run --rm app`.
+- No prior user approval is required for commands inside containers.
+- Host-side exceptions: `docker compose`, `git`, file edits, `openspec` CLI.
+
+## Services
+
+| Service | Purpose |
+|---------|---------|
+| `app` | Next.js, npm, npx, Drizzle |
+| `db` | PostgreSQL 16 (local dev) |

@@ -1,0 +1,23 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js (App Router), TypeScript, React
+  Hosting: Vercel Hobby (non-commercial, personal/family use)
+  Database: Neon PostgreSQL (Free tier) for production; PostgreSQL container for local dev
+  ORM: Drizzle ORM
+  Styling: Tailwind CSS
+  Local development: Docker Compose (app + PostgreSQL)
+  Development commands: Run inside Docker containers (docker compose exec/run app)
+  Target users: Elementary school children (grades 1–2) and their families
+  Language: Japanese UI
+  Domain: Addition practice app with score tracking and progress history
+
+rules:
+  proposal:
+    - Include a Non-goals section
+    - Keep proposals under 500 words
+  design:
+    - Include data model and API route overview
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Reference docker compose exec/run for command execution

@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f0f9ff;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: var(--foreground);
+  min-height: 100vh;
+  font-family: "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+}
+
+.page-shell {
+  margin: 0 auto;
+  min-height: 100vh;
+  max-width: 960px;
+  padding: 1.5rem;
+}
+
+.card {
+  border-radius: 1.5rem;
+  background: white;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgb(14 116 144 / 0.08);
+}
+
+.big-btn {
+  display: block;
+  width: 100%;
+  border-radius: 1.25rem;
+  background: white;
+  padding: 1rem 1.25rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  box-shadow: 0 4px 0 #cbd5e1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.big-btn:hover {
+  transform: translateY(-1px);
+}
+
+.big-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #cbd5e1;
+}
+
+.big-btn-active {
+  background: #e0f2fe;
+  box-shadow: 0 4px 0 #7dd3fc;
+}
+
+.keypad-btn {
+  min-height: 4.5rem;
+  border-radius: 1.25rem;
+  background: white;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  box-shadow: 0 4px 0 #cbd5e1;
+}
+
+.keypad-btn:disabled {
+  opacity: 0.5;
+}
+
+.keypad-btn-submit {
+  box-shadow: 0 4px 0 #047857;
+}
+
+.keypad-btn-submit:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #047857;
+}
+
+.feedback-success {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.feedback-retry {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.feedback-error {
+  text-align: center;
+  font-weight: 700;
+  color: #dc2626;
+}
+
+@keyframes success-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes retry-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.animate-success {
+  animation: success-pop 0.4s ease;
+}
+
+.animate-retry {
+  animation: retry-shake 0.35s ease;
+}
+
+@media (min-width: 768px) {
+  .page-shell {
+    padding: 2.5rem;
+  }
+}

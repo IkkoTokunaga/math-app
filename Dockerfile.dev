@@ -1,0 +1,13 @@
+FROM node:24-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+COPY . .
+
+RUN if [ -f package.json ]; then npm ci 2>/dev/null || npm install; fi
+
+EXPOSE 3000
+
+CMD ["sh", "-c", "if [ ! -f package.json ]; then echo 'Error: package.json not found. Create Next.js project first (task 1.2).'; exit 1; fi; npm run dev -- -H 0.0.0.0"]

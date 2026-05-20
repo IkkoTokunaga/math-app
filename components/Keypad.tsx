@@ -107,7 +107,7 @@ export function Keypad({ value, onChange, onSubmit, disabled }: KeypadProps) {
         type="button"
         disabled={disabled || value.length === 0}
         onClick={onSubmit}
-        className="keypad-btn keypad-btn-submit bg-emerald-500 text-xl text-white hover:bg-emerald-600"
+        className="keypad-btn-submit"
         title="答える（Enter）"
       >
         答える

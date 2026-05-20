@@ -72,13 +72,34 @@ body {
   opacity: 0.5;
 }
 
-.keypad-btn-submit {
-  box-shadow: 0 4px 0 #047857;
+button.keypad-btn-submit {
+  min-height: 4.5rem;
+  border-radius: 1.25rem;
+  background-color: #0284c7;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  border: 2px solid #0369a1;
+  box-shadow: 0 4px 0 #0369a1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
-.keypad-btn-submit:active:not(:disabled) {
+button.keypad-btn-submit:hover:not(:disabled) {
+  background-color: #0369a1;
+}
+
+button.keypad-btn-submit:disabled {
+  opacity: 1;
+  background-color: #94a3b8;
+  color: #64748b;
+  border-color: #94a3b8;
+  box-shadow: 0 4px 0 #64748b;
+}
+
+button.keypad-btn-submit:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 #047857;
+  box-shadow: 0 1px 0 #075985;
 }
 
 .feedback-success {

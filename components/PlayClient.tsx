@@ -19,7 +19,8 @@ import {
   submitGuestAnswer,
 } from "@/lib/guest-session";
 import { useIsClient } from "@/lib/use-is-client";
-import { LEVEL_NAMES, type Level } from "@/lib/questions";
+import { MAX_LEVEL } from "@/lib/levels";
+import { type Level } from "@/lib/questions";
 
 type Question = {
   operandA: number;
@@ -191,19 +192,18 @@ export function PlayClient({ auth }: PlayClientProps) {
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
         <p className="text-center text-xl font-bold text-slate-700">{displayName}</p>
         <h2 className="text-center text-3xl font-bold text-slate-800">レベルを選ぶ</h2>
-        {(Object.entries(LEVEL_NAMES) as [string, string][]).map(([value, label]) => {
-          const lv = Number(value) as Level;
+        {Array.from({ length: MAX_LEVEL }, (_, index) => {
+          const lv = (index + 1) as Level;
           const disabled = lv > effectiveUnlocked;
           return (
             <button
-              key={value}
+              key={lv}
               type="button"
               disabled={submitting || disabled}
               onClick={() => startSession(lv)}
               className="big-btn disabled:opacity-40"
             >
-              Lv{value} {label}
-              {disabled && "（まだ）"}
+              Lv{lv}
             </button>
           );
         })}
@@ -236,7 +236,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
       <div className="text-center text-lg text-slate-600">
         <span className="font-bold text-slate-700">{displayName}　</span>
-        問題 {currentIndex + 1} / {questions.length}　Lv{level} {level ? LEVEL_NAMES[level] : ""}
+        問題 {currentIndex + 1} / {questions.length}　Lv{level}
       </div>
 
       <section

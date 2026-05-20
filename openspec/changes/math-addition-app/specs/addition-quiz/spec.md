@@ -77,6 +77,14 @@ The system SHALL validate each answer immediately after submission.
 - **WHEN** a player submits a wrong answer and then submits again
 - **THEN** the system re-validates the new answer without advancing until the correct sum is submitted
 
+### Requirement: Level selection screen
+
+The level selection screen SHALL show each level as `Lv1` through `Lv4` only, without level names or unlock status text. Locked levels SHALL appear disabled (non-clickable) but SHALL NOT show additional labels such as 「まだ」. During a quiz, the header SHALL show the level number only (e.g. `Lv2`) without the level name.
+
+#### Scenario: Locked level display
+- **WHEN** a player has not unlocked level 3
+- **THEN** the level 3 button shows `Lv3` only and is disabled
+
 ### Requirement: Four difficulty levels
 
 The system SHALL support four difficulty levels with the following constraints:

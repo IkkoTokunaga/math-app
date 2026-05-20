@@ -1,12 +1,12 @@
 import { and, desc, eq, sql } from "drizzle-orm";
-import { db } from "./db";
+import { getDb } from "./db";
 import { questionLogs, sessions } from "./db/schema";
 import { getUnlockProgress, getUnlockedLevel } from "./levels";
 import type { Level } from "./questions";
 import { LEVEL_NAMES } from "./questions";
 
 export async function getProgressData(playerId: string) {
-  const completedSessions = await db
+  const completedSessions = await getDb()
     .select({
       id: sessions.id,
       level: sessions.level,
@@ -50,7 +50,7 @@ export async function getProgressData(playerId: string) {
   const unlockedLevel = getUnlockedLevel(levelSessions);
   const unlockProgress = getUnlockProgress(levelSessions, unlockedLevel);
 
-  const weakSpots = await db
+  const weakSpots = await getDb()
     .select({
       operandA: questionLogs.operandA,
       operandB: questionLogs.operandB,

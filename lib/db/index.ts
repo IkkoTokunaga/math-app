@@ -7,12 +7,16 @@ type Db = PostgresJsDatabase<typeof schema>;
 let client: ReturnType<typeof postgres> | null = null;
 let dbInstance: Db | null = null;
 
+export function isDatabaseConfigured(): boolean {
+  return Boolean(process.env.DATABASE_URL?.trim());
+}
+
 function isLocalDatabase(url: string): boolean {
   return url.includes("localhost") || url.includes("@db:") || url.includes("127.0.0.1");
 }
 
 function createDb(): Db {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = process.env.DATABASE_URL?.trim();
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");
   }
@@ -33,11 +37,3 @@ export function getDb(): Db {
   }
   return dbInstance;
 }
-
-export const db = new Proxy({} as Db, {
-  get(_target, prop, receiver) {
-    const instance = getDb();
-    const value = Reflect.get(instance, prop, receiver);
-    return typeof value === "function" ? value.bind(instance) : value;
-  },
-});

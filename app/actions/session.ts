@@ -2,7 +2,7 @@
 
 import { and, desc, eq, ne } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { questionLogs, sessions } from "@/lib/db/schema";
 import type { AttemptCounts, Question } from "@/lib/db/schema";
 import { getUnlockedLevel } from "@/lib/levels";
@@ -22,7 +22,7 @@ import {
 } from "@/lib/scoring";
 
 export async function getPlayerUnlockedLevelAction(playerId: string): Promise<Level> {
-  const completed = await db
+  const completed = await getDb()
     .select({
       level: sessions.level,
       stars: sessions.stars,
@@ -41,7 +41,7 @@ export async function getPlayerUnlockedLevelAction(playerId: string): Promise<Le
 }
 
 export async function startSessionAction(playerId: string, level: Level) {
-  const completed = await db
+  const completed = await getDb()
     .select({
       level: sessions.level,
       stars: sessions.stars,
@@ -64,7 +64,7 @@ export async function startSessionAction(playerId: string, level: Level) {
 
   const questions = generateQuestions(level, QUESTIONS_PER_SESSION);
 
-  const [session] = await db
+  const [session] = await getDb()
     .insert(sessions)
     .values({
       playerId,
@@ -88,7 +88,7 @@ export async function submitAnswerAction(
   answer: number,
   elapsedSeconds: number,
 ) {
-  const [session] = await db
+  const [session] = await getDb()
     .select()
     .from(sessions)
     .where(eq(sessions.id, sessionId))
@@ -98,7 +98,7 @@ export async function submitAnswerAction(
     throw new Error("セッションが見つかりません");
   }
 
-  const existing = await db
+  const existing = await getDb()
     .select({ id: questionLogs.id })
     .from(questionLogs)
     .where(
@@ -125,7 +125,7 @@ export async function submitAnswerAction(
 
   if (answer !== correctAnswer) {
     attemptCounts[key] = (attemptCounts[key] ?? 0) + 1;
-    await db
+    await getDb()
       .update(sessions)
       .set({ attemptCounts })
       .where(eq(sessions.id, sessionId));
@@ -141,7 +141,7 @@ export async function submitAnswerAction(
   const level = session.level as Level;
   const { pointsEarned } = calculateQuestionScore(level, elapsedSeconds);
 
-  await db.insert(questionLogs).values({
+  await getDb().insert(questionLogs).values({
     sessionId,
     questionIndex,
     operandA: question.operandA,
@@ -172,13 +172,13 @@ export async function submitAnswerAction(
 }
 
 async function finalizeSession(sessionId: string) {
-  const logs = await db
+  const logs = await getDb()
     .select()
     .from(questionLogs)
     .where(eq(questionLogs.sessionId, sessionId))
     .orderBy(questionLogs.questionIndex);
 
-  const [session] = await db
+  const [session] = await getDb()
     .select()
     .from(sessions)
     .where(eq(sessions.id, sessionId))
@@ -197,7 +197,7 @@ async function finalizeSession(sessionId: string) {
   const stars = calculateStars(totalScore, maxPossible);
   const bestStreak = calculateBestStreak(firstAttemptResults);
 
-  const previous = await db
+  const previous = await getDb()
     .select({ correctAnswers: sessions.correctAnswers })
     .from(sessions)
     .where(
@@ -215,7 +215,7 @@ async function finalizeSession(sessionId: string) {
     previous[0]?.correctAnswers ?? null,
   );
 
-  await db
+  await getDb()
     .update(sessions)
     .set({
       status: "completed",
@@ -245,7 +245,7 @@ async function finalizeSession(sessionId: string) {
 }
 
 export async function getSessionResultAction(sessionId: string) {
-  const [session] = await db
+  const [session] = await getDb()
     .select()
     .from(sessions)
     .where(eq(sessions.id, sessionId))
@@ -255,7 +255,7 @@ export async function getSessionResultAction(sessionId: string) {
     return null;
   }
 
-  const previous = await db
+  const previous = await getDb()
     .select({ correctAnswers: sessions.correctAnswers })
     .from(sessions)
     .where(

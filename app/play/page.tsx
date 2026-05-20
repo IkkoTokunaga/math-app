@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { PlayClient } from "@/components/PlayClient";
 import { getAuthState } from "@/lib/auth";
 

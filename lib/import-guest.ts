@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { players, questionLogs, sessions, users } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import type { GuestStoreSnapshot } from "@/lib/guest/types";
@@ -33,7 +33,7 @@ export async function importGuestData(
 
   const passwordHash = await hashPassword(password);
 
-  return db.transaction(async (tx) => {
+  return getDb().transaction(async (tx) => {
     const [user] = await tx
       .insert(users)
       .values({ email: trimmedEmail, passwordHash })

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { getDb, isDatabaseConfigured } from "@/lib/db";
 import { players } from "@/lib/db/schema";
 import { getUserIdFromCookie } from "./session";
 
@@ -13,13 +13,17 @@ export type AuthState =
     };
 
 export async function getAuthState(): Promise<AuthState> {
-  const userId = await getUserIdFromCookie();
-  if (!userId) {
+  if (!isDatabaseConfigured()) {
     return { loggedIn: false };
   }
 
   try {
-    const [player] = await db
+    const userId = await getUserIdFromCookie();
+    if (!userId) {
+      return { loggedIn: false };
+    }
+
+    const [player] = await getDb()
       .select({
         id: players.id,
         name: players.name,

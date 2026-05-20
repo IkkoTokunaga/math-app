@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearAuthCookie, setAuthCookie, verifyPassword } from "@/lib/auth";
 import { getAuthState } from "@/lib/auth/state";
-import { db } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import type { GuestStoreSnapshot } from "@/lib/guest/types";
 import { importGuestData } from "@/lib/import-guest";
@@ -20,7 +20,7 @@ export async function loginAction(email: string, password: string) {
     throw new Error("メールとパスワードを入力してください");
   }
 
-  const [user] = await db
+  const [user] = await getDb()
     .select()
     .from(users)
     .where(eq(users.email, trimmedEmail))
@@ -42,7 +42,7 @@ export async function registerAndImportGuestAction(
   snapshot: GuestStoreSnapshot,
 ) {
   const trimmedEmail = email.trim().toLowerCase();
-  const [existing] = await db
+  const [existing] = await getDb()
     .select({ id: users.id })
     .from(users)
     .where(eq(users.email, trimmedEmail))

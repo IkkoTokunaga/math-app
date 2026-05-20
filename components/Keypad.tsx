@@ -51,7 +51,7 @@ export function Keypad({ value, onChange, onSubmit, disabled }: KeypadProps) {
         return;
       }
 
-      if (event.key === "Backspace") {
+      if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
         onChange(value.slice(0, -1));
         return;
@@ -91,7 +91,7 @@ export function Keypad({ value, onChange, onSubmit, disabled }: KeypadProps) {
         onClick={backspace}
         className="keypad-btn flex items-center justify-center"
         aria-label="1文字削除"
-        title="1文字削除（Backspace）"
+        title="1文字削除（Backspace / Delete）"
       >
         <BackspaceIcon />
       </button>

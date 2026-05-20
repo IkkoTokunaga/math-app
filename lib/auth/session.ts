@@ -49,14 +49,19 @@ export async function getUserIdFromCookie(): Promise<string | null> {
     return null;
   }
 
-  const tokenHash = hashToken(token);
-  const now = new Date();
+  try {
+    const tokenHash = hashToken(token);
+    const now = new Date();
 
-  const [row] = await db
-    .select({ userId: authSessions.userId })
-    .from(authSessions)
-    .where(and(eq(authSessions.tokenHash, tokenHash), gt(authSessions.expiresAt, now)))
-    .limit(1);
+    const [row] = await db
+      .select({ userId: authSessions.userId })
+      .from(authSessions)
+      .where(and(eq(authSessions.tokenHash, tokenHash), gt(authSessions.expiresAt, now)))
+      .limit(1);
 
-  return row?.userId ?? null;
+    return row?.userId ?? null;
+  } catch (error) {
+    console.error("Failed to read auth session from database", error);
+    return null;
+  }
 }

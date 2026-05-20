@@ -18,23 +18,28 @@ export async function getAuthState(): Promise<AuthState> {
     return { loggedIn: false };
   }
 
-  const [player] = await db
-    .select({
-      id: players.id,
-      name: players.name,
-    })
-    .from(players)
-    .where(eq(players.userId, userId))
-    .limit(1);
+  try {
+    const [player] = await db
+      .select({
+        id: players.id,
+        name: players.name,
+      })
+      .from(players)
+      .where(eq(players.userId, userId))
+      .limit(1);
 
-  if (!player) {
+    if (!player) {
+      return { loggedIn: false };
+    }
+
+    return {
+      loggedIn: true,
+      userId,
+      playerId: player.id,
+      playerName: player.name,
+    };
+  } catch (error) {
+    console.error("Failed to load auth state from database", error);
     return { loggedIn: false };
   }
-
-  return {
-    loggedIn: true,
-    userId,
-    playerId: player.id,
-    playerName: player.name,
-  };
 }

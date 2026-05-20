@@ -189,7 +189,12 @@ export function PlayClient({ auth }: PlayClientProps) {
 
   if (!sessionId && !localId) {
     return (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+      <>
+        <header className="mb-8 text-center">
+          <h1 className="text-4xl font-bold text-slate-800 sm:text-5xl">たしざん れんしゅう</h1>
+          <p className="mt-2 text-lg text-slate-600">10問チャレンジ！</p>
+        </header>
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
         <p className="text-center text-xl font-bold text-slate-700">{displayName}</p>
         <h2 className="text-center text-3xl font-bold text-slate-800">レベルを選ぶ</h2>
         {Array.from({ length: MAX_LEVEL }, (_, index) => {
@@ -226,7 +231,8 @@ export function PlayClient({ auth }: PlayClientProps) {
             </button>
           </p>
         )}
-      </div>
+        </div>
+      </>
     );
   }
 

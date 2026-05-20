@@ -23,6 +23,9 @@ export type CompletedSession = {
 
 /** 理論満点（または星5）で即次レベル解放 */
 export function isPerfectSession(session: CompletedSession): boolean {
+  if (session.stars >= STAR_COUNT) {
+    return true;
+  }
   if (session.totalScore != null) {
     const max = calculateMaxPossibleSessionScore(
       session.level as Level,
@@ -30,7 +33,7 @@ export function isPerfectSession(session: CompletedSession): boolean {
     );
     return session.totalScore >= max;
   }
-  return session.stars >= STAR_COUNT;
+  return false;
 }
 
 export function countStar4Sessions(

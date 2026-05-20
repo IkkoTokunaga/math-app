@@ -243,11 +243,11 @@ export function PlayClient({ auth }: PlayClientProps) {
         className={`card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}
       >
         <p className="mb-6 text-5xl font-bold text-slate-800 sm:text-6xl">
-          {question.operandA} + {question.operandB} = ?
+          {question.operandA} + {question.operandB} ={" "}
+          <span className="inline-block min-w-[1.5ch] rounded-2xl bg-slate-100 px-4 py-2 text-slate-800">
+            {answer || "?"}
+          </span>
         </p>
-        <div className="mb-6 min-h-16 rounded-2xl bg-slate-100 px-4 py-4 text-4xl font-bold text-slate-800">
-          {answer || "?"}
-        </div>
         {feedback && (
           <p className={feedbackType === "success" ? "feedback-success" : "feedback-retry"}>
             {feedback}

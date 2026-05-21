@@ -76,6 +76,56 @@ export function calculateStars(totalScore: number, maxPossibleScore: number): nu
   return Math.min(STAR_COUNT - 1, Math.floor((ratio / STAR_FULL_SCORE_RATIO) * STAR_COUNT));
 }
 
+/** 星Nに必要な最低得点（N=0は0、N=5は理論最大の90%） */
+export function getStarScoreThreshold(starCount: number, maxPossibleScore: number): number {
+  if (starCount <= 0) {
+    return 0;
+  }
+  if (starCount >= STAR_COUNT) {
+    return Math.ceil(maxPossibleScore * STAR_FULL_SCORE_RATIO);
+  }
+  return Math.ceil(maxPossibleScore * (starCount / STAR_COUNT) * STAR_FULL_SCORE_RATIO);
+}
+
+export type StarProgressInfo = {
+  stars: number;
+  nextStars: number | null;
+  pointsToNextStar: number | null;
+  tierProgressPercent: number;
+};
+
+export function getStarProgressInfo(
+  totalScore: number,
+  maxPossibleScore: number,
+): StarProgressInfo {
+  const stars = calculateStars(totalScore, maxPossibleScore);
+
+  if (stars >= STAR_COUNT) {
+    return {
+      stars,
+      nextStars: null,
+      pointsToNextStar: null,
+      tierProgressPercent: 100,
+    };
+  }
+
+  const nextStars = stars + 1;
+  const tierStartScore = getStarScoreThreshold(stars, maxPossibleScore);
+  const tierEndScore = getStarScoreThreshold(nextStars, maxPossibleScore);
+  const tierRange = tierEndScore - tierStartScore;
+  const tierProgressPercent =
+    tierRange > 0
+      ? Math.min(100, Math.max(0, ((totalScore - tierStartScore) / tierRange) * 100))
+      : 0;
+
+  return {
+    stars,
+    nextStars,
+    pointsToNextStar: Math.max(0, tierEndScore - totalScore),
+    tierProgressPercent,
+  };
+}
+
 export function calculateStreakBonus(firstAttemptResults: boolean[]): number {
   let streak = 0;
   let bonus = 0;
@@ -130,6 +180,30 @@ export function aggregateSessionScores(
     baseScore,
     bonusScore: timeBonus + streakBonus,
     totalScore: questionScoreSum + streakBonus,
+  };
+}
+
+export type SessionScoreDetails = {
+  baseScore: number;
+  timeBonus: number;
+  streakBonus: number;
+  totalScore: number;
+};
+
+export function getSessionScoreDetails(
+  level: Level,
+  questionLogs: Array<{ pointsEarned: number; isFirstAttemptCorrect: boolean }>,
+): SessionScoreDetails {
+  const { baseScore, bonusScore, totalScore } = aggregateSessionScores(level, questionLogs);
+  const streakBonus = calculateStreakBonus(
+    questionLogs.map((log) => log.isFirstAttemptCorrect),
+  );
+
+  return {
+    baseScore,
+    timeBonus: bonusScore - streakBonus,
+    streakBonus,
+    totalScore,
   };
 }
 

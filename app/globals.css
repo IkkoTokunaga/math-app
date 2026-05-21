@@ -208,6 +208,288 @@ body {
   padding: 0.75rem 1rem;
 }
 
+.star-progress {
+  width: 100%;
+}
+
+.star-progress-display {
+  width: 100%;
+}
+
+.star-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  line-height: 1;
+}
+
+.star-display-slot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-display-icon,
+.star-tier-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  transform-origin: center;
+}
+
+.star-display-icon--earned {
+  color: var(--chalk-yellow);
+  text-shadow: 0 0 10px rgb(255 244 163 / 0.45);
+}
+
+.star-display-icon--empty {
+  color: var(--chalk-dim);
+}
+
+.star-display-icon--pop {
+  animation: star-earn-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.star-display-icon--pop-final {
+  animation: star-earn-pop-final 0.8s cubic-bezier(0.34, 1.2, 0.64, 1);
+  z-index: 1;
+}
+
+.star-display-icon--sparkle {
+  animation: star-sparkle-glow 1.6s ease-in-out infinite;
+}
+
+.star-display--perfect .star-display-icon--earned {
+  color: #fff4a3;
+  text-shadow:
+    0 0 12px rgb(255 244 163 / 0.8),
+    0 0 24px rgb(255 214 153 / 0.45);
+}
+
+.star-sparkle-particle {
+  position: absolute;
+  z-index: 2;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 9999px;
+  background: #fffef0;
+  box-shadow: 0 0 8px rgb(255 244 163 / 0.95);
+  pointer-events: none;
+  animation: star-sparkle-twinkle 1.4s ease-in-out infinite;
+}
+
+.star-sparkle-particle--a {
+  top: 0.05em;
+  right: 0;
+}
+
+.star-sparkle-particle--b {
+  bottom: 0.1em;
+  left: 0.05em;
+}
+
+.star-sparkle-particle--c {
+  top: 0.35em;
+  left: -0.08em;
+}
+
+.star-sparkle-glyph {
+  position: absolute;
+  z-index: 2;
+  font-size: 0.34em;
+  line-height: 1;
+  color: #fff8c8;
+  text-shadow: 0 0 8px rgb(255 244 163 / 0.95);
+  pointer-events: none;
+  animation: star-sparkle-glyph 1.8s ease-in-out infinite;
+}
+
+.star-sparkle-glyph--a {
+  top: -0.15em;
+  left: 0.15em;
+}
+
+.star-sparkle-glyph--b {
+  right: -0.05em;
+  bottom: -0.05em;
+}
+
+.star-progress-track {
+  height: 1rem;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 2px solid var(--frame-dark);
+  background: var(--board-deep);
+  box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.25);
+}
+
+.star-progress-fill {
+  height: 100%;
+  width: 0;
+  --bar-phase: 0;
+  --bar-cyan: #8ee8ff;
+  --bar-orange: #ffb347;
+  border-radius: 9999px;
+  background: linear-gradient(
+    90deg,
+    var(--bar-cyan) 0%,
+    color-mix(in srgb, var(--bar-cyan), var(--bar-orange) calc(var(--bar-phase) * 100%)) 100%
+  );
+  box-shadow: 0 0 8px color-mix(in srgb, var(--bar-cyan), var(--bar-orange) calc(var(--bar-phase) * 100%) / 35%);
+  will-change: width, background;
+}
+
+.star-progress-fill--rainbow {
+  background: linear-gradient(
+    90deg,
+    #ff6b9d 0%,
+    #ffd166 20%,
+    #8ee8ff 40%,
+    #a8e6cf 60%,
+    #c4b5fd 80%,
+    #ff6b9d 100%
+  );
+  background-size: 220% 100%;
+  box-shadow:
+    0 0 10px rgb(255 214 153 / 0.45),
+    0 0 18px rgb(142 232 255 / 0.25);
+  animation: star-progress-rainbow 2.8s linear infinite;
+}
+
+.star-progress-message {
+  opacity: 0;
+  transform: translateY(0.35rem);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.star-progress-message--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes star-earn-pop {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.35) rotate(-18deg);
+  }
+
+  55% {
+    transform: scale(1.28) rotate(6deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes star-earn-pop-final {
+  0% {
+    opacity: 0.4;
+    transform: scale(0.45) rotate(-12deg);
+  }
+
+  30% {
+    transform: scale(1.75) rotate(6deg);
+  }
+
+  50% {
+    transform: scale(1.75) rotate(0deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes star-sparkle-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+    text-shadow:
+      0 0 12px rgb(255 244 163 / 0.8),
+      0 0 24px rgb(255 214 153 / 0.45);
+  }
+
+  50% {
+    filter: brightness(1.3);
+    text-shadow:
+      0 0 18px rgb(255 244 163 / 1),
+      0 0 34px rgb(255 214 153 / 0.65);
+  }
+}
+
+@keyframes star-sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes star-sparkle-glyph {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.5) rotate(0deg);
+  }
+
+  40% {
+    opacity: 1;
+    transform: scale(1.15) rotate(18deg);
+  }
+
+  70% {
+    opacity: 0.35;
+    transform: scale(0.85) rotate(36deg);
+  }
+}
+
+@keyframes star-progress-rainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star-display-icon--pop,
+  .star-display-icon--pop-final,
+  .star-display-icon--sparkle,
+  .star-sparkle-particle,
+  .star-sparkle-glyph {
+    animation: none;
+  }
+
+  .star-display--perfect .star-display-icon--earned {
+    text-shadow: 0 0 10px rgb(255 244 163 / 0.45);
+  }
+
+  .star-progress-fill--rainbow {
+    animation: none;
+    background-position: 0% 50%;
+  }
+
+  .star-progress-message {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 .field-input {
   border-radius: 0.375rem;
   border: 2px dashed rgb(240 235 224 / 0.35);

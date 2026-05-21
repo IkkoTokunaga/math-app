@@ -57,6 +57,28 @@ Star rating SHALL be based on the ratio of total session score to the theoretica
 
 The theoretical maximum score is NOT revealed to the player.
 
+### Requirement: Star progress on result screen
+
+The session result screen SHALL show a progress bar from the current star rating toward the next star. When the player has fewer than 5 stars, the screen SHALL display how many more points are needed to reach the next star. When the player has 5 stars, the bar SHALL show full progress with a congratulatory message instead of a points-to-next target. Star acquisition and bar fill SHALL animate in sync on the result screen using a shared progress value. While the bar is filling, its color SHALL transition from light blue toward orange based on fill progress. When the animation completes with 5 stars, the bar SHALL switch to a rainbow appearance; for fewer than 5 stars, the bar SHALL remain in the blue-to-orange scheme after completion. The points-to-next message SHALL appear after the animation completes. Animations SHALL be disabled when the user prefers reduced motion.
+
+#### Scenario: Synchronized star and bar animation
+- **WHEN** a player views the result screen after completing a session
+- **THEN** earned stars appear sequentially with a pop effect while the progress bar fills over the same duration
+- **AND** the last earned star in the sequence plays a larger pop that settles back to normal size
+
+#### Scenario: Reduced motion
+- **WHEN** the user prefers reduced motion
+- **THEN** the result screen shows final stars and bar width immediately without animation
+
+#### Scenario: Points to next star
+- **WHEN** a player completes a session with fewer than 5 stars
+- **THEN** the result screen shows a bar filled according to progress within the current star tier and text such as "あと N 点で ★★★☆☆"
+
+#### Scenario: Maximum stars
+- **WHEN** a player completes a session with 5 stars
+- **THEN** the result screen shows a full progress bar and a maximum-star congratulatory message without revealing the theoretical maximum score
+- **AND** all five stars display a continuous sparkle effect after the reveal animation completes, following a short delay so the final star pop can settle
+
 #### Scenario: Five stars
 - **WHEN** a session ends with totalScore at or above 90% of the theoretical maximum
 - **THEN** the star rating is ★★★★★
@@ -95,6 +117,18 @@ A session SHALL be considered perfect for level unlock when the player earns ★
 #### Scenario: Perfect via max score
 - **WHEN** a session ends with totalScore equal to the theoretical maximum
 - **THEN** the session qualifies as perfect for instant next-level unlock even if star calculation differs
+
+### Requirement: Score breakdown on result screen
+
+The session result screen SHALL display a score breakdown with base points, time bonus, streak bonus (each bonus line only when greater than zero), session total, and per-question points earned. Per-question rows SHALL show the addition expression and a retry label when the first submission was incorrect.
+
+#### Scenario: Result screen score details
+- **WHEN** a player completes a session and views the result screen
+- **THEN** the screen shows 配点の詳細 with base points, applicable bonuses, total score, and a per-question list with points earned
+
+#### Scenario: Retry question in breakdown
+- **WHEN** a question was answered correctly after one or more wrong attempts
+- **THEN** the per-question row shows a retry label and still displays the points earned at the correct submission
 
 ### Requirement: Growth message
 

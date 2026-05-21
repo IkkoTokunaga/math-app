@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { SessionScoreBreakdown } from "@/components/SessionScoreBreakdown";
+import { StarProgressBar } from "@/components/StarProgressBar";
 import { getGuestCompletedSession } from "@/lib/guest-session";
 import { useIsClient } from "@/lib/use-is-client";
-import { renderStars } from "@/lib/scoring";
 import { LEVEL_NAMES, type Level } from "@/lib/questions";
 
 type GuestResultClientProps = {
@@ -41,8 +42,9 @@ export function GuestResultClient({ localId }: GuestResultClientProps) {
           {result.questionLogs.length}問中 {result.correctAnswers}問正解！
         </p>
         <p className="text-2xl">正答率 {result.accuracy}%</p>
-        <p className="text-5xl">{renderStars(result.stars)}</p>
+        <StarProgressBar level={result.level as Level} totalScore={result.totalScore} />
         <p className="text-accent text-3xl font-bold">{result.totalScore}点</p>
+        <SessionScoreBreakdown level={result.level as Level} questionLogs={result.questionLogs} />
         <p className="text-success text-lg">{result.growthMessage}</p>
       </div>
 

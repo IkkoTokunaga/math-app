@@ -269,6 +269,18 @@ export async function getSessionResultAction(sessionId: string) {
     .orderBy(desc(sessions.playedAt))
     .limit(1);
 
+  const logs = await getDb()
+    .select({
+      questionIndex: questionLogs.questionIndex,
+      operandA: questionLogs.operandA,
+      operandB: questionLogs.operandB,
+      pointsEarned: questionLogs.pointsEarned,
+      isFirstAttemptCorrect: questionLogs.isFirstAttemptCorrect,
+    })
+    .from(questionLogs)
+    .where(eq(questionLogs.sessionId, sessionId))
+    .orderBy(questionLogs.questionIndex);
+
   return {
     sessionId: session.id,
     level: session.level,
@@ -284,6 +296,7 @@ export async function getSessionResultAction(sessionId: string) {
       session.correctAnswers ?? 0,
       previous[0]?.correctAnswers ?? null,
     ),
+    questionLogs: logs,
   };
 }
 

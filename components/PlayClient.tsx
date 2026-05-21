@@ -31,6 +31,9 @@ type PlayClientProps = {
   auth: AuthState;
 };
 
+const SUCCESS_FEEDBACK_MS = 1500;
+const COMPLETION_FEEDBACK_MS = 1800;
+
 export function PlayClient({ auth }: PlayClientProps) {
   const router = useRouter();
   const isMember = auth.loggedIn;
@@ -129,7 +132,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         if (result.completed) {
           setTimeout(() => {
             router.push(`/result/${activeId}`);
-          }, 700);
+          }, COMPLETION_FEEDBACK_MS);
           return;
         }
       } else {
@@ -153,7 +156,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         if (result.completed) {
           setTimeout(() => {
             router.push(`/result/guest/${activeId}`);
-          }, 700);
+          }, COMPLETION_FEEDBACK_MS);
           return;
         }
       }
@@ -163,7 +166,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         setAnswer("");
         setFeedback(null);
         setFeedbackType(null);
-      }, 700);
+      }, SUCCESS_FEEDBACK_MS);
     } catch (err) {
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
     } finally {
@@ -256,12 +259,35 @@ export function PlayClient({ auth }: PlayClientProps) {
             {answer || "?"}
           </span>
         </div>
-        {feedback && (
-          <p className={feedbackType === "success" ? "feedback-success" : "feedback-retry"}>
-            {feedback}
-          </p>
-        )}
       </section>
+
+      {feedback && (
+        <div
+          className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-6"
+          role="status"
+          aria-live="polite"
+        >
+          {feedbackType === "success" && (
+            <div className="feedback-success-glow" aria-hidden="true" />
+          )}
+          {feedbackType === "success" ? (
+            <div className="feedback-popup feedback-popup-success">
+              <div className="feedback-confetti" aria-hidden="true">
+                {["✨", "⭐", "🎉", "✨", "⭐", "🎊", "✨", "⭐"].map((icon, index) => (
+                  <span key={index} className="feedback-confetti-piece">
+                    {icon}
+                  </span>
+                ))}
+              </div>
+              <p className="feedback-success">🎉 {feedback} 🎉</p>
+            </div>
+          ) : (
+            <div className="feedback-popup feedback-popup-retry">
+              <p className="feedback-retry">{feedback}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <Keypad
         value={answer}

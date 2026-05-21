@@ -221,7 +221,17 @@ export function PlayClient({ auth }: PlayClientProps) {
     return (
       <>
         <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-slate-800 sm:text-5xl">たしざん れんしゅう</h1>
+          <div className="flex items-center justify-center gap-3 sm:gap-4">
+            <img
+              src="/mascot.svg"
+              alt=""
+              width={56}
+              height={78}
+              className="h-14 w-auto shrink-0 sm:h-16"
+              aria-hidden
+            />
+            <h1 className="text-4xl font-bold text-slate-800 sm:text-5xl">たしざん れんしゅう</h1>
+          </div>
           <p className="mt-2 text-lg text-slate-600">10問チャレンジ！</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">

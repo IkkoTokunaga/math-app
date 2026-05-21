@@ -295,8 +295,8 @@ button.keypad-btn-submit:active:not(:disabled) {
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
-  color: var(--chalk-green);
-  text-shadow: 0 0 12px rgb(168 230 207 / 0.4);
+  color: #047857;
+  text-shadow: 0 2px 0 rgb(255 255 255 / 0.8);
 }
 
 .feedback-retry {
@@ -361,23 +361,20 @@ button.keypad-btn-submit:active:not(:disabled) {
 .feedback-popup-success {
   position: relative;
   overflow: visible;
-  border-radius: 0.375rem;
-  border: 3px solid var(--frame);
-  background:
-    radial-gradient(circle at 50% 0%, rgb(168 230 207 / 0.2) 0%, transparent 50%),
-    linear-gradient(165deg, var(--board-highlight) 0%, var(--board) 100%);
+  border-radius: 2rem;
+  border: 3px solid #34d399;
+  background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 45%, #6ee7b7 100%);
   padding: 2rem 2.5rem;
   box-shadow:
-    inset 0 0 40px rgb(168 230 207 / 0.1),
-    0 0 0 2px rgb(168 230 207 / 0.2),
-    0 20px 50px rgb(0 0 0 / 0.45);
+    0 0 0 4px rgb(52 211 153 / 0.25),
+    0 20px 50px rgb(16 185 129 / 0.35);
   animation: feedback-success-celebrate 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .feedback-success-glow {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle, rgb(168 230 207 / 0.2) 0%, transparent 65%);
+  background: radial-gradient(circle, rgb(16 185 129 / 0.3) 0%, transparent 65%);
   animation: feedback-success-flash 0.55s ease-out;
 }
 

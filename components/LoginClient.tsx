@@ -18,12 +18,12 @@ export function LoginClient() {
         router.refresh();
       }}
       footer={
-        <p className="text-center text-slate-600">
-          <Link href="/signup" className="text-sky-600 underline">
+        <p className="text-center text-muted">
+          <Link href="/signup" className="text-link">
             サインアップ
           </Link>
           {" / "}
-          <Link href="/play" className="text-sky-600 underline">
+          <Link href="/play" className="text-link">
             れんしゅうへ
           </Link>
         </p>

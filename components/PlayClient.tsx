@@ -214,7 +214,7 @@ export function PlayClient({ auth }: PlayClientProps) {
   };
 
   if (!isClient) {
-    return <p className="text-center text-lg text-slate-600">読み込み中...</p>;
+    return <p className="text-center text-lg text-muted">読み込み中...</p>;
   }
 
   if (!sessionId && !localId) {
@@ -223,20 +223,20 @@ export function PlayClient({ auth }: PlayClientProps) {
         <header className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 sm:gap-4">
             <img
-              src="/mascot.svg"
+              src="/mascot.png"
               alt=""
-              width={56}
-              height={78}
-              className="h-14 w-auto shrink-0 sm:h-16"
+              width={155}
+              height={312}
+              className="h-20 w-auto shrink-0 sm:h-24"
               aria-hidden
             />
-            <h1 className="text-4xl font-bold text-slate-800 sm:text-5xl">たしざん れんしゅう</h1>
+            <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">たしざん れんしゅう</h1>
           </div>
-          <p className="mt-2 text-lg text-slate-600">10問チャレンジ！</p>
+          <p className="mt-2 text-lg text-muted">10問チャレンジ！</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-        <p className="text-center text-xl font-bold text-slate-700">{displayName}</p>
-        <h2 className="text-center text-3xl font-bold text-slate-800">レベルを選ぶ</h2>
+        <p className="text-center text-xl font-bold">{displayName}</p>
+        <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
         {Array.from({ length: MAX_LEVEL }, (_, index) => {
           const lv = (index + 1) as Level;
           const disabled = lv > effectiveUnlocked;
@@ -253,7 +253,7 @@ export function PlayClient({ auth }: PlayClientProps) {
           );
         })}
         {error && <p className="feedback-error">{error}</p>}
-        <Link href="/progress" className="big-btn bg-violet-500 text-center text-white">
+        <Link href="/progress" className="big-btn big-btn-secondary text-center">
           これまでの記録
         </Link>
         <AuthLinks auth={auth} />
@@ -265,7 +265,7 @@ export function PlayClient({ auth }: PlayClientProps) {
                 await logoutAction();
                 window.location.href = "/play";
               }}
-              className="text-sm text-slate-400 underline"
+              className="text-dim text-sm underline"
             >
               ログアウト
             </button>
@@ -280,19 +280,19 @@ export function PlayClient({ auth }: PlayClientProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-      <div className="text-center text-lg text-slate-600">
-        <span className="font-bold text-slate-700">{displayName}　</span>
+      <div className="text-center text-lg text-muted">
+        <span className="font-bold">{displayName}　</span>
         問題 {currentIndex + 1} / {questions.length}　Lv{level}
       </div>
 
       <section
         className={`card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}
       >
-        <div className="mb-6 flex items-center justify-center gap-x-2 text-[clamp(1.5rem,8vw,3.75rem)] font-bold text-slate-800">
+        <div className="chalk-heading mb-6 flex items-center justify-center gap-x-2 text-[clamp(1.5rem,8vw,3.75rem)] font-bold">
           <span className="whitespace-nowrap">
             {question.operandA} + {question.operandB} =
           </span>
-          <span className="inline-flex min-w-[3.5ch] shrink-0 items-center justify-center rounded-2xl bg-slate-100 px-2 py-2 tabular-nums text-slate-800 sm:px-4">
+          <span className="answer-slot">
             {answer || "?"}
           </span>
         </div>
@@ -338,7 +338,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       <button
         type="button"
         onClick={backToLevels}
-        className="text-center text-sky-600 underline"
+        className="text-link text-center"
       >
         やめる
       </button>

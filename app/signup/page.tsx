@@ -11,7 +11,7 @@ export default async function SignupPage() {
 
   return (
     <main className="page-shell">
-      <Suspense fallback={<p className="text-center text-slate-600">読み込み中...</p>}>
+      <Suspense fallback={<p className="text-center text-muted">読み込み中...</p>}>
         <SignupClient />
       </Suspense>
     </main>

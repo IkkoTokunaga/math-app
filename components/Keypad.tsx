@@ -13,7 +13,7 @@ function BackspaceIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
-      className="mx-auto h-9 w-9 text-slate-700"
+      className="mx-auto h-9 w-9 text-chalk"
       aria-hidden
       fill="currentColor"
     >

@@ -22,7 +22,7 @@ export default async function OpenGraphImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%)",
+          background: "linear-gradient(175deg, #152820 0%, #1a2e24 40%, #1f352a 100%)",
           fontFamily: "Noto Sans JP",
         }}
       >
@@ -34,16 +34,17 @@ export default async function OpenGraphImage() {
             justifyContent: "center",
             width: "960px",
             padding: "48px 64px",
-            borderRadius: "48px",
-            background: "white",
-            boxShadow: "0 24px 60px rgba(14, 116, 144, 0.12)",
+            borderRadius: "8px",
+            border: "8px solid #a67c52",
+            background: "linear-gradient(165deg, #345848 0%, #2a4538 45%, #1f3a2e 100%)",
+            boxShadow: "inset 0 0 60px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.45)",
           }}
         >
           <div
             style={{
               fontSize: 72,
               fontWeight: 700,
-              color: "#0f172a",
+              color: "#f0ebe0",
               lineHeight: 1.1,
             }}
           >
@@ -53,7 +54,7 @@ export default async function OpenGraphImage() {
             style={{
               marginTop: 24,
               fontSize: 34,
-              color: "#0369a1",
+              color: "#b8b0a0",
               lineHeight: 1.5,
               textAlign: "center",
             }}
@@ -68,14 +69,14 @@ export default async function OpenGraphImage() {
               gap: 24,
               fontSize: 72,
               fontWeight: 700,
-              color: "#0284c7",
+              color: "#f0ebe0",
             }}
           >
             <span>3</span>
-            <span style={{ color: "#64748b" }}>+</span>
+            <span style={{ color: "#b8b0a0" }}>+</span>
             <span>5</span>
-            <span style={{ color: "#64748b" }}>=</span>
-            <span style={{ color: "#cbd5e1" }}>?</span>
+            <span style={{ color: "#b8b0a0" }}>=</span>
+            <span style={{ color: "#fff4a3" }}>?</span>
           </div>
         </div>
       </div>

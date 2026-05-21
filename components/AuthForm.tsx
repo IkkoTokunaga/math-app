@@ -36,26 +36,26 @@ export function AuthForm({
 
   return (
     <section className="card mx-auto max-w-md">
-      <h1 className="mb-6 text-center text-3xl font-bold text-slate-800">{title}</h1>
+      <h1 className="chalk-heading mb-6 text-center text-3xl font-bold">{title}</h1>
       <div className="flex flex-col gap-4">
         {extraFields}
         <label className="flex flex-col gap-1 text-left">
-          <span className="text-sm text-slate-600">メール</span>
+          <span className="text-sm text-muted">メール</span>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg"
+            className="field-input"
             autoComplete="email"
           />
         </label>
         <label className="flex flex-col gap-1 text-left">
-          <span className="text-sm text-slate-600">パスワード</span>
+          <span className="text-sm text-muted">パスワード</span>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg"
+            className="field-input"
             autoComplete={submitLabel === "ログイン" ? "current-password" : "new-password"}
           />
         </label>
@@ -64,7 +64,7 @@ export function AuthForm({
           type="button"
           disabled={submitting}
           onClick={handleSubmit}
-          className="big-btn bg-sky-500 text-white"
+          className="big-btn big-btn-primary"
         >
           {submitting ? "処理中..." : submitLabel}
         </button>

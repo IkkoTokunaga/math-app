@@ -19,11 +19,11 @@ export function SignupClient() {
       submitLabel="登録する"
       extraFields={
         <label className="flex flex-col gap-1 text-left">
-          <span className="text-sm text-slate-600">なまえ</span>
+          <span className="text-sm text-muted">なまえ</span>
           <input
             value={childName}
             onChange={(e) => setChildName(e.target.value)}
-            className="rounded-2xl border-2 border-slate-200 px-4 py-3 text-lg"
+            className="field-input"
             maxLength={50}
             placeholder="なまえ"
           />
@@ -41,18 +41,18 @@ export function SignupClient() {
         router.refresh();
       }}
       footer={
-        <div className="flex flex-col gap-2 text-center text-slate-600">
+        <div className="flex flex-col gap-2 text-center text-muted">
           {fromResult && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-dim">
               この端末に保存されているきろくをとうろくします
             </p>
           )}
           <p>
-            <Link href="/login" className="text-sky-600 underline">
+            <Link href="/login" className="text-link">
               ログイン
             </Link>
             {" / "}
-            <Link href="/play" className="text-sky-600 underline">
+            <Link href="/play" className="text-link">
               れんしゅうへ
             </Link>
           </p>

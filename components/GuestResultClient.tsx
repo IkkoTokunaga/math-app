@@ -15,14 +15,14 @@ export function GuestResultClient({ localId }: GuestResultClientProps) {
   const result = isClient ? getGuestCompletedSession(localId) : null;
 
   if (!isClient) {
-    return <p className="text-center text-slate-600">読み込み中...</p>;
+    return <p className="text-center text-muted">読み込み中...</p>;
   }
 
   if (!result) {
     return (
       <div className="card text-center">
         <p className="mb-4">結果が 見つかりません</p>
-        <Link href="/play" className="big-btn inline-block bg-sky-500 text-white">
+        <Link href="/play" className="big-btn big-btn-primary inline-block">
           れんしゅうへ
         </Link>
       </div>
@@ -31,10 +31,10 @@ export function GuestResultClient({ localId }: GuestResultClientProps) {
 
   return (
     <section className="card mx-auto max-w-xl text-center">
-      <p className="text-lg text-slate-600">
+      <p className="text-lg text-muted">
         Lv{result.level} {LEVEL_NAMES[result.level as Level]}
       </p>
-      <h1 className="mt-2 text-4xl font-bold text-slate-800">おつかれさま！</h1>
+      <h1 className="chalk-heading mt-2 text-4xl font-bold">おつかれさま！</h1>
 
       <div className="my-8 grid gap-4">
         <p className="text-3xl font-bold">
@@ -42,15 +42,15 @@ export function GuestResultClient({ localId }: GuestResultClientProps) {
         </p>
         <p className="text-2xl">正答率 {result.accuracy}%</p>
         <p className="text-5xl">{renderStars(result.stars)}</p>
-        <p className="text-3xl font-bold text-sky-600">{result.totalScore}点</p>
-        <p className="text-lg text-emerald-600">{result.growthMessage}</p>
+        <p className="text-accent text-3xl font-bold">{result.totalScore}点</p>
+        <p className="text-success text-lg">{result.growthMessage}</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Link href="/play" className="big-btn bg-sky-500 text-white">
+        <Link href="/play" className="big-btn big-btn-primary">
           もう一度
         </Link>
-        <Link href="/progress" className="big-btn bg-violet-500 text-white">
+        <Link href="/progress" className="big-btn big-btn-secondary">
           記録を見る
         </Link>
       </div>
@@ -58,7 +58,7 @@ export function GuestResultClient({ localId }: GuestResultClientProps) {
       <p className="mt-10 text-center">
         <Link
           href="/signup?from=result"
-          className="text-sm text-slate-500 underline hover:text-slate-700"
+          className="text-dim text-sm underline hover:text-muted"
         >
           きろくを とうろくする（おうちのひとと）
         </Link>

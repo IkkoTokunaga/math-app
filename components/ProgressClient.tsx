@@ -68,14 +68,14 @@ export function ProgressClient({ auth }: ProgressClientProps) {
   const guestNotice = !auth.loggedIn;
 
   if (!isClient) {
-    return <p className="text-center text-lg text-slate-600">読み込み中...</p>;
+    return <p className="text-center text-lg text-muted">読み込み中...</p>;
   }
 
   if (displayError) {
     return (
       <div className="card text-center">
         <p className="mb-4">{displayError}</p>
-        <Link href="/play" className="big-btn inline-block bg-sky-500 text-white">
+        <Link href="/play" className="big-btn big-btn-primary inline-block">
           れんしゅうへ
         </Link>
       </div>
@@ -83,30 +83,30 @@ export function ProgressClient({ auth }: ProgressClientProps) {
   }
 
   if (!displayData) {
-    return <p className="text-center text-lg text-slate-600">読み込み中...</p>;
+    return <p className="text-center text-lg text-muted">読み込み中...</p>;
   }
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       {guestNotice && (
-        <p className="text-center text-sm text-slate-500">
+        <p className="text-center text-sm text-dim">
           きろくは この 端末に だけ 保存されています
         </p>
       )}
 
       <section className="card grid gap-4 sm:grid-cols-3">
         <div>
-          <p className="text-sm text-slate-500">今週の平均正答率</p>
+          <p className="text-sm text-muted">今週の平均正答率</p>
           <p className="text-3xl font-bold">
             {displayData.weeklyAverage !== null ? `${displayData.weeklyAverage}%` : "今週はまだプレイしていません"}
           </p>
         </div>
         <div>
-          <p className="text-sm text-slate-500">連続学習日数</p>
+          <p className="text-sm text-muted">連続学習日数</p>
           <p className="text-3xl font-bold">{displayData.learningStreak}日</p>
         </div>
         <div>
-          <p className="text-sm text-slate-500">解放レベル</p>
+          <p className="text-sm text-muted">解放レベル</p>
           <p className="text-3xl font-bold">
             Lv{displayData.unlockedLevel} {LEVEL_NAMES[displayData.unlockedLevel as Level]}
           </p>
@@ -118,7 +118,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
           <p className="text-lg">
             次のレベル（Lv{displayData.unlockProgress.nextLevel}）へ
           </p>
-          <ul className="mt-2 list-inside list-disc text-slate-700">
+          <ul className="mt-2 list-inside list-disc text-muted">
             <li>{renderStars(STAR_COUNT)} 満点で すぐ解放</li>
             <li>
               または {renderStars(4).replace(/☆/g, "")} を あと{" "}
@@ -132,7 +132,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
             </li>
           </ul>
           {displayData.unlockProgress.hasPerfect && (
-            <p className="mt-2 text-emerald-600">満点を とれたよ！ 次のレベルが ひらける</p>
+            <p className="mt-2 text-success">満点を とれたよ！ 次のレベルが ひらける</p>
           )}
         </section>
       )}
@@ -143,13 +143,13 @@ export function ProgressClient({ auth }: ProgressClientProps) {
           {displayData.recentSessions.map((session) => (
             <div
               key={session.id}
-              className="flex flex-col gap-1 rounded-2xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="font-bold">
                   Lv{session.level} {session.levelName}
                 </p>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-dim">
                   {new Date(session.playedAt).toLocaleString("ja-JP")}
                 </p>
               </div>
@@ -162,7 +162,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
             </div>
           ))}
           {displayData.recentSessions.length === 0 && (
-            <p className="text-slate-500">まだ記録がありません</p>
+            <p className="text-muted">まだ記録がありません</p>
           )}
         </div>
       </section>
@@ -172,7 +172,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
           <h2 className="mb-4 text-2xl font-bold">よく間違える問題</h2>
           <ul className="flex flex-col gap-2">
             {displayData.weakSpots.map((spot) => (
-              <li key={spot.label} className="rounded-2xl bg-amber-50 px-4 py-3 text-lg">
+              <li key={spot.label} className="row-item-warn text-lg">
                 {spot.label}（{spot.missCount}回）
               </li>
             ))}
@@ -184,14 +184,14 @@ export function ProgressClient({ auth }: ProgressClientProps) {
         <p className="text-center">
           <Link
             href="/signup"
-            className="text-sm text-slate-500 underline hover:text-slate-700"
+            className="text-dim text-sm underline hover:text-muted"
           >
             きろくを とうろくする（おうちのひとと）
           </Link>
         </p>
       )}
 
-      <Link href="/play" className="big-btn bg-sky-500 text-center text-white">
+      <Link href="/play" className="big-btn big-btn-primary text-center">
         れんしゅうへ
       </Link>
     </div>

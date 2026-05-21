@@ -7,7 +7,7 @@ export default async function ProgressPage() {
   return (
     <main className="page-shell">
       <header className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-slate-800">これまでの記録</h1>
+        <h1 className="chalk-heading text-4xl font-bold">これまでの記録</h1>
       </header>
       <ProgressClient auth={auth} />
     </main>

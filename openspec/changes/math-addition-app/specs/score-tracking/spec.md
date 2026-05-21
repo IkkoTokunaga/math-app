@@ -34,6 +34,28 @@ The session score SHALL be the sum of all question points plus streak bonuses. T
 - **WHEN** a session completes
 - **THEN** totalScore equals the sum of question points plus streak bonuses
 
+### Requirement: Live score during quiz
+
+During an active quiz session, the system SHALL display the player's accumulated question points in the top-right of the quiz header. The displayed score SHALL be the sum of `pointsEarned` from correctly answered questions so far and SHALL NOT include streak bonuses until the session completes.
+
+#### Scenario: Score updates on correct answer
+- **WHEN** a player submits a correct answer during a quiz
+- **THEN** the top-right score increases by that question's `pointsEarned`
+
+#### Scenario: Score resets on new session
+- **WHEN** a player starts a new quiz session or returns to level selection
+- **THEN** the displayed score resets to 0
+
+#### Scenario: Points earned feedback
+- **WHEN** a player submits a correct answer
+- **THEN** the success feedback shows how many points were earned (e.g. "+15点")
+- **AND** those points animate into the top-right total score
+- **AND** the total updates only after the merge animation completes
+
+#### Scenario: Reduced motion for score animation
+- **WHEN** the user prefers reduced motion
+- **THEN** the earned points are shown in feedback and added to the total immediately without a fly animation
+
 ### Requirement: Accuracy display
 
 Accuracy SHALL be based on **first-attempt correctness** per question (whether the first submission was correct), independent of points earned after retries or response time.

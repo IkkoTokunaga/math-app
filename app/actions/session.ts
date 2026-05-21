@@ -159,6 +159,7 @@ export async function submitAnswerAction(
       correct: true as const,
       message: "正解！",
       completed: false as const,
+      pointsEarned,
     };
   }
 
@@ -167,6 +168,7 @@ export async function submitAnswerAction(
     correct: true as const,
     message: "正解！",
     completed: true as const,
+    pointsEarned,
     result,
   };
 }

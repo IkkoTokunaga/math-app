@@ -64,11 +64,17 @@ export function startGuestSession(level: Level): {
 }
 
 type SubmitWrong = { correct: false; message: string };
-type SubmitContinue = { correct: true; message: string; completed: false };
+type SubmitContinue = {
+  correct: true;
+  message: string;
+  completed: false;
+  pointsEarned: number;
+};
 type SubmitDone = {
   correct: true;
   message: string;
   completed: true;
+  pointsEarned: number;
   localId: string;
   result: GuestCompletedSession;
 };
@@ -122,7 +128,7 @@ export function submitGuestAnswer(
 
   if (answeredCount < QUESTIONS_PER_SESSION) {
     writeGuestStore(store);
-    return { correct: true, message: "正解！", completed: false };
+    return { correct: true, message: "正解！", completed: false, pointsEarned };
   }
 
   const sameLevelCompleted = store.completedSessions.filter(
@@ -152,6 +158,7 @@ export function submitGuestAnswer(
     correct: true,
     message: "正解！",
     completed: true,
+    pointsEarned,
     localId,
     result: completed,
   };

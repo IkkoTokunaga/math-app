@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { logoutAction } from "@/app/actions/auth";
 import {
   getPlayerUnlockedLevelAction,
@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/session";
 import { AuthLinks } from "@/components/AuthLinks";
 import { Keypad } from "@/components/Keypad";
+import { RunningScore } from "@/components/RunningScore";
 import type { AuthState } from "@/lib/auth/state";
 import { getGuestLabel } from "@/lib/guest-storage";
 import {
@@ -49,9 +50,19 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [feedbackType, setFeedbackType] = useState<"success" | "retry" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runningScore, setRunningScore] = useState(0);
+  const [pendingPoints, setPendingPoints] = useState<number | null>(null);
+  const [scoreAnimId, setScoreAnimId] = useState(0);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
   const questionStartedAtRef = useRef<number>(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pointsEarnedRef = useRef<HTMLParagraphElement>(null);
+  const pendingPointsRef = useRef(0);
+
+  const applyPendingPoints = useCallback(() => {
+    setRunningScore((score) => score + pendingPointsRef.current);
+    setPendingPoints(null);
+  }, []);
 
   const clearFeedback = () => {
     if (feedbackTimeoutRef.current) {
@@ -60,6 +71,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     }
     setFeedback(null);
     setFeedbackType(null);
+    setPendingPoints(null);
   };
 
   const showRetryFeedback = (message: string) => {
@@ -114,6 +126,9 @@ export function PlayClient({ auth }: PlayClientProps) {
       }
       setCurrentIndex(0);
       setAnswer("");
+      setRunningScore(0);
+      setPendingPoints(null);
+      pendingPointsRef.current = 0;
       clearFeedback();
       questionStartedAtRef.current = Date.now();
     } catch (err) {
@@ -151,6 +166,9 @@ export function PlayClient({ auth }: PlayClientProps) {
 
         setFeedback(result.message);
         setFeedbackType("success");
+        pendingPointsRef.current = result.pointsEarned;
+        setPendingPoints(result.pointsEarned);
+        setScoreAnimId((id) => id + 1);
 
         if (result.completed) {
           setTimeout(() => {
@@ -174,6 +192,9 @@ export function PlayClient({ auth }: PlayClientProps) {
 
         setFeedback(result.message);
         setFeedbackType("success");
+        pendingPointsRef.current = result.pointsEarned;
+        setPendingPoints(result.pointsEarned);
+        setScoreAnimId((id) => id + 1);
 
         if (result.completed) {
           setTimeout(() => {
@@ -202,6 +223,9 @@ export function PlayClient({ auth }: PlayClientProps) {
     setQuestions([]);
     setCurrentIndex(0);
     setAnswer("");
+    setRunningScore(0);
+    setPendingPoints(null);
+    pendingPointsRef.current = 0;
     clearFeedback();
     setError(null);
   };
@@ -280,9 +304,22 @@ export function PlayClient({ auth }: PlayClientProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-      <div className="text-center text-lg text-muted">
-        <span className="font-bold">{displayName}　</span>
-        問題 {currentIndex + 1} / {questions.length}　Lv{level}
+      <div className="flex items-start justify-between gap-4 text-lg">
+        <div className="text-muted">
+          <p>
+            <span className="font-bold">{displayName}</span>
+          </p>
+          <p>
+            問題 {currentIndex + 1} / {questions.length}　Lv{level}
+          </p>
+        </div>
+        <RunningScore
+          score={runningScore}
+          pointsEarned={pendingPoints}
+          animId={scoreAnimId}
+          flyFromRef={pointsEarnedRef}
+          onPointsApplied={applyPendingPoints}
+        />
       </div>
 
       <section
@@ -317,6 +354,11 @@ export function PlayClient({ auth }: PlayClientProps) {
                 ))}
               </div>
               <p className="feedback-success">🎉 {feedback} 🎉</p>
+              {pendingPoints != null && (
+                <p ref={pointsEarnedRef} className="feedback-points-earned">
+                  +{pendingPoints}点
+                </p>
+              )}
             </div>
           ) : (
             <div className="feedback-popup feedback-popup-retry">

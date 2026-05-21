@@ -33,6 +33,7 @@ type PlayClientProps = {
 
 const SUCCESS_FEEDBACK_MS = 1500;
 const COMPLETION_FEEDBACK_MS = 1800;
+const RETRY_FEEDBACK_MS = 1500;
 
 export function PlayClient({ auth }: PlayClientProps) {
   const router = useRouter();
@@ -50,6 +51,31 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
   const questionStartedAtRef = useRef<number>(0);
+  const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearFeedback = () => {
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+    setFeedback(null);
+    setFeedbackType(null);
+  };
+
+  const showRetryFeedback = (message: string) => {
+    clearFeedback();
+    setFeedback(message);
+    setFeedbackType("retry");
+    feedbackTimeoutRef.current = setTimeout(clearFeedback, RETRY_FEEDBACK_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (sessionId || localId) {
@@ -88,8 +114,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       }
       setCurrentIndex(0);
       setAnswer("");
-      setFeedback(null);
-      setFeedbackType(null);
+      clearFeedback();
       questionStartedAtRef.current = Date.now();
     } catch (err) {
       setError(err instanceof Error ? err.message : "セッション開始に失敗しました");
@@ -105,8 +130,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     }
 
     setSubmitting(true);
-    setFeedback(null);
-    setFeedbackType(null);
+    clearFeedback();
 
     const elapsedSeconds = (Date.now() - questionStartedAtRef.current) / 1000;
 
@@ -120,8 +144,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         );
 
         if (!result.correct) {
-          setFeedback(result.message);
-          setFeedbackType("retry");
+          showRetryFeedback(result.message);
           setAnswer("");
           return;
         }
@@ -144,8 +167,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         );
 
         if (!result.correct) {
-          setFeedback(result.message);
-          setFeedbackType("retry");
+          showRetryFeedback(result.message);
           setAnswer("");
           return;
         }
@@ -164,8 +186,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       setTimeout(() => {
         setCurrentIndex((index) => index + 1);
         setAnswer("");
-        setFeedback(null);
-        setFeedbackType(null);
+        clearFeedback();
       }, SUCCESS_FEEDBACK_MS);
     } catch (err) {
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
@@ -181,9 +202,15 @@ export function PlayClient({ auth }: PlayClientProps) {
     setQuestions([]);
     setCurrentIndex(0);
     setAnswer("");
-    setFeedback(null);
-    setFeedbackType(null);
+    clearFeedback();
     setError(null);
+  };
+
+  const handleAnswerChange = (value: string) => {
+    if (feedbackType === "retry") {
+      clearFeedback();
+    }
+    setAnswer(value);
   };
 
   if (!isClient) {
@@ -291,7 +318,7 @@ export function PlayClient({ auth }: PlayClientProps) {
 
       <Keypad
         value={answer}
-        onChange={setAnswer}
+        onChange={handleAnswerChange}
         onSubmit={submitAnswer}
         disabled={submitting}
       />

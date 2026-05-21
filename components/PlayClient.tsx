@@ -248,12 +248,14 @@ export function PlayClient({ auth }: PlayClientProps) {
       <section
         className={`card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}
       >
-        <p className="mb-6 text-5xl font-bold text-slate-800 sm:text-6xl">
-          {question.operandA} + {question.operandB} ={" "}
-          <span className="inline-block min-w-[1.5ch] rounded-2xl bg-slate-100 px-4 py-2 text-slate-800">
+        <div className="mb-6 flex items-center justify-center gap-x-2 text-[clamp(1.5rem,8vw,3.75rem)] font-bold text-slate-800">
+          <span className="whitespace-nowrap">
+            {question.operandA} + {question.operandB} =
+          </span>
+          <span className="inline-flex min-w-[3.5ch] shrink-0 items-center justify-center rounded-2xl bg-slate-100 px-2 py-2 tabular-nums text-slate-800 sm:px-4">
             {answer || "?"}
           </span>
-        </p>
+        </div>
         {feedback && (
           <p className={feedbackType === "success" ? "feedback-success" : "feedback-retry"}>
             {feedback}

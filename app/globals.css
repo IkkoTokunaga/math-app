@@ -580,14 +580,21 @@ button.keypad-btn-submit:active:not(:disabled) {
   font-weight: 800;
   line-height: 1.2;
   text-align: center;
-  color: #047857;
-  text-shadow: 0 2px 0 rgb(255 255 255 / 0.8);
+  color: var(--frame-dark);
+  text-shadow: 0 2px 0 rgb(255 255 255 / 0.85);
+}
+
+.feedback-points-slot {
+  position: relative;
+  z-index: 1;
+  min-height: 2.4rem;
+  margin-top: 0.75rem;
 }
 
 .feedback-points-earned {
   position: relative;
   z-index: 1;
-  margin-top: 0.75rem;
+  margin-top: 0;
   font-size: 2rem;
   font-weight: 800;
   line-height: 1.2;
@@ -720,19 +727,20 @@ button.keypad-btn-submit:active:not(:disabled) {
   position: relative;
   overflow: visible;
   border-radius: 2rem;
-  border: 3px solid #34d399;
-  background: linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 45%, #6ee7b7 100%);
+  border: 3px solid var(--frame);
+  background: linear-gradient(165deg, #fff8e0 0%, var(--chalk-yellow) 45%, #f0dc78 100%);
   padding: 2rem 2.5rem;
   box-shadow:
-    0 0 0 4px rgb(52 211 153 / 0.25),
-    0 20px 50px rgb(16 185 129 / 0.35);
+    0 0 0 4px rgb(166 124 82 / 0.28),
+    0 20px 50px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.55);
   animation: feedback-success-celebrate 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .feedback-success-glow {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle, rgb(16 185 129 / 0.3) 0%, transparent 65%);
+  background: radial-gradient(circle, rgb(255 244 163 / 0.32) 0%, transparent 65%);
   animation: feedback-success-flash 0.55s ease-out;
 }
 

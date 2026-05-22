@@ -52,6 +52,7 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [runningScore, setRunningScore] = useState(0);
   const [pendingPoints, setPendingPoints] = useState<number | null>(null);
+  const [feedbackPointsEarned, setFeedbackPointsEarned] = useState<number | null>(null);
   const [scoreAnimId, setScoreAnimId] = useState(0);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
   const questionStartedAtRef = useRef<number>(0);
@@ -72,6 +73,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     setFeedback(null);
     setFeedbackType(null);
     setPendingPoints(null);
+    setFeedbackPointsEarned(null);
   };
 
   const showRetryFeedback = (message: string) => {
@@ -128,6 +130,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       setAnswer("");
       setRunningScore(0);
       setPendingPoints(null);
+      setFeedbackPointsEarned(null);
       pendingPointsRef.current = 0;
       clearFeedback();
       questionStartedAtRef.current = Date.now();
@@ -168,6 +171,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         setFeedbackType("success");
         pendingPointsRef.current = result.pointsEarned;
         setPendingPoints(result.pointsEarned);
+        setFeedbackPointsEarned(result.pointsEarned);
         setScoreAnimId((id) => id + 1);
 
         if (result.completed) {
@@ -194,6 +198,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         setFeedbackType("success");
         pendingPointsRef.current = result.pointsEarned;
         setPendingPoints(result.pointsEarned);
+        setFeedbackPointsEarned(result.pointsEarned);
         setScoreAnimId((id) => id + 1);
 
         if (result.completed) {
@@ -225,6 +230,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     setAnswer("");
     setRunningScore(0);
     setPendingPoints(null);
+    setFeedbackPointsEarned(null);
     pendingPointsRef.current = 0;
     clearFeedback();
     setError(null);
@@ -354,11 +360,13 @@ export function PlayClient({ auth }: PlayClientProps) {
                 ))}
               </div>
               <p className="feedback-success">🎉 {feedback} 🎉</p>
-              {pendingPoints != null && (
-                <p ref={pointsEarnedRef} className="feedback-points-earned">
-                  +{pendingPoints}点
-                </p>
-              )}
+              <div className="feedback-points-slot">
+                {feedbackPointsEarned != null && (
+                  <p ref={pointsEarnedRef} className="feedback-points-earned">
+                    +{feedbackPointsEarned}点
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <div className="feedback-popup feedback-popup-retry">

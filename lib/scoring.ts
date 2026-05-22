@@ -78,6 +78,8 @@ export function calculateMaxPossibleSessionScore(
  * 獲得点数 ÷ 理論最大に対する割合で星0〜5。
  * 90%以上で星5。未満は 0〜90% を均等5分割（18%刻みで星0〜4）。
  */
+const STAR_BAND_RATIO = STAR_FULL_SCORE_RATIO / STAR_COUNT;
+
 export function calculateStars(totalScore: number, maxPossibleScore: number): number {
   if (maxPossibleScore <= 0) {
     return 0;
@@ -86,18 +88,35 @@ export function calculateStars(totalScore: number, maxPossibleScore: number): nu
   if (ratio >= STAR_FULL_SCORE_RATIO) {
     return STAR_COUNT;
   }
-  return Math.min(STAR_COUNT - 1, Math.floor((ratio / STAR_FULL_SCORE_RATIO) * STAR_COUNT));
+  // 18%刻み。境界(例: 72%)で ratio/0.18 が 3.999… になり星が1つ欠けるのを防ぐ
+  return Math.min(STAR_COUNT - 1, Math.floor(ratio / STAR_BAND_RATIO + Number.EPSILON));
 }
 
-/** 星Nに必要な最低得点（N=0は0、N=5は理論最大の90%） */
-export function getStarScoreThreshold(starCount: number, maxPossibleScore: number): number {
-  if (starCount <= 0) {
+/** 星Nを初めて付与する最低得点（calculateStars と一致） */
+export function getMinimumScoreForStars(starCount: number, maxPossibleScore: number): number {
+  if (starCount <= 0 || maxPossibleScore <= 0) {
     return 0;
   }
   if (starCount >= STAR_COUNT) {
     return Math.ceil(maxPossibleScore * STAR_FULL_SCORE_RATIO);
   }
-  return Math.ceil(maxPossibleScore * (starCount / STAR_COUNT) * STAR_FULL_SCORE_RATIO);
+
+  let low = 0;
+  let high = maxPossibleScore + 1;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (calculateStars(mid, maxPossibleScore) < starCount) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
+/** 星Nに必要な最低得点（N=0は0、N=5は理論最大の90%） */
+export function getStarScoreThreshold(starCount: number, maxPossibleScore: number): number {
+  return getMinimumScoreForStars(starCount, maxPossibleScore);
 }
 
 export type StarProgressInfo = {
@@ -123,8 +142,8 @@ export function getStarProgressInfo(
   }
 
   const nextStars = stars + 1;
-  const tierStartScore = getStarScoreThreshold(stars, maxPossibleScore);
-  const tierEndScore = getStarScoreThreshold(nextStars, maxPossibleScore);
+  const tierStartScore = getMinimumScoreForStars(stars, maxPossibleScore);
+  const tierEndScore = getMinimumScoreForStars(nextStars, maxPossibleScore);
   const tierRange = tierEndScore - tierStartScore;
   const tierProgressPercent =
     tierRange > 0

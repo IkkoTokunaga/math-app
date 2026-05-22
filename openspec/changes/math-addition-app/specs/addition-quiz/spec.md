@@ -24,6 +24,14 @@ The system SHALL display each question as `operandA + operandB = ?`, where the `
 - **WHEN** the player enters digits via the keypad or keyboard
 - **THEN** the entered digits replace `?` inline in the equation (e.g. `3 + 5 = 8`)
 
+### Requirement: No vertical scroll during quiz
+
+During an active quiz session, the problem screen SHALL NOT cause vertical page scrolling. The existing layout structure (header, progress bar, equation, keypad) SHALL be preserved; the system MAY scale the quiz panel to fit the viewport when needed.
+
+#### Scenario: Viewport fit on short screens
+- **WHEN** a player is answering a question on a viewport shorter than the default layout height
+- **THEN** the quiz content fits within the visible area without vertical scrolling
+
 ### Requirement: Numeric keypad input
 
 The system SHALL provide an on-screen numeric keypad (0–9) with large touch-friendly buttons for entering answers. The keypad layout SHALL follow a calculator-style arrangement (7–8–9 / 4–5–6 / 1–2–3). The player SHALL submit their answer via an 「答える」 button. The system SHALL provide an on-screen backspace button that removes the last entered digit.
@@ -76,6 +84,34 @@ The system SHALL validate each answer immediately after submission.
 #### Scenario: Retry until correct
 - **WHEN** a player submits a wrong answer and then submits again
 - **THEN** the system re-validates the new answer without advancing until the correct sum is submitted
+
+### Requirement: Quiz header navigation
+
+During a quiz, the header SHALL show the mascot image at the top left, player name and question progress (`問題 N / 10`) and level (`LvN`) centered at the top, and the running score at the top right. The system SHALL NOT show a 「やめる」 quit button during the quiz. Tapping the mascot SHALL return the player to the level selection screen (home).
+
+#### Scenario: Mascot returns home
+- **WHEN** a player taps the mascot during a quiz
+- **THEN** the current session is abandoned and the level selection screen is shown
+
+#### Scenario: No quit button
+- **WHEN** a player is answering questions during a quiz
+- **THEN** no 「やめる」 button is visible
+
+### Requirement: Mascot speech bubble on answer
+
+When a player submits a correct answer during a quiz, the mascot SHALL show a random positive praise comment in a speech bubble to the right of the mascot (e.g. 「すごい！」). On an incorrect answer, the mascot SHALL NOT show a speech bubble. The bubble SHALL clear when feedback ends.
+
+#### Scenario: Praise on correct answer
+- **WHEN** a player submits a correct answer
+- **THEN** the mascot shows a random praise comment in a speech bubble until the next question or feedback ends
+
+#### Scenario: No bubble on incorrect answer
+- **WHEN** a player submits an incorrect answer
+- **THEN** the mascot does not show a speech bubble
+
+#### Scenario: Completion message on final question
+- **WHEN** a player answers the 10th question correctly and completes the session
+- **THEN** the mascot shows 「おつかれさまでした」 in the speech bubble until redirect to the result screen
 
 ### Requirement: Level selection screen
 

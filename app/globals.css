@@ -48,6 +48,96 @@ body {
   padding: 1.5rem;
 }
 
+.page-shell--quiz {
+  box-sizing: border-box;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: clamp(0.5rem, 1.2vh, 1.5rem);
+  padding-top: max(clamp(0.5rem, 1.2vh, 1.5rem), env(safe-area-inset-top));
+  padding-bottom: max(clamp(0.5rem, 1.2vh, 1.5rem), env(safe-area-inset-bottom));
+}
+
+html.quiz-active,
+body.quiz-active {
+  overflow: hidden;
+}
+
+.quiz-mascot-wrap {
+  position: relative;
+  z-index: 2;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.quiz-header-mascot {
+  position: relative;
+  display: block;
+  width: 4.5rem;
+  height: 4.5rem;
+  overflow: visible;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+.quiz-mascot-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: min(5.75rem, 22dvh);
+  width: auto;
+  max-width: none;
+  pointer-events: none;
+}
+
+.page-shell--quiz .quiz-header {
+  overflow: visible;
+}
+
+.mascot-speech-bubble {
+  position: absolute;
+  z-index: 20;
+  left: calc(100% + 0.4rem);
+  top: 38%;
+  border-radius: 0.75rem;
+  border: 2px solid var(--frame);
+  background: linear-gradient(165deg, #fff8fa 0%, #ffe8ee 100%);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  color: #4a2030;
+  box-shadow:
+    0 2px 0 var(--frame-dark),
+    0 6px 16px rgb(0 0 0 / 0.3);
+  transform: translateY(-50%);
+  animation: mascot-bubble-in 0.25s ease;
+  pointer-events: none;
+}
+
+@keyframes mascot-bubble-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-0.35rem) scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-speech-bubble {
+    animation: none;
+  }
+}
+
 .text-muted {
   color: var(--chalk-muted);
 }
@@ -1029,7 +1119,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 }
 
 @media (min-width: 768px) {
-  .page-shell {
+  .page-shell:not(.page-shell--quiz) {
     padding: 2.5rem;
   }
 }

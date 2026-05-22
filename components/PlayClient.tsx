@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/session";
 import { AuthLinks } from "@/components/AuthLinks";
 import { Keypad } from "@/components/Keypad";
+import { QuizMascot } from "@/components/QuizMascot";
 import {
   COMPLETION_BAR_FILL_MS,
   LiveScoreProgressBar,
@@ -25,6 +26,10 @@ import {
 } from "@/lib/guest-session";
 import { useIsClient } from "@/lib/use-is-client";
 import { MAX_LEVEL } from "@/lib/levels";
+import {
+  SESSION_COMPLETE_MASCOT_COMMENT,
+  pickRandomMascotComment,
+} from "@/lib/mascot-comments";
 import { type Level } from "@/lib/questions";
 import {
   STAR_COUNT,
@@ -143,6 +148,7 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackType, setFeedbackType] = useState<"success" | "retry" | null>(null);
+  const [mascotComment, setMascotComment] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [runningScore, setRunningScore] = useState(0);
@@ -224,6 +230,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     }
     setFeedback(null);
     setFeedbackType(null);
+    setMascotComment(null);
     setPendingPoints(null);
     setPendingFlyLabel(null);
     setFeedbackPoints(null);
@@ -250,6 +257,71 @@ export function PlayClient({ auth }: PlayClientProps) {
       questionStartedAtRef.current = Date.now();
     }
   }, [currentIndex, sessionId, localId]);
+
+  const inQuiz = Boolean(sessionId || localId);
+  const quizPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const shell = document.querySelector(".page-shell");
+    if (!shell) {
+      return;
+    }
+    shell.classList.toggle("page-shell--quiz", inQuiz);
+    document.documentElement.classList.toggle("quiz-active", inQuiz);
+    document.body.classList.toggle("quiz-active", inQuiz);
+    return () => {
+      shell.classList.remove("page-shell--quiz");
+      document.documentElement.classList.remove("quiz-active");
+      document.body.classList.remove("quiz-active");
+    };
+  }, [inQuiz]);
+
+  useEffect(() => {
+    if (!inQuiz) {
+      return;
+    }
+
+    const panel = quizPanelRef.current;
+    const shell = document.querySelector(".page-shell");
+    if (!panel || !shell) {
+      return;
+    }
+
+    let frame = 0;
+
+    const fitPanel = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        panel.style.transform = "none";
+        panel.style.marginBottom = "";
+
+        const available = shell.clientHeight;
+        const needed = panel.offsetHeight;
+        if (needed <= available || needed === 0) {
+          return;
+        }
+
+        const scale = available / needed;
+        panel.style.transform = `scale(${scale})`;
+        panel.style.transformOrigin = "top center";
+        panel.style.marginBottom = `${needed * (scale - 1)}px`;
+      });
+    };
+
+    const observer = new ResizeObserver(fitPanel);
+    observer.observe(panel);
+    observer.observe(shell);
+    window.addEventListener("resize", fitPanel);
+    fitPanel();
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", fitPanel);
+      panel.style.transform = "";
+      panel.style.marginBottom = "";
+    };
+  }, [inQuiz, currentIndex, level, error, submitting]);
 
   useEffect(() => {
     if (auth.loggedIn) {
@@ -331,6 +403,9 @@ export function PlayClient({ auth }: PlayClientProps) {
           pointsEarnedRef,
           streakBonusRef,
         });
+        setMascotComment(
+          result.completed ? SESSION_COMPLETE_MASCOT_COMMENT : pickRandomMascotComment(),
+        );
         setFeedback(result.message);
         setFeedbackType("success");
         queueScoreAwards(result);
@@ -372,6 +447,9 @@ export function PlayClient({ auth }: PlayClientProps) {
           pointsEarnedRef,
           streakBonusRef,
         });
+        setMascotComment(
+          result.completed ? SESSION_COMPLETE_MASCOT_COMMENT : pickRandomMascotComment(),
+        );
         setFeedback(result.message);
         setFeedbackType("success");
         queueScoreAwards(result);
@@ -503,9 +581,13 @@ export function PlayClient({ auth }: PlayClientProps) {
   const question = questions[currentIndex];
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
-      <div className="flex items-start justify-between gap-4 text-lg">
-        <div className="text-muted">
+    <div
+      ref={quizPanelRef}
+      className="mx-auto flex w-full max-w-xl flex-col gap-6"
+    >
+      <header className="quiz-header relative flex min-h-[4.5rem] items-start">
+        <QuizMascot comment={mascotComment} onHomeClick={backToLevels} />
+        <div className="pointer-events-none absolute inset-x-0 top-0 px-14 text-center text-lg text-muted sm:px-16">
           <p>
             <span className="font-bold">{displayName}</span>
           </p>
@@ -513,18 +595,20 @@ export function PlayClient({ auth }: PlayClientProps) {
             問題 {currentIndex + 1} / {questions.length}　Lv{level}
           </p>
         </div>
-        <RunningScore
-          score={runningScore}
-          pointsEarned={pendingPoints}
-          flyLabel={pendingFlyLabel}
-          flyDelayMs={pendingFlyDelayMs}
-          flyDurationMs={pendingFlyDurationMs}
-          flyClassName={pendingFlyClassName}
-          animId={scoreAnimId}
-          getFlyFromElement={getFlyFromElement}
-          onPointsApplied={applyPendingPoints}
-        />
-      </div>
+        <div className="ml-auto shrink-0">
+          <RunningScore
+            score={runningScore}
+            pointsEarned={pendingPoints}
+            flyLabel={pendingFlyLabel}
+            flyDelayMs={pendingFlyDelayMs}
+            flyDurationMs={pendingFlyDurationMs}
+            flyClassName={pendingFlyClassName}
+            animId={scoreAnimId}
+            getFlyFromElement={getFlyFromElement}
+            onPointsApplied={applyPendingPoints}
+          />
+        </div>
+      </header>
 
       {level != null && (
         <LiveScoreProgressBar
@@ -604,14 +688,6 @@ export function PlayClient({ auth }: PlayClientProps) {
       />
 
       {error && <p className="feedback-error">{error}</p>}
-
-      <button
-        type="button"
-        onClick={backToLevels}
-        className="text-link text-center"
-      >
-        やめる
-      </button>
     </div>
   );
 }

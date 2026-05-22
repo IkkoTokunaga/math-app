@@ -104,6 +104,11 @@ The system SHALL validate each answer immediately after submission.
 - **WHEN** a player submits a wrong answer and then submits again
 - **THEN** the system re-validates the new answer without advancing until the correct sum is submitted
 
+#### Scenario: Double-submit prevention
+- **WHEN** a player taps 「答える」 or presses Enter multiple times in quick succession for the same submission
+- **THEN** the system processes at most one answer validation for that attempt
+- **AND** after a correct answer, 「答える」 and Enter remain disabled until feedback finishes and the next question is shown (or the session completes and redirects to results)
+
 ### Requirement: Quiz header navigation
 
 During a quiz, the header SHALL show the mascot image at the top left, player name and question progress (`問題 N / 10`) and level (`LvN`) centered at the top, and the running score at the top right. The system SHALL NOT show a 「やめる」 quit button during the quiz. Tapping the mascot SHALL return the player to the level selection screen (home).

@@ -183,6 +183,7 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [devUnlockApplied, setDevUnlockApplied] = useState(false);
   const levelCellRefs = useRef<Map<Level, HTMLDivElement>>(new Map());
   const questionStartedAtRef = useRef<number>(0);
+  const submitLockRef = useRef(false);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointsEarnedRef = useRef<HTMLParagraphElement>(null);
   const streakBonusRef = useRef<HTMLParagraphElement>(null);
@@ -546,16 +547,18 @@ export function PlayClient({ auth }: PlayClientProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "セッション開始に失敗しました");
     } finally {
+      submitLockRef.current = false;
       setSubmitting(false);
     }
   };
 
   const submitAnswer = async () => {
     const activeId = isMember ? sessionId : localId;
-    if (!activeId || answer.length === 0 || submitting) {
+    if (!activeId || answer.length === 0 || submitLockRef.current) {
       return;
     }
 
+    submitLockRef.current = true;
     setSubmitting(true);
     clearFeedback();
 
@@ -563,6 +566,8 @@ export function PlayClient({ auth }: PlayClientProps) {
       0,
       (Date.now() - questionStartedAtRef.current) / 1000,
     );
+
+    let releaseSubmitLock = true;
 
     try {
       let correctPoints: CorrectAnswerPoints | null = null;
@@ -606,6 +611,7 @@ export function PlayClient({ auth }: PlayClientProps) {
           if (fillToEnd) {
             setFillBarToEnd(true);
           }
+          releaseSubmitLock = false;
           setTimeout(() => {
             router.push(`/result/${activeId}`);
           }, completionRedirectMs(awards, fillToEnd));
@@ -650,6 +656,7 @@ export function PlayClient({ auth }: PlayClientProps) {
           if (fillToEnd) {
             setFillBarToEnd(true);
           }
+          releaseSubmitLock = false;
           setTimeout(() => {
             router.push(`/result/guest/${activeId}`);
           }, completionRedirectMs(awards, fillToEnd));
@@ -661,19 +668,27 @@ export function PlayClient({ auth }: PlayClientProps) {
         pointsEarnedRef,
         streakBonusRef,
       });
+      releaseSubmitLock = false;
       setTimeout(() => {
         setCurrentIndex((index) => index + 1);
         setAnswer("");
         clearFeedback();
+        submitLockRef.current = false;
+        setSubmitting(false);
       }, feedbackDurationMs(awards, SUCCESS_FEEDBACK_MS));
     } catch (err) {
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
     } finally {
-      setSubmitting(false);
+      if (releaseSubmitLock) {
+        submitLockRef.current = false;
+        setSubmitting(false);
+      }
     }
   };
 
   const backToLevels = () => {
+    submitLockRef.current = false;
+    setSubmitting(false);
     setSessionId(null);
     setLocalId(null);
     setLevel(null);

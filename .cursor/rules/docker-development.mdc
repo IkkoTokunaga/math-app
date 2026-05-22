@@ -41,6 +41,13 @@ docker compose exec app npm test
 docker compose exec app npm run lint
 ```
 
+## CSS / HMR in development
+
+- `next.config.ts` disables Turbopack dev filesystem cache and sends `Cache-Control: no-store` in development.
+- Compose sets `CHOKIDAR_*` / `WATCHPACK_POLLING*` so file changes propagate from WSL bind mounts.
+- If styles still look stale: `docker compose exec app npm run dev:clean` (clears `.next` once), then normal `docker compose up` afterward.
+- Browser: prefer a hard reload once after config changes; DevTools → Network → "Disable cache" (while open) also helps.
+
 ## Rules for the agent
 
 - Do NOT run `npm`, `npx`, `node`, migration, or test commands on the host.

@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/session";
 import { AuthLinks } from "@/components/AuthLinks";
 import { Keypad } from "@/components/Keypad";
+import { LiveScoreProgressBar } from "@/components/LiveScoreProgressBar";
 import { RunningScore, SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import type { AuthState } from "@/lib/auth/state";
 import { getGuestLabel } from "@/lib/guest-storage";
@@ -466,6 +467,10 @@ export function PlayClient({ auth }: PlayClientProps) {
           onPointsApplied={applyPendingPoints}
         />
       </div>
+
+      {level != null && (
+        <LiveScoreProgressBar level={level} totalScore={runningScore} />
+      )}
 
       <section
         className={`card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}

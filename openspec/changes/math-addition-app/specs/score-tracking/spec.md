@@ -36,11 +36,18 @@ The session score SHALL be the sum of all question points plus streak bonuses. T
 
 ### Requirement: Live score during quiz
 
-During an active quiz session, the system SHALL display the player's accumulated score in the top-right of the quiz header. The displayed score SHALL be the sum of question `pointsEarned` plus any streak milestone bonuses earned so far during the session.
+During an active quiz session, the system SHALL display the player's accumulated score in the top-right of the quiz header. The displayed score SHALL be the sum of question `pointsEarned` plus any streak milestone bonuses earned so far during the session. Below the header, the system SHALL display a progress bar filled according to the running total score relative to the theoretical maximum. The bar SHALL NOT show a large star row or points-to-next-star text. Instead, the bar element SHALL include milestone markers at each star threshold (★1 through ★5). Each marker SHALL use a single horizontal anchor so the star sits directly above the vertical line on the track at that star's score threshold.
+
+#### Scenario: Milestone markers on quiz bar
+- **WHEN** a player is answering questions during an active quiz session
+- **THEN** the quiz view shows a progress bar with five milestone markers positioned at star thresholds
+- **AND** each marker shows a star directly above its vertical line; the line SHALL be positioned on the track at that star's score threshold (same percentage as the bar fill scale)
+- **AND** earned milestones show a filled star (★) and unearned milestones show an empty star (☆)
 
 #### Scenario: Score updates on correct answer
 - **WHEN** a player submits a correct answer during a quiz
 - **THEN** the top-right score increases by that question's `pointsEarned` and any streak milestone bonus awarded on that answer
+- **AND** the progress bar fill and milestone stars update to reflect the new running total
 
 #### Scenario: Score resets on new session
 - **WHEN** a player starts a new quiz session or returns to level selection

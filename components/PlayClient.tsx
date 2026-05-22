@@ -177,9 +177,8 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [scoreAnimId, setScoreAnimId] = useState(0);
   const [fillBarToEnd, setFillBarToEnd] = useState(false);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
-  const [memberCelebratedLevels, setMemberCelebratedLevels] = useState<Level[] | undefined>(
-    undefined,
-  );
+  const [memberCelebrationsReady, setMemberCelebrationsReady] = useState(false);
+  const memberCelebratedRef = useRef<Level[]>([]);
   const [celebratingLevel, setCelebratingLevel] = useState<Level | null>(null);
   const [devUnlockApplied, setDevUnlockApplied] = useState(false);
   const levelCellRefs = useRef<Map<Level, HTMLDivElement>>(new Map());
@@ -390,21 +389,29 @@ export function PlayClient({ auth }: PlayClientProps) {
   }, [isClient, inLevelSelect, auth]);
 
   useEffect(() => {
-    if (!isClient || !inLevelSelect || !auth.loggedIn) {
+    if (!isClient || !inLevelSelect) {
+      return;
+    }
+
+    if (!auth.loggedIn) {
+      memberCelebratedRef.current = [];
       return;
     }
 
     let cancelled = false;
+    setMemberCelebrationsReady(false);
 
     getMemberCelebratedLevelsAction(auth.playerId)
       .then((levels) => {
         if (!cancelled) {
-          setMemberCelebratedLevels(levels);
+          memberCelebratedRef.current = levels;
+          setMemberCelebrationsReady(true);
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setMemberCelebratedLevels([]);
+          memberCelebratedRef.current = [];
+          setMemberCelebrationsReady(true);
         }
       });
 
@@ -419,7 +426,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       return;
     }
 
-    if (auth.loggedIn && memberCelebratedLevels === undefined) {
+    if (auth.loggedIn && !memberCelebrationsReady) {
       return;
     }
 
@@ -429,7 +436,7 @@ export function PlayClient({ auth }: PlayClientProps) {
 
     const run = async () => {
       const pending = auth.loggedIn
-        ? getPendingUnlockCelebration(memberCelebratedLevels!, effectiveUnlocked)
+        ? getPendingUnlockCelebration(memberCelebratedRef.current, effectiveUnlocked)
         : getPendingGuestUnlockCelebration(effectiveUnlocked);
 
       if (pending == null) {
@@ -445,11 +452,9 @@ export function PlayClient({ auth }: PlayClientProps) {
           if (cancelled) {
             return;
           }
-          setMemberCelebratedLevels((current) => {
-            const next = new Set(current ?? []);
-            next.add(pending);
-            return Array.from(next).sort((a, b) => a - b) as Level[];
-          });
+          const next = new Set(memberCelebratedRef.current);
+          next.add(pending);
+          memberCelebratedRef.current = Array.from(next).sort((a, b) => a - b) as Level[];
         } else {
           markGuestUnlockCelebrated(pending);
         }
@@ -463,11 +468,6 @@ export function PlayClient({ auth }: PlayClientProps) {
         return;
       }
 
-      await recordCelebrated();
-      if (cancelled) {
-        return;
-      }
-
       const cell = levelCellRefs.current.get(pending);
       requestAnimationFrame(() => {
         cell?.scrollIntoView({
@@ -477,7 +477,11 @@ export function PlayClient({ auth }: PlayClientProps) {
       });
 
       animTimer = window.setTimeout(() => {
+        if (cancelled) {
+          return;
+        }
         setCelebratingLevel(pending);
+        void recordCelebrated();
       }, UNLOCK_SCROLL_DELAY_MS);
 
       endTimer = window.setTimeout(() => {
@@ -492,7 +496,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       window.clearTimeout(animTimer);
       window.clearTimeout(endTimer);
     };
-  }, [isClient, inLevelSelect, effectiveUnlocked, auth, memberCelebratedLevels]);
+  }, [isClient, inLevelSelect, effectiveUnlocked, auth, memberCelebrationsReady]);
 
   useEffect(() => {
     if (celebratingLevel == null) {

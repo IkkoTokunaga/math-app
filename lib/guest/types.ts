@@ -5,6 +5,7 @@ export type GuestQuestionLog = {
   questionIndex: number;
   operandA: number;
   operandB: number;
+  operandC?: number;
   userAnswer: number;
   correctAnswer: number;
   incorrectCount: number;

@@ -2,8 +2,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { questionLogs, sessions } from "./db/schema";
 import { getUnlockProgress, getUnlockedLevel } from "./levels";
-import type { Level } from "./questions";
-import { LEVEL_NAMES } from "./questions";
+import { formatQuestionExpression } from "./questions";
 
 export async function getProgressData(playerId: string) {
   const completedSessions = await getDb()
@@ -23,7 +22,6 @@ export async function getProgressData(playerId: string) {
 
   const recentSessions = completedSessions.slice(0, 5).map((session) => ({
     ...session,
-    levelName: LEVEL_NAMES[session.level as Level],
   }));
 
   const weekStart = getWeekStart(new Date());
@@ -54,6 +52,7 @@ export async function getProgressData(playerId: string) {
     .select({
       operandA: questionLogs.operandA,
       operandB: questionLogs.operandB,
+      operandC: questionLogs.operandC,
       missCount: sql<number>`count(*)`.mapWith(Number),
     })
     .from(questionLogs)
@@ -64,7 +63,7 @@ export async function getProgressData(playerId: string) {
         eq(questionLogs.isFirstAttemptCorrect, false),
       ),
     )
-    .groupBy(questionLogs.operandA, questionLogs.operandB)
+    .groupBy(questionLogs.operandA, questionLogs.operandB, questionLogs.operandC)
     .orderBy(desc(sql`count(*)`))
     .limit(3);
 
@@ -75,7 +74,11 @@ export async function getProgressData(playerId: string) {
     unlockedLevel,
     unlockProgress,
     weakSpots: weakSpots.map((spot) => ({
-      label: `${spot.operandA} + ${spot.operandB}`,
+      label: formatQuestionExpression({
+        operandA: spot.operandA,
+        operandB: spot.operandB,
+        operandC: spot.operandC ?? undefined,
+      }),
       missCount: spot.missCount,
     })),
   };

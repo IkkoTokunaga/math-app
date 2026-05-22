@@ -27,10 +27,10 @@ import {
 import { useIsClient } from "@/lib/use-is-client";
 import { MAX_LEVEL } from "@/lib/levels";
 import {
-  SESSION_COMPLETE_MASCOT_COMMENT,
-  pickRandomMascotComment,
-} from "@/lib/mascot-comments";
-import { type Level } from "@/lib/questions";
+  formatQuestionExpression,
+  getMaxAnswerDigits,
+  type Level,
+} from "@/lib/questions";
 import {
   SCORE_TIME_GRACE_SECONDS,
   STAR_COUNT,
@@ -38,10 +38,18 @@ import {
   calculateStars,
 } from "@/lib/scoring";
 
-type Question = {
-  operandA: number;
-  operandB: number;
-};
+import {
+  SESSION_COMPLETE_MASCOT_COMMENT,
+  pickRandomMascotComment,
+} from "@/lib/mascot-comments";
+import type { Question } from "@/lib/db/schema";
+import { applyDevUnlock, getDevUnlockFromSearch } from "@/lib/dev-unlock-setup";
+import {
+  UNLOCK_CELEBRATION_MS,
+  getPendingUnlockCelebration,
+  getUnlockCelebrationPlayerKey,
+  markUnlockCelebrated,
+} from "@/lib/unlock-celebration";
 
 type CorrectAnswerPoints = {
   basePoints: number;
@@ -162,6 +170,9 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [scoreAnimId, setScoreAnimId] = useState(0);
   const [fillBarToEnd, setFillBarToEnd] = useState(false);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
+  const [celebratingLevel, setCelebratingLevel] = useState<Level | null>(null);
+  const [devUnlockApplied, setDevUnlockApplied] = useState(false);
+  const levelCellRefs = useRef<Map<Level, HTMLDivElement>>(new Map());
   const questionStartedAtRef = useRef<number>(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointsEarnedRef = useRef<HTMLParagraphElement>(null);
@@ -328,6 +339,28 @@ export function PlayClient({ auth }: PlayClientProps) {
     };
   }, [inQuiz, currentIndex, level, error, submitting]);
 
+  const guestUnlocked = isClient ? getGuestUnlockedLevel() : 1;
+  const effectiveUnlocked = auth.loggedIn ? unlockedLevel : guestUnlocked;
+  const inLevelSelect = !sessionId && !localId;
+
+  useEffect(() => {
+    if (!isClient || !inLevelSelect || devUnlockApplied) {
+      return;
+    }
+
+    const targetLevel = getDevUnlockFromSearch(window.location.search);
+    if (targetLevel == null) {
+      return;
+    }
+
+    applyDevUnlock(targetLevel);
+    setDevUnlockApplied(true);
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("devUnlock");
+    window.history.replaceState({}, "", url.pathname + url.search);
+  }, [isClient, inLevelSelect, devUnlockApplied]);
+
   useEffect(() => {
     if (auth.loggedIn) {
       getPlayerUnlockedLevelAction(auth.playerId)
@@ -336,8 +369,67 @@ export function PlayClient({ auth }: PlayClientProps) {
     }
   }, [auth]);
 
-  const guestUnlocked = isClient ? getGuestUnlockedLevel() : 1;
-  const effectiveUnlocked = auth.loggedIn ? unlockedLevel : guestUnlocked;
+  useEffect(() => {
+    if (!isClient || !inLevelSelect || !auth.loggedIn) {
+      return;
+    }
+
+    getPlayerUnlockedLevelAction(auth.playerId)
+      .then(setUnlockedLevel)
+      .catch(() => setUnlockedLevel(1));
+  }, [isClient, inLevelSelect, auth]);
+
+  const celebrationPlayerKey = getUnlockCelebrationPlayerKey(
+    auth.loggedIn,
+    auth.loggedIn ? auth.playerId : undefined,
+  );
+
+  useEffect(() => {
+    if (!isClient || !inLevelSelect) {
+      setCelebratingLevel(null);
+      return;
+    }
+
+    const pending = getPendingUnlockCelebration(celebrationPlayerKey, effectiveUnlocked);
+    if (pending == null) {
+      setCelebratingLevel(null);
+      return;
+    }
+
+    if (prefersReducedMotion()) {
+      markUnlockCelebrated(celebrationPlayerKey, pending);
+      setCelebratingLevel(null);
+      return;
+    }
+
+    markUnlockCelebrated(celebrationPlayerKey, pending);
+    setCelebratingLevel(pending);
+
+    const timer = window.setTimeout(() => {
+      setCelebratingLevel(null);
+    }, UNLOCK_CELEBRATION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isClient, inLevelSelect, effectiveUnlocked, celebrationPlayerKey]);
+
+  useEffect(() => {
+    if (celebratingLevel == null) {
+      return;
+    }
+
+    const cell = levelCellRefs.current.get(celebratingLevel);
+    if (!cell) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      cell.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "center",
+      });
+    });
+  }, [celebratingLevel]);
+
   const displayName = isMember ? auth.playerName : getGuestLabel();
 
   const startSession = async (selectedLevel: Level) => {
@@ -550,21 +642,47 @@ export function PlayClient({ auth }: PlayClientProps) {
           これまでの記録
         </Link>
         <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
+        <div className="level-select-list">
         {Array.from({ length: MAX_LEVEL }, (_, index) => {
           const lv = (index + 1) as Level;
           const disabled = lv > effectiveUnlocked;
+          const isUnlocking = celebratingLevel === lv;
           return (
-            <button
+            <div
               key={lv}
-              type="button"
-              disabled={submitting || disabled}
-              onClick={() => startSession(lv)}
-              className="big-btn disabled:opacity-40"
+              ref={(element) => {
+                if (element) {
+                  levelCellRefs.current.set(lv, element);
+                } else {
+                  levelCellRefs.current.delete(lv);
+                }
+              }}
+              className={`level-unlock-cell ${isUnlocking ? "level-unlock-cell--active" : ""}`}
             >
-              Lv{lv}
-            </button>
+              {isUnlocking && (
+                <>
+                  <span className="level-unlock-flash" aria-hidden="true" />
+                  <span className="level-unlock-spark level-unlock-spark--1" aria-hidden="true">✦</span>
+                  <span className="level-unlock-spark level-unlock-spark--2" aria-hidden="true">★</span>
+                  <span className="level-unlock-spark level-unlock-spark--3" aria-hidden="true">✦</span>
+                  <span className="level-unlock-spark level-unlock-spark--4" aria-hidden="true">★</span>
+                  <span className="level-unlock-spark level-unlock-spark--5" aria-hidden="true">✦</span>
+                  <span className="level-unlock-spark level-unlock-spark--6" aria-hidden="true">★</span>
+                </>
+              )}
+              <button
+                type="button"
+                disabled={submitting || disabled}
+                onClick={() => startSession(lv)}
+                className={`big-btn disabled:opacity-40 ${isUnlocking ? "big-btn--unlocking" : ""}`}
+                aria-label={isUnlocking ? `Lv${lv} が新しく解放されました` : undefined}
+              >
+                Lv{lv}
+              </button>
+            </div>
           );
         })}
+        </div>
         {error && <p className="feedback-error">{error}</p>}
         <AuthLinks auth={auth} />
         {auth.loggedIn && (
@@ -630,11 +748,11 @@ export function PlayClient({ auth }: PlayClientProps) {
       <section
         className={`card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}
       >
-        <div className="chalk-heading mb-6 flex items-center justify-center gap-x-2 text-[clamp(1.5rem,8vw,3.75rem)] font-bold">
+        <div className="chalk-heading equation-display mb-6 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
           <span className="whitespace-nowrap">
-            {question.operandA} + {question.operandB} =
+            {formatQuestionExpression(question)} =
           </span>
-          <span className="answer-slot">
+          <span className="answer-slot ml-2 shrink-0">
             {answer || "?"}
           </span>
         </div>
@@ -693,6 +811,7 @@ export function PlayClient({ auth }: PlayClientProps) {
         onChange={handleAnswerChange}
         onSubmit={submitAnswer}
         disabled={submitting}
+        maxDigits={level != null ? getMaxAnswerDigits(level) : 3}
       />
 
       {error && <p className="feedback-error">{error}</p>}

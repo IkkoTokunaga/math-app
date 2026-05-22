@@ -133,6 +133,7 @@ export function submitGuestAnswer(
     questionIndex,
     operandA: question.operandA,
     operandB: question.operandB,
+    ...(question.operandC != null ? { operandC: question.operandC } : {}),
     userAnswer: answer,
     correctAnswer,
     incorrectCount,

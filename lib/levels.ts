@@ -5,15 +5,19 @@ import {
 } from "./scoring";
 import { QUESTIONS_PER_SESSION, type Level } from "./questions";
 
-export const MAX_LEVEL = 4 as const;
+export const MAX_LEVEL = 10 as const;
 
 export const UNLOCK_REQUIREMENTS: Partial<
   Record<Level, { fromLevel: Level; requiredStar4Sessions: number }>
-> = {
-  2: { fromLevel: 1, requiredStar4Sessions: STAR4_UNLOCK_COUNT },
-  3: { fromLevel: 2, requiredStar4Sessions: STAR4_UNLOCK_COUNT },
-  4: { fromLevel: 3, requiredStar4Sessions: STAR4_UNLOCK_COUNT },
-};
+> = Object.fromEntries(
+  Array.from({ length: MAX_LEVEL - 1 }, (_, index) => {
+    const nextLevel = (index + 2) as Level;
+    return [
+      nextLevel,
+      { fromLevel: (index + 1) as Level, requiredStar4Sessions: STAR4_UNLOCK_COUNT },
+    ];
+  }),
+) as Partial<Record<Level, { fromLevel: Level; requiredStar4Sessions: number }>>;
 
 export type CompletedSession = {
   level: number;
@@ -59,13 +63,13 @@ export function hasUnlockFromLevel(
 export function getUnlockedLevel(sessions: CompletedSession[]): Level {
   let unlocked: Level = 1;
 
-  for (let level = 2 as Level; level <= MAX_LEVEL; level += 1) {
-    const requirement = UNLOCK_REQUIREMENTS[level];
+  for (let level = 2; level <= MAX_LEVEL; level += 1) {
+    const requirement = UNLOCK_REQUIREMENTS[level as Level];
     if (!requirement) {
       continue;
     }
     if (hasUnlockFromLevel(sessions, requirement.fromLevel)) {
-      unlocked = level;
+      unlocked = level as Level;
     } else {
       break;
     }

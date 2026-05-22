@@ -14,6 +14,14 @@ pointsEarned = basePoints + timeBonus
 
 Where `remainingSeconds = max(0, 10 - floor(max(0, elapsedSeconds - 1)))` (the first 1 second after a question appears does not advance the countdown).
 
+**Level scaling:** `basePoints` and `timeBonus` both multiply by `level`, so higher levels award proportionally more points per question and per session. The theoretical maximum session score increases with level accordingly.
+
+| Level | Base (correct) | Max time bonus (instant answer) | Max per question |
+|-------|----------------|----------------------------------|------------------|
+| 1 | 10 | 10 | 20 |
+| 5 | 50 | 50 | 100 |
+| 10 | 100 | 100 | 200 |
+
 #### Scenario: Grace period at question start
 - **WHEN** a new question is shown
 - **THEN** the time bonus countdown does not decrease during the first 1 second
@@ -21,6 +29,11 @@ Where `remainingSeconds = max(0, 10 - floor(max(0, elapsedSeconds - 1)))` (the f
 #### Scenario: Correct on first attempt quickly
 - **WHEN** a player submits the correct answer on the first attempt within 10 seconds at level 1
 - **THEN** the question awards at least 10 base points plus a time bonus
+
+#### Scenario: Higher level awards more points
+- **WHEN** a player submits the correct answer on the first attempt within 10 seconds at level 10
+- **THEN** the question awards 100 base points plus up to 100 time bonus (200 total at instant answer)
+- **AND** the per-question maximum at level 10 is ten times that of level 1
 
 #### Scenario: Correct after retries
 - **WHEN** a player submits wrong answers and then the correct answer
@@ -169,7 +182,7 @@ A session SHALL be considered perfect for level unlock when the player earns ★
 
 ### Requirement: Score breakdown on result screen
 
-The session result screen SHALL display a score breakdown with base points, time bonus, streak bonus (each bonus line only when greater than zero), session total, and per-question points earned. Per-question rows SHALL show the addition expression and a retry label when the first submission was incorrect.
+The session result screen SHALL display a score breakdown with base points, time bonus, streak bonus (each bonus line only when greater than zero), session total, and per-question points earned. Per-question rows SHALL show the addition expression (two or three operands as applicable) and a retry label when the first submission was incorrect.
 
 #### Scenario: Result screen score details
 - **WHEN** a player completes a session and views the result screen

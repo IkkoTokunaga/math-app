@@ -7,6 +7,7 @@ type KeypadProps = {
   onChange: (value: string) => void;
   onSubmit: () => void;
   disabled?: boolean;
+  maxDigits?: number;
 };
 
 function BackspaceIcon() {
@@ -22,9 +23,9 @@ function BackspaceIcon() {
   );
 }
 
-export function Keypad({ value, onChange, onSubmit, disabled }: KeypadProps) {
+export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: KeypadProps) {
   const appendDigit = (digit: string) => {
-    if (disabled || value.length >= 3) {
+    if (disabled || value.length >= maxDigits) {
       return;
     }
     onChange(value + digit);
@@ -45,7 +46,7 @@ export function Keypad({ value, onChange, onSubmit, disabled }: KeypadProps) {
 
       if (/^[0-9]$/.test(event.key)) {
         event.preventDefault();
-        if (value.length < 3) {
+        if (value.length < maxDigits) {
           onChange(value + event.key);
         }
         return;
@@ -67,7 +68,7 @@ export function Keypad({ value, onChange, onSubmit, disabled }: KeypadProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [disabled, value, onChange, onSubmit]);
+  }, [disabled, value, onChange, onSubmit, maxDigits]);
 
   // テンキー（電卓）と同じ配列: 7-8-9 / 4-5-6 / 1-2-3
   const digits = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];

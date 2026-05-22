@@ -6,14 +6,13 @@ import { useIsClient } from "@/lib/use-is-client";
 import type { AuthState } from "@/lib/auth/state";
 import { computeGuestProgress } from "@/lib/guest-progress";
 import { readGuestStore } from "@/lib/guest-storage";
-import { LEVEL_NAMES, QUESTIONS_PER_SESSION, type Level } from "@/lib/questions";
+import { QUESTIONS_PER_SESSION } from "@/lib/questions";
 import { renderStars, STAR_COUNT } from "@/lib/scoring";
 
 type ProgressData = {
   recentSessions: Array<{
     id: string;
     level: number;
-    levelName: string;
     correctAnswers: number | null;
     accuracy: number | null;
     totalQuestions?: number | null;
@@ -107,9 +106,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
         </div>
         <div>
           <p className="text-sm text-muted">解放レベル</p>
-          <p className="text-3xl font-bold">
-            Lv{displayData.unlockedLevel} {LEVEL_NAMES[displayData.unlockedLevel as Level]}
-          </p>
+          <p className="text-3xl font-bold">Lv{displayData.unlockedLevel}</p>
         </div>
       </section>
 
@@ -146,9 +143,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
               className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
-                <p className="font-bold">
-                  Lv{session.level} {session.levelName}
-                </p>
+                <p className="font-bold">Lv{session.level}</p>
                 <p className="text-sm text-dim">
                   {new Date(session.playedAt).toLocaleString("ja-JP")}
                 </p>

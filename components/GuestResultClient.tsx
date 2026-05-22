@@ -5,7 +5,7 @@ import { SessionScoreBreakdown } from "@/components/SessionScoreBreakdown";
 import { StarProgressBar } from "@/components/StarProgressBar";
 import { getGuestCompletedSession } from "@/lib/guest-session";
 import { useIsClient } from "@/lib/use-is-client";
-import { LEVEL_NAMES, type Level } from "@/lib/questions";
+import { type Level } from "@/lib/questions";
 
 type GuestResultClientProps = {
   localId: string;
@@ -32,9 +32,7 @@ export function GuestResultClient({ localId }: GuestResultClientProps) {
 
   return (
     <section className="card mx-auto max-w-xl text-center">
-      <p className="text-lg text-muted">
-        Lv{result.level} {LEVEL_NAMES[result.level as Level]}
-      </p>
+      <p className="text-lg text-muted">Lv{result.level}</p>
       <h1 className="chalk-heading mt-2 text-4xl font-bold">おつかれさま！</h1>
 
       <div className="my-8 grid gap-4">

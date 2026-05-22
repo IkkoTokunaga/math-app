@@ -8,6 +8,13 @@
       "when": 1779260098497,
       "tag": "0000_watery_garia",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779428492089,
+      "tag": "0001_lyrical_goliath",
+      "breakpoints": true
     }
   ]
 }

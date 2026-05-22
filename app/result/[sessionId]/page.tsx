@@ -4,7 +4,7 @@ import { getSessionResultAction } from "@/app/actions/session";
 import { SessionScoreBreakdown } from "@/components/SessionScoreBreakdown";
 import { StarProgressBar } from "@/components/StarProgressBar";
 import { getAuthState } from "@/lib/auth";
-import { LEVEL_NAMES, type Level } from "@/lib/questions";
+import { type Level } from "@/lib/questions";
 
 type ResultPageProps = {
   params: Promise<{ sessionId: string }>;
@@ -22,9 +22,7 @@ export default async function ResultPage({ params }: ResultPageProps) {
   return (
     <main className="page-shell">
       <section className="card mx-auto max-w-xl text-center">
-        <p className="text-lg text-muted">
-          Lv{result.level} {LEVEL_NAMES[result.level as Level]}
-        </p>
+        <p className="text-lg text-muted">Lv{result.level}</p>
         <h1 className="chalk-heading mt-2 text-4xl font-bold">おつかれさま！</h1>
 
         <div className="my-8 grid gap-4">

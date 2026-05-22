@@ -160,6 +160,7 @@ export async function submitAnswerAction(
     questionIndex,
     operandA: question.operandA,
     operandB: question.operandB,
+    operandC: question.operandC ?? null,
     userAnswer: answer,
     correctAnswer,
     incorrectCount,
@@ -296,6 +297,7 @@ export async function getSessionResultAction(sessionId: string) {
       questionIndex: questionLogs.questionIndex,
       operandA: questionLogs.operandA,
       operandB: questionLogs.operandB,
+      operandC: questionLogs.operandC,
       pointsEarned: questionLogs.pointsEarned,
       isFirstAttemptCorrect: questionLogs.isFirstAttemptCorrect,
     })

@@ -12,6 +12,7 @@ import {
 export type Question = {
   operandA: number;
   operandB: number;
+  operandC?: number;
 };
 
 export type AttemptCounts = Record<string, number>;
@@ -76,6 +77,7 @@ export const questionLogs = pgTable("question_logs", {
   questionIndex: smallint("question_index").notNull(),
   operandA: smallint("operand_a").notNull(),
   operandB: smallint("operand_b").notNull(),
+  operandC: smallint("operand_c"),
   userAnswer: smallint("user_answer").notNull(),
   correctAnswer: smallint("correct_answer").notNull(),
   incorrectCount: smallint("incorrect_count").notNull().default(0),

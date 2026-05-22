@@ -1,10 +1,11 @@
 import { getSessionScoreDetails } from "@/lib/scoring";
-import type { Level } from "@/lib/questions";
+import { formatQuestionExpression, type Level } from "@/lib/questions";
 
 type QuestionLog = {
   questionIndex: number;
   operandA: number;
   operandB: number;
+  operandC?: number | null;
   pointsEarned: number;
   isFirstAttemptCorrect: boolean;
 };
@@ -55,7 +56,12 @@ export function SessionScoreBreakdown({ level, questionLogs }: SessionScoreBreak
             className="row-item flex items-center justify-between gap-3 text-sm"
           >
             <span>
-              {log.questionIndex + 1}問目 {log.operandA} + {log.operandB}
+              {log.questionIndex + 1}問目{" "}
+              {formatQuestionExpression({
+                operandA: log.operandA,
+                operandB: log.operandB,
+                operandC: log.operandC ?? undefined,
+              })}
               {!log.isFirstAttemptCorrect && (
                 <span className="ml-2 text-dim">（リトライ）</span>
               )}

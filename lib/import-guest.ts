@@ -54,6 +54,7 @@ export async function importGuestData(
           questions: completed.questionLogs.map((log) => ({
             operandA: log.operandA,
             operandB: log.operandB,
+            ...(log.operandC != null ? { operandC: log.operandC } : {}),
           })) as Question[],
           attemptCounts: {} as AttemptCounts,
           totalQuestions: completed.questionLogs.length,
@@ -76,6 +77,7 @@ export async function importGuestData(
             questionIndex: log.questionIndex,
             operandA: log.operandA,
             operandB: log.operandB,
+            operandC: log.operandC ?? null,
             userAnswer: log.userAnswer,
             correctAnswer: log.correctAnswer,
             incorrectCount: log.incorrectCount,

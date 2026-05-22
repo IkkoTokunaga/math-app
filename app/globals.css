@@ -102,11 +102,15 @@ body.quiz-active {
 .mascot-speech-bubble {
   position: absolute;
   z-index: 20;
-  left: calc(100% + 0.4rem);
-  top: 38%;
+  left: 0.85rem;
+  top: 3.15rem;
   border-radius: 0.75rem;
   border: 2px solid var(--frame);
-  background: linear-gradient(165deg, #fff8fa 0%, #ffe8ee 100%);
+  background: linear-gradient(
+    165deg,
+    rgb(255 248 250 / 0.88) 0%,
+    rgb(255 232 238 / 0.88) 100%
+  );
   font-size: 0.8rem;
   font-weight: 700;
   line-height: 1.35;

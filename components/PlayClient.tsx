@@ -532,12 +532,15 @@ export function PlayClient({ auth }: PlayClientProps) {
               className="h-20 w-auto shrink-0 sm:h-24"
               aria-hidden
             />
-            <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">たしざん れんしゅう</h1>
+            <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">たしざん</h1>
           </div>
           <p className="mt-2 text-lg text-muted">10問チャレンジ！</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
         <p className="text-center text-xl font-bold">{displayName}</p>
+        <Link href="/progress" className="big-btn big-btn-secondary text-center">
+          これまでの記録
+        </Link>
         <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
         {Array.from({ length: MAX_LEVEL }, (_, index) => {
           const lv = (index + 1) as Level;
@@ -555,9 +558,6 @@ export function PlayClient({ auth }: PlayClientProps) {
           );
         })}
         {error && <p className="feedback-error">{error}</p>}
-        <Link href="/progress" className="big-btn big-btn-secondary text-center">
-          これまでの記録
-        </Link>
         <AuthLinks auth={auth} />
         {auth.loggedIn && (
           <p className="text-center">

@@ -142,7 +142,7 @@ The level selection screen SHALL show each level as `Lv1` through `Lv10` only, w
 
 ### Requirement: First-time level unlock celebration
 
-When a player unlocks a new level for the first time and returns to the level selection screen, the system SHALL play a one-time reveal animation on the newly unlocked level button and scroll the viewport so that button is visible (centered when possible). The celebration SHALL NOT repeat on later visits to the level selection screen for the same level. When the user prefers reduced motion, the animation SHALL be skipped while still recording that the level was shown.
+When a player unlocks a new level for the first time and returns to the level selection screen, the system SHALL scroll the newly unlocked level button into view first, then play a one-time reveal animation contained within the level row (without expanding page layout). The celebration SHALL NOT repeat on later visits to the level selection screen for the same level. When the user prefers reduced motion, the animation SHALL be skipped while still recording that the level was shown.
 
 #### Scenario: Unlock animation on level select
 - **WHEN** a player unlocks level 2 for the first time and opens the level selection screen

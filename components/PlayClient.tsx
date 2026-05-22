@@ -46,6 +46,7 @@ import type { Question } from "@/lib/db/schema";
 import { applyDevUnlock, getDevUnlockFromSearch } from "@/lib/dev-unlock-setup";
 import {
   UNLOCK_CELEBRATION_MS,
+  UNLOCK_SCROLL_DELAY_MS,
   getPendingUnlockCelebration,
   getUnlockCelebrationPlayerKey,
   markUnlockCelebrated,
@@ -403,31 +404,42 @@ export function PlayClient({ auth }: PlayClientProps) {
     }
 
     markUnlockCelebrated(celebrationPlayerKey, pending);
-    setCelebratingLevel(pending);
 
-    const timer = window.setTimeout(() => {
+    const cell = levelCellRefs.current.get(pending);
+    requestAnimationFrame(() => {
+      cell?.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "nearest",
+      });
+    });
+
+    const animTimer = window.setTimeout(() => {
+      setCelebratingLevel(pending);
+    }, prefersReducedMotion() ? 0 : UNLOCK_SCROLL_DELAY_MS);
+
+    const endTimer = window.setTimeout(() => {
       setCelebratingLevel(null);
-    }, UNLOCK_CELEBRATION_MS);
+    }, (prefersReducedMotion() ? 0 : UNLOCK_SCROLL_DELAY_MS) + UNLOCK_CELEBRATION_MS);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(animTimer);
+      window.clearTimeout(endTimer);
+    };
   }, [isClient, inLevelSelect, effectiveUnlocked, celebrationPlayerKey]);
 
   useEffect(() => {
     if (celebratingLevel == null) {
+      document.documentElement.classList.remove("level-unlock-active");
+      document.body.classList.remove("level-unlock-active");
       return;
     }
 
-    const cell = levelCellRefs.current.get(celebratingLevel);
-    if (!cell) {
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      cell.scrollIntoView({
-        behavior: prefersReducedMotion() ? "auto" : "smooth",
-        block: "center",
-      });
-    });
+    document.documentElement.classList.add("level-unlock-active");
+    document.body.classList.add("level-unlock-active");
+    return () => {
+      document.documentElement.classList.remove("level-unlock-active");
+      document.body.classList.remove("level-unlock-active");
+    };
   }, [celebratingLevel]);
 
   const displayName = isMember ? auth.playerName : getGuestLabel();
@@ -642,7 +654,7 @@ export function PlayClient({ auth }: PlayClientProps) {
           これまでの記録
         </Link>
         <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
-        <div className="level-select-list">
+        <div className={`level-select-list ${celebratingLevel != null ? "level-select-list--celebrating" : ""}`}>
         {Array.from({ length: MAX_LEVEL }, (_, index) => {
           const lv = (index + 1) as Level;
           const disabled = lv > effectiveUnlocked;
@@ -660,15 +672,17 @@ export function PlayClient({ auth }: PlayClientProps) {
               className={`level-unlock-cell ${isUnlocking ? "level-unlock-cell--active" : ""}`}
             >
               {isUnlocking && (
-                <>
-                  <span className="level-unlock-flash" aria-hidden="true" />
-                  <span className="level-unlock-spark level-unlock-spark--1" aria-hidden="true">✦</span>
-                  <span className="level-unlock-spark level-unlock-spark--2" aria-hidden="true">★</span>
-                  <span className="level-unlock-spark level-unlock-spark--3" aria-hidden="true">✦</span>
-                  <span className="level-unlock-spark level-unlock-spark--4" aria-hidden="true">★</span>
-                  <span className="level-unlock-spark level-unlock-spark--5" aria-hidden="true">✦</span>
-                  <span className="level-unlock-spark level-unlock-spark--6" aria-hidden="true">★</span>
-                </>
+                <div className="level-unlock-fx" aria-hidden="true">
+                  <span className="level-unlock-flash" />
+                  <span className="level-unlock-wave level-unlock-wave--1" />
+                  <span className="level-unlock-wave level-unlock-wave--2" />
+                  <span className="level-unlock-spark level-unlock-spark--1">✦</span>
+                  <span className="level-unlock-spark level-unlock-spark--2">★</span>
+                  <span className="level-unlock-spark level-unlock-spark--3">✦</span>
+                  <span className="level-unlock-spark level-unlock-spark--4">★</span>
+                  <span className="level-unlock-spark level-unlock-spark--5">✦</span>
+                  <span className="level-unlock-spark level-unlock-spark--6">★</span>
+                </div>
               )}
               <button
                 type="button"

@@ -240,24 +240,23 @@ body.quiz-active {
 .big-btn--unlocking {
   position: relative;
   z-index: 2;
-  overflow: visible;
+  overflow: hidden;
   opacity: 1;
   border-color: #e6d060;
   background: linear-gradient(180deg, #fff4a3 0%, #e6d060 100%);
   color: #3d3010;
   text-shadow: none;
   box-shadow:
-    0 0 0 0 rgb(255 244 163 / 0.9),
     0 4px 0 #8a7530,
-    0 0 32px rgb(255 244 163 / 0.75),
-    0 0 56px rgb(255 214 153 / 0.45);
+    0 0 28px rgb(255 244 163 / 0.65);
   animation: level-unlock-reveal 3s cubic-bezier(0.34, 1.35, 0.64, 1);
+  will-change: filter, opacity, box-shadow;
 }
 
 .big-btn--unlocking::before {
   content: "";
   position: absolute;
-  inset: -40%;
+  inset: 0;
   background: linear-gradient(
     115deg,
     transparent 38%,
@@ -271,8 +270,8 @@ body.quiz-active {
 .big-btn--unlocking::after {
   content: "";
   position: absolute;
-  inset: -6px;
-  border-radius: 0.5rem;
+  inset: 0;
+  border-radius: 0.375rem;
   border: 3px solid rgb(255 244 163 / 0.85);
   pointer-events: none;
   animation: level-unlock-ring 3s ease-out;
@@ -281,6 +280,8 @@ body.quiz-active {
 .level-unlock-cell {
   position: relative;
   isolation: isolate;
+  overflow: hidden;
+  contain: layout style paint;
 }
 
 .level-select-list {
@@ -289,19 +290,31 @@ body.quiz-active {
   gap: 1.125rem;
 }
 
+.level-select-list--celebrating {
+  overflow: clip;
+}
+
 .level-select-list .level-unlock-cell--active {
   scroll-margin-top: calc(1rem + env(safe-area-inset-top, 0px));
   scroll-margin-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
 .level-unlock-cell--active {
-  z-index: 3;
+  z-index: 1;
+}
+
+.level-unlock-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 0.375rem;
 }
 
 .level-unlock-flash {
   position: absolute;
-  inset: -20%;
-  z-index: 0;
+  inset: 0;
   border-radius: 9999px;
   background: radial-gradient(
     circle,
@@ -309,8 +322,19 @@ body.quiz-active {
     rgb(255 214 153 / 0.35) 35%,
     transparent 68%
   );
-  pointer-events: none;
   animation: level-unlock-flash 3s ease-out;
+}
+
+.level-unlock-wave {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem;
+  border: 2px solid rgb(255 244 163 / 0.55);
+  animation: level-unlock-wave 3s ease-out;
+}
+
+.level-unlock-wave--2 {
+  animation-delay: 0.22s;
 }
 
 .level-unlock-spark {
@@ -320,14 +344,12 @@ body.quiz-active {
   position: absolute;
   left: 50%;
   top: 50%;
-  z-index: 4;
   font-size: 1.15rem;
   line-height: 1;
   color: #fff4a3;
   text-shadow:
     0 0 8px rgb(255 244 163 / 1),
     0 0 16px rgb(255 214 153 / 0.8);
-  pointer-events: none;
   animation: level-unlock-spark-fly 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -338,79 +360,43 @@ body.quiz-active {
 .level-unlock-spark--5 { --spark-x: -18px; --spark-y: -62px; --spark-rot: 8deg; animation-delay: 0.18s; }
 .level-unlock-spark--6 { --spark-x: 22px; --spark-y: 58px; --spark-rot: -16deg; animation-delay: 0.24s; }
 
-.level-unlock-cell--active::before,
-.level-unlock-cell--active::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 100%;
-  height: 100%;
-  border-radius: 0.5rem;
-  border: 2px solid rgb(255 244 163 / 0.55);
-  pointer-events: none;
-  transform: translate(-50%, -50%);
-}
-
-.level-unlock-cell--active::before {
-  z-index: 1;
-  animation: level-unlock-wave 3s ease-out;
-}
-
-.level-unlock-cell--active::after {
-  z-index: 1;
-  animation: level-unlock-wave 3s ease-out 0.22s;
+html.level-unlock-active,
+body.level-unlock-active {
+  overflow-x: clip;
 }
 
 @keyframes level-unlock-reveal {
   0% {
-    opacity: 0.25;
-    transform: scale(0.78) rotate(-4deg);
+    opacity: 0.35;
     filter: grayscale(0.9) brightness(0.75);
     box-shadow:
-      0 0 0 0 rgb(255 244 163 / 0),
       0 4px 0 var(--frame-shadow),
       0 0 0 rgb(255 244 163 / 0);
   }
 
-  12% {
+  15% {
     opacity: 1;
-    transform: scale(1.22) rotate(2deg);
     filter: grayscale(0) brightness(1.15);
     box-shadow:
-      0 0 0 8px rgb(255 244 163 / 0.55),
       0 6px 0 #8a7530,
-      0 0 40px rgb(255 244 163 / 0.95),
-      0 0 72px rgb(255 214 153 / 0.65);
+      0 0 36px rgb(255 244 163 / 0.95),
+      0 0 56px rgb(255 214 153 / 0.55);
   }
 
-  24% {
-    transform: scale(0.96) rotate(-1deg);
-  }
-
-  36% {
-    transform: scale(1.1) rotate(1deg);
+  35% {
+    filter: grayscale(0) brightness(1.06);
     box-shadow:
-      0 0 0 4px rgb(255 244 163 / 0.35),
       0 5px 0 #8a7530,
-      0 0 36px rgb(255 244 163 / 0.8),
-      0 0 60px rgb(255 214 153 / 0.5);
-  }
-
-  50% {
-    transform: scale(1.02) rotate(0deg);
+      0 0 28px rgb(255 244 163 / 0.75);
   }
 
   65%,
   100% {
     opacity: 1;
-    transform: scale(1) rotate(0deg);
     filter: grayscale(0) brightness(1);
     box-shadow:
-      0 0 0 0 rgb(255 244 163 / 0),
       0 4px 0 #8a7530,
-      0 0 24px rgb(255 244 163 / 0.45),
-      0 0 40px rgb(255 214 153 / 0.25);
+      0 0 20px rgb(255 244 163 / 0.35);
   }
 }
 
@@ -438,18 +424,18 @@ body.quiz-active {
 @keyframes level-unlock-ring {
   0% {
     opacity: 1;
-    transform: scale(0.88);
+    transform: scale(0.92);
     border-color: rgb(255 244 163 / 0.95);
   }
 
   40% {
     opacity: 0.85;
-    transform: scale(1.12);
+    transform: scale(1.06);
   }
 
   100% {
     opacity: 0;
-    transform: scale(1.45);
+    transform: scale(1.12);
     border-color: rgb(255 244 163 / 0);
   }
 }
@@ -457,29 +443,29 @@ body.quiz-active {
 @keyframes level-unlock-wave {
   0% {
     opacity: 0.85;
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.55);
+    transform: scale(1.12);
   }
 }
 
 @keyframes level-unlock-flash {
   0% {
     opacity: 0;
-    transform: scale(0.5);
+    transform: scale(0.85);
   }
 
   15% {
     opacity: 1;
-    transform: scale(1.15);
+    transform: scale(1.05);
   }
 
   100% {
     opacity: 0;
-    transform: scale(1.65);
+    transform: scale(1.1);
   }
 }
 
@@ -505,25 +491,31 @@ body.quiz-active {
   }
 }
 
+@media (max-width: 640px) {
+  .level-unlock-spark--1 { --spark-x: -24px; --spark-y: -20px; }
+  .level-unlock-spark--2 { --spark-x: 22px; --spark-y: -22px; }
+  .level-unlock-spark--3 { --spark-x: -26px; --spark-y: 6px; }
+  .level-unlock-spark--4 { --spark-x: 24px; --spark-y: 8px; }
+  .level-unlock-spark--5 { --spark-x: -10px; --spark-y: -28px; }
+  .level-unlock-spark--6 { --spark-x: 12px; --spark-y: 26px; }
+
+  .level-unlock-spark {
+    font-size: 1rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .big-btn--unlocking,
   .big-btn--unlocking::before,
   .big-btn--unlocking::after,
-  .level-unlock-cell--active::before,
-  .level-unlock-cell--active::after,
   .level-unlock-flash,
+  .level-unlock-wave,
   .level-unlock-spark {
     animation: none;
   }
 
   .big-btn--unlocking {
-    transform: none;
     filter: none;
-  }
-
-  .level-unlock-flash,
-  .level-unlock-spark {
-    display: none;
   }
 }
 

@@ -67,3 +67,5 @@ export function markUnlockCelebrated(playerKey: string, level: Level): void {
 }
 
 export const UNLOCK_CELEBRATION_MS = 3200;
+/** スクロール完了後に演出を開始するまでの待ち時間 */
+export const UNLOCK_SCROLL_DELAY_MS = 400;

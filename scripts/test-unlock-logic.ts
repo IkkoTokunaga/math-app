@@ -19,14 +19,13 @@ async function main() {
   setupBrowserGlobals();
 
   const { getUnlockedLevel } = await import("../lib/levels");
+  const { getPendingUnlockCelebration } = await import("../lib/unlock-celebration-core");
   const {
-    getPendingUnlockCelebration,
-    getUnlockCelebrationPlayerKey,
-    markUnlockCelebrated,
-  } = await import("../lib/unlock-celebration");
+    markGuestUnlockCelebrated,
+    setGuestCelebratedLevels,
+  } = await import("../lib/guest-unlock-celebration");
   type Level = import("../lib/questions").Level;
 
-  const PLAYER_KEY = "guest";
   const TARGET = Number(process.env.TEST_UNLOCK_LEVEL ?? 7);
 
   let passed = 0;
@@ -47,7 +46,7 @@ async function main() {
     for (let level = 2; level < upToExclusive; level += 1) {
       celebrated.push(level);
     }
-    localStorage.setItem("math-app-unlock-celebrations", JSON.stringify({ guest: celebrated }));
+    setGuestCelebratedLevels(celebrated);
   }
 
   for (let targetLevel = 2; targetLevel <= TARGET; targetLevel += 1) {
@@ -63,15 +62,20 @@ async function main() {
     assert(`Lv${targetLevel - 1} クリアで Lv${targetLevel} 解放`, unlocked === targetLevel);
 
     setCelebrated(targetLevel);
-    const pending = getPendingUnlockCelebration(PLAYER_KEY, targetLevel as Level);
+    const { readGuestCelebratedLevels } = await import("../lib/guest-unlock-celebration");
+    const pending = getPendingUnlockCelebration(
+      readGuestCelebratedLevels(),
+      targetLevel as Level,
+    );
     assert(`Lv${targetLevel} 初回演出 pending`, pending === targetLevel);
 
-    markUnlockCelebrated(PLAYER_KEY, targetLevel as Level);
-    const after = getPendingUnlockCelebration(PLAYER_KEY, targetLevel as Level);
+    markGuestUnlockCelebrated(targetLevel as Level);
+    const after = getPendingUnlockCelebration(
+      readGuestCelebratedLevels(),
+      targetLevel as Level,
+    );
     assert(`Lv${targetLevel} 演出済みなら pending なし`, after === null);
   }
-
-  assert("ゲスト player key", getUnlockCelebrationPlayerKey(false) === "guest");
 
   if (failed > 0) {
     console.error(`\n${failed} failed, ${passed} passed`);

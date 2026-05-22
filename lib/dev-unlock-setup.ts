@@ -2,7 +2,7 @@ import type { Level } from "@/lib/questions";
 import type { GuestCompletedSession } from "@/lib/guest/types";
 import { readGuestStore, writeGuestStore } from "@/lib/guest-storage";
 
-const CELEBRATION_KEY = "math-app-unlock-celebrations";
+import { setGuestCelebratedLevels } from "@/lib/guest-unlock-celebration";
 
 function makePerfectSession(level: Level): GuestCompletedSession {
   return {
@@ -56,10 +56,7 @@ export function applyDevUnlock(targetLevel: Level): void {
     celebrated.push(level);
   }
 
-  const raw = localStorage.getItem(CELEBRATION_KEY);
-  const celebrations = raw ? (JSON.parse(raw) as Record<string, number[]>) : {};
-  celebrations.guest = celebrated;
-  localStorage.setItem(CELEBRATION_KEY, JSON.stringify(celebrations));
+  setGuestCelebratedLevels(celebrated);
 }
 
 export function getDevUnlockFromSearch(search: string): Level | null {

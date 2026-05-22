@@ -142,7 +142,7 @@ The level selection screen SHALL show each level as `Lv1` through `Lv10` only, w
 
 ### Requirement: First-time level unlock celebration
 
-When a player unlocks a new level for the first time and returns to the level selection screen, the system SHALL scroll the newly unlocked level button into view first, then play a one-time reveal animation contained within the level row (without expanding page layout). The celebration SHALL NOT repeat on later visits to the level selection screen for the same level. When the user prefers reduced motion, the animation SHALL be skipped while still recording that the level was shown.
+When a player unlocks a new level for the first time and returns to the level selection screen, the system SHALL scroll the newly unlocked level button into view first, then play a one-time reveal animation contained within the level row (without expanding page layout). The celebration SHALL NOT repeat on later visits to the level selection screen for the same level. When the user prefers reduced motion, the animation SHALL be skipped while still recording that the level was shown. For guest players, celebration state SHALL be stored in browser localStorage. For registered members, celebration state SHALL be stored in the database per player so it persists across browsers and survives localStorage clears.
 
 #### Scenario: Unlock animation on level select
 - **WHEN** a player unlocks level 2 for the first time and opens the level selection screen
@@ -156,6 +156,16 @@ When a player unlocks a new level for the first time and returns to the level se
 #### Scenario: Reduced motion for unlock celebration
 - **WHEN** the user prefers reduced motion and unlocks a new level
 - **THEN** the level selection screen appears without unlock animation
+
+#### Scenario: Member celebration persists across devices
+- **WHEN** a registered member has already seen the unlock animation for level 2
+- **AND** the member opens the level selection screen on another browser or after clearing localStorage
+- **THEN** the unlock animation does not play again for level 2
+
+#### Scenario: Guest celebration migrates on signup
+- **WHEN** a guest has already seen unlock celebrations and completes member registration
+- **THEN** those celebration records are imported to the member account in the database
+- **AND** the member does not see those celebrations again after login
 
 ### Requirement: Ten difficulty levels
 

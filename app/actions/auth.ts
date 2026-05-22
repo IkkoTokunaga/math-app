@@ -40,6 +40,7 @@ export async function registerAndImportGuestAction(
   password: string,
   childName: string,
   snapshot: GuestStoreSnapshot,
+  celebratedLevels: readonly number[] = [],
 ) {
   const trimmedEmail = email.trim().toLowerCase();
   const [existing] = await getDb()
@@ -52,7 +53,13 @@ export async function registerAndImportGuestAction(
     throw new Error("このメールはすでに登録されています。ログインしてください。");
   }
 
-  const { userId } = await importGuestData(email, password, childName, snapshot);
+  const { userId } = await importGuestData(
+    email,
+    password,
+    childName,
+    snapshot,
+    celebratedLevels,
+  );
   await setAuthCookie(userId);
   revalidatePath("/play");
   return { ok: true as const };

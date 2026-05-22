@@ -6,6 +6,7 @@ import { useState } from "react";
 import { registerAndImportGuestAction } from "@/app/actions/auth";
 import { AuthForm } from "@/components/AuthForm";
 import { clearGuestStore, exportGuestSnapshot } from "@/lib/guest-storage";
+import { readGuestCelebratedLevels } from "@/lib/guest-unlock-celebration";
 
 export function SignupClient() {
   const router = useRouter();
@@ -35,7 +36,14 @@ export function SignupClient() {
           throw new Error("名前を入力してください");
         }
         const snapshot = exportGuestSnapshot();
-        await registerAndImportGuestAction(email, password, name, snapshot);
+        const celebratedLevels = readGuestCelebratedLevels();
+        await registerAndImportGuestAction(
+          email,
+          password,
+          name,
+          snapshot,
+          celebratedLevels,
+        );
         clearGuestStore();
         router.push("/play");
         router.refresh();

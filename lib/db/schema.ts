@@ -69,6 +69,24 @@ export const sessions = pgTable("sessions", {
   completedAt: timestamp("completed_at"),
 });
 
+export const playerUnlockCelebrations = pgTable(
+  "player_unlock_celebrations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    playerId: uuid("player_id")
+      .references(() => players.id, { onDelete: "cascade" })
+      .notNull(),
+    level: smallint("level").notNull(),
+    celebratedAt: timestamp("celebrated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex("player_unlock_celebrations_player_level").on(
+      table.playerId,
+      table.level,
+    ),
+  ],
+);
+
 export const questionLogs = pgTable("question_logs", {
   id: uuid("id").defaultRandom().primaryKey(),
   sessionId: uuid("session_id")

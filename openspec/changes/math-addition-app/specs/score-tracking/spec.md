@@ -36,11 +36,11 @@ The session score SHALL be the sum of all question points plus streak bonuses. T
 
 ### Requirement: Live score during quiz
 
-During an active quiz session, the system SHALL display the player's accumulated question points in the top-right of the quiz header. The displayed score SHALL be the sum of `pointsEarned` from correctly answered questions so far and SHALL NOT include streak bonuses until the session completes.
+During an active quiz session, the system SHALL display the player's accumulated score in the top-right of the quiz header. The displayed score SHALL be the sum of question `pointsEarned` plus any streak milestone bonuses earned so far during the session.
 
 #### Scenario: Score updates on correct answer
 - **WHEN** a player submits a correct answer during a quiz
-- **THEN** the top-right score increases by that question's `pointsEarned`
+- **THEN** the top-right score increases by that question's `pointsEarned` and any streak milestone bonus awarded on that answer
 
 #### Scenario: Score resets on new session
 - **WHEN** a player starts a new quiz session or returns to level selection
@@ -49,12 +49,13 @@ During an active quiz session, the system SHALL display the player's accumulated
 #### Scenario: Points earned feedback
 - **WHEN** a player submits a correct answer
 - **THEN** the success feedback shows how many points were earned (e.g. "+15点")
-- **AND** those points animate into the top-right total score
-- **AND** the total updates only after the merge animation completes
+- **AND** when a streak milestone bonus applies, the feedback also shows a streak bonus line (e.g. "+5 連続ボーナス!") that pops in immediately below the question points in a quick chained animation
+- **AND** the question points and any streak bonus line animate sequentially into the top-right total score
+- **AND** the total updates only after each merge animation completes
 
 #### Scenario: Reduced motion for score animation
 - **WHEN** the user prefers reduced motion
-- **THEN** the earned points are shown in feedback and added to the total immediately without a fly animation
+- **THEN** the earned points and any bonus lines are shown in feedback and added to the total immediately without a fly animation
 
 ### Requirement: Accuracy display
 

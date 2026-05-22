@@ -126,6 +126,32 @@ export function getStarProgressInfo(
   };
 }
 
+export function calculateCurrentFirstAttemptStreak(
+  priorFirstAttemptResults: boolean[],
+): number {
+  let streak = 0;
+  for (const isCorrect of priorFirstAttemptResults) {
+    if (isCorrect) {
+      streak += 1;
+    } else {
+      streak = 0;
+    }
+  }
+  return streak;
+}
+
+/** 今回の正解で付与される連続正解マイルストーンボーナス（初回正解時のみ） */
+export function getStreakMilestoneBonusForAnswer(
+  priorFirstAttemptResults: boolean[],
+  isFirstAttemptCorrect: boolean,
+): number {
+  if (!isFirstAttemptCorrect) {
+    return 0;
+  }
+  const streak = calculateCurrentFirstAttemptStreak(priorFirstAttemptResults) + 1;
+  return STREAK_MILESTONES[streak] ?? 0;
+}
+
 export function calculateStreakBonus(firstAttemptResults: boolean[]): number {
   let streak = 0;
   let bonus = 0;

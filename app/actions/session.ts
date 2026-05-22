@@ -19,6 +19,7 @@ import {
   calculateMaxPossibleSessionScore,
   calculateQuestionScore,
   calculateStars,
+  getStreakMilestoneBonusForAnswer,
 } from "@/lib/scoring";
 
 export async function getPlayerUnlockedLevelAction(playerId: string): Promise<Level> {
@@ -139,7 +140,20 @@ export async function submitAnswerAction(
   const incorrectCount = attemptCounts[key] ?? 0;
   const isFirstAttemptCorrect = incorrectCount === 0;
   const level = session.level as Level;
-  const { pointsEarned } = calculateQuestionScore(level, elapsedSeconds);
+  const { basePoints, timeBonus, pointsEarned } = calculateQuestionScore(
+    level,
+    elapsedSeconds,
+  );
+
+  const priorLogs = await getDb()
+    .select({ isFirstAttemptCorrect: questionLogs.isFirstAttemptCorrect })
+    .from(questionLogs)
+    .where(eq(questionLogs.sessionId, sessionId))
+    .orderBy(questionLogs.questionIndex);
+  const streakBonusEarned = getStreakMilestoneBonusForAnswer(
+    priorLogs.map((log) => log.isFirstAttemptCorrect),
+    isFirstAttemptCorrect,
+  );
 
   await getDb().insert(questionLogs).values({
     sessionId,
@@ -159,7 +173,10 @@ export async function submitAnswerAction(
       correct: true as const,
       message: "正解！",
       completed: false as const,
+      basePoints,
+      timeBonus,
       pointsEarned,
+      streakBonusEarned,
     };
   }
 
@@ -168,7 +185,10 @@ export async function submitAnswerAction(
     correct: true as const,
     message: "正解！",
     completed: true as const,
+    basePoints,
+    timeBonus,
     pointsEarned,
+    streakBonusEarned,
     result,
   };
 }

@@ -13,7 +13,10 @@ import {
   QUESTIONS_PER_SESSION,
   type Level,
 } from "@/lib/questions";
-import { calculateQuestionScore } from "@/lib/scoring";
+import {
+  calculateQuestionScore,
+  getStreakMilestoneBonusForAnswer,
+} from "@/lib/scoring";
 import { readGuestStore, writeGuestStore } from "@/lib/guest-storage";
 
 function newLocalId(): string {
@@ -64,20 +67,26 @@ export function startGuestSession(level: Level): {
 }
 
 type SubmitWrong = { correct: false; message: string };
+type SubmitCorrectPayload = {
+  basePoints: number;
+  timeBonus: number;
+  pointsEarned: number;
+  streakBonusEarned: number;
+};
+
 type SubmitContinue = {
   correct: true;
   message: string;
   completed: false;
-  pointsEarned: number;
-};
+} & SubmitCorrectPayload;
+
 type SubmitDone = {
   correct: true;
   message: string;
   completed: true;
-  pointsEarned: number;
   localId: string;
   result: GuestCompletedSession;
-};
+} & SubmitCorrectPayload;
 
 export function submitGuestAnswer(
   localId: string,
@@ -111,7 +120,15 @@ export function submitGuestAnswer(
   }
 
   const incorrectCount = session.attemptCounts[key] ?? 0;
-  const { pointsEarned } = calculateQuestionScore(session.level, elapsedSeconds);
+  const isFirstAttemptCorrect = incorrectCount === 0;
+  const { basePoints, timeBonus, pointsEarned } = calculateQuestionScore(
+    session.level,
+    elapsedSeconds,
+  );
+  const streakBonusEarned = getStreakMilestoneBonusForAnswer(
+    session.questionLogs.map((entry) => entry.isFirstAttemptCorrect),
+    isFirstAttemptCorrect,
+  );
   const log: GuestQuestionLog = {
     questionIndex,
     operandA: question.operandA,
@@ -120,7 +137,7 @@ export function submitGuestAnswer(
     correctAnswer,
     incorrectCount,
     pointsEarned,
-    isFirstAttemptCorrect: incorrectCount === 0,
+    isFirstAttemptCorrect,
   };
 
   session.questionLogs.push(log);
@@ -128,7 +145,15 @@ export function submitGuestAnswer(
 
   if (answeredCount < QUESTIONS_PER_SESSION) {
     writeGuestStore(store);
-    return { correct: true, message: "正解！", completed: false, pointsEarned };
+    return {
+      correct: true,
+      message: "正解！",
+      completed: false,
+      basePoints,
+      timeBonus,
+      pointsEarned,
+      streakBonusEarned,
+    };
   }
 
   const sameLevelCompleted = store.completedSessions.filter(
@@ -158,7 +183,10 @@ export function submitGuestAnswer(
     correct: true,
     message: "正解！",
     completed: true,
+    basePoints,
+    timeBonus,
     pointsEarned,
+    streakBonusEarned,
     localId,
     result: completed,
   };

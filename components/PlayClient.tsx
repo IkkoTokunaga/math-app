@@ -11,7 +11,7 @@ import {
 } from "@/app/actions/session";
 import { AuthLinks } from "@/components/AuthLinks";
 import { Keypad } from "@/components/Keypad";
-import { RunningScore } from "@/components/RunningScore";
+import { RunningScore, SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import type { AuthState } from "@/lib/auth/state";
 import { getGuestLabel } from "@/lib/guest-storage";
 import {
@@ -28,9 +28,72 @@ type Question = {
   operandB: number;
 };
 
+type CorrectAnswerPoints = {
+  basePoints: number;
+  timeBonus: number;
+  pointsEarned: number;
+  streakBonusEarned: number;
+};
+
+const STREAK_FLY_DELAY_MS = 80;
+const STREAK_FLY_DURATION_MS = 420;
+
+type ScoreAward = {
+  amount: number;
+  flyLabel: string;
+  flyFromRef: React.RefObject<HTMLParagraphElement | null>;
+  flyDelayMs?: number;
+  flyDurationMs?: number;
+  flyClassName?: string;
+};
+
 type PlayClientProps = {
   auth: AuthState;
 };
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function awardAnimMs(award: ScoreAward): number {
+  return (award.flyDelayMs ?? SCORE_FLY_DELAY_MS) + (award.flyDurationMs ?? SCORE_FLY_DURATION_MS);
+}
+
+function feedbackDurationMs(awards: ScoreAward[], baseMs: number): number {
+  if (awards.length <= 1) {
+    return baseMs;
+  }
+  return baseMs + awards.slice(1).reduce((sum, award) => sum + awardAnimMs(award), 0);
+}
+
+function buildScoreAwards(
+  points: CorrectAnswerPoints,
+  refs: {
+    pointsEarnedRef: React.RefObject<HTMLParagraphElement | null>;
+    streakBonusRef: React.RefObject<HTMLParagraphElement | null>;
+  },
+): ScoreAward[] {
+  const awards: ScoreAward[] = [
+    {
+      amount: points.pointsEarned,
+      flyLabel: `+${points.pointsEarned}点`,
+      flyFromRef: refs.pointsEarnedRef,
+    },
+  ];
+
+  if (points.streakBonusEarned > 0) {
+    awards.push({
+      amount: points.streakBonusEarned,
+      flyLabel: `+${points.streakBonusEarned} 連続ボーナス!`,
+      flyFromRef: refs.streakBonusRef,
+      flyDelayMs: STREAK_FLY_DELAY_MS,
+      flyDurationMs: STREAK_FLY_DURATION_MS,
+      flyClassName: "score-fly-badge--streak",
+    });
+  }
+
+  return awards;
+}
 
 const SUCCESS_FEEDBACK_MS = 1500;
 const COMPLETION_FEEDBACK_MS = 1800;
@@ -52,18 +115,74 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [runningScore, setRunningScore] = useState(0);
   const [pendingPoints, setPendingPoints] = useState<number | null>(null);
-  const [feedbackPointsEarned, setFeedbackPointsEarned] = useState<number | null>(null);
+  const [pendingFlyLabel, setPendingFlyLabel] = useState<string | null>(null);
+  const [pendingFlyDelayMs, setPendingFlyDelayMs] = useState(SCORE_FLY_DELAY_MS);
+  const [pendingFlyDurationMs, setPendingFlyDurationMs] = useState(SCORE_FLY_DURATION_MS);
+  const [pendingFlyClassName, setPendingFlyClassName] = useState("");
+  const [feedbackPoints, setFeedbackPoints] = useState<CorrectAnswerPoints | null>(null);
   const [scoreAnimId, setScoreAnimId] = useState(0);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
   const questionStartedAtRef = useRef<number>(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pointsEarnedRef = useRef<HTMLParagraphElement>(null);
+  const streakBonusRef = useRef<HTMLParagraphElement>(null);
+  const flyFromSourceRef = useRef<React.RefObject<HTMLParagraphElement | null>>(pointsEarnedRef);
   const pendingPointsRef = useRef(0);
+  const awardQueueRef = useRef<ScoreAward[]>([]);
+
+  const getFlyFromElement = useCallback(() => flyFromSourceRef.current.current, []);
+
+  const startNextScoreAward = useCallback(() => {
+    const next = awardQueueRef.current.shift();
+    if (!next) {
+      return;
+    }
+
+    flyFromSourceRef.current = next.flyFromRef;
+    pendingPointsRef.current = next.amount;
+    setPendingFlyLabel(next.flyLabel);
+    setPendingFlyDelayMs(next.flyDelayMs ?? SCORE_FLY_DELAY_MS);
+    setPendingFlyDurationMs(next.flyDurationMs ?? SCORE_FLY_DURATION_MS);
+    setPendingFlyClassName(next.flyClassName ?? "");
+    setPendingPoints(next.amount);
+    setScoreAnimId((id) => id + 1);
+  }, []);
+
+  const queueScoreAwards = useCallback(
+    (points: CorrectAnswerPoints) => {
+      const awards = buildScoreAwards(points, {
+        pointsEarnedRef,
+        streakBonusRef,
+      });
+      const totalAward = points.pointsEarned + points.streakBonusEarned;
+
+      setFeedbackPoints(points);
+
+      if (prefersReducedMotion()) {
+        setRunningScore((score) => score + totalAward);
+        setPendingPoints(null);
+        setPendingFlyLabel(null);
+        awardQueueRef.current = [];
+        return;
+      }
+
+      awardQueueRef.current = awards;
+      requestAnimationFrame(() => {
+        startNextScoreAward();
+      });
+    },
+    [startNextScoreAward],
+  );
 
   const applyPendingPoints = useCallback(() => {
     setRunningScore((score) => score + pendingPointsRef.current);
     setPendingPoints(null);
-  }, []);
+    setPendingFlyLabel(null);
+
+    if (awardQueueRef.current.length > 0) {
+      startNextScoreAward();
+    }
+  }, [startNextScoreAward]);
 
   const clearFeedback = () => {
     if (feedbackTimeoutRef.current) {
@@ -73,7 +192,9 @@ export function PlayClient({ auth }: PlayClientProps) {
     setFeedback(null);
     setFeedbackType(null);
     setPendingPoints(null);
-    setFeedbackPointsEarned(null);
+    setPendingFlyLabel(null);
+    setFeedbackPoints(null);
+    awardQueueRef.current = [];
   };
 
   const showRetryFeedback = (message: string) => {
@@ -130,8 +251,10 @@ export function PlayClient({ auth }: PlayClientProps) {
       setAnswer("");
       setRunningScore(0);
       setPendingPoints(null);
-      setFeedbackPointsEarned(null);
+      setPendingFlyLabel(null);
+      setFeedbackPoints(null);
       pendingPointsRef.current = 0;
+      awardQueueRef.current = [];
       clearFeedback();
       questionStartedAtRef.current = Date.now();
     } catch (err) {
@@ -153,6 +276,8 @@ export function PlayClient({ auth }: PlayClientProps) {
     const elapsedSeconds = (Date.now() - questionStartedAtRef.current) / 1000;
 
     try {
+      let correctPoints: CorrectAnswerPoints | null = null;
+
       if (isMember) {
         const result = await submitAnswerAction(
           activeId,
@@ -167,17 +292,19 @@ export function PlayClient({ auth }: PlayClientProps) {
           return;
         }
 
+        correctPoints = result;
+        const awards = buildScoreAwards(result, {
+          pointsEarnedRef,
+          streakBonusRef,
+        });
         setFeedback(result.message);
         setFeedbackType("success");
-        pendingPointsRef.current = result.pointsEarned;
-        setPendingPoints(result.pointsEarned);
-        setFeedbackPointsEarned(result.pointsEarned);
-        setScoreAnimId((id) => id + 1);
+        queueScoreAwards(result);
 
         if (result.completed) {
           setTimeout(() => {
             router.push(`/result/${activeId}`);
-          }, COMPLETION_FEEDBACK_MS);
+          }, feedbackDurationMs(awards, COMPLETION_FEEDBACK_MS));
           return;
         }
       } else {
@@ -194,26 +321,32 @@ export function PlayClient({ auth }: PlayClientProps) {
           return;
         }
 
+        correctPoints = result;
+        const awards = buildScoreAwards(result, {
+          pointsEarnedRef,
+          streakBonusRef,
+        });
         setFeedback(result.message);
         setFeedbackType("success");
-        pendingPointsRef.current = result.pointsEarned;
-        setPendingPoints(result.pointsEarned);
-        setFeedbackPointsEarned(result.pointsEarned);
-        setScoreAnimId((id) => id + 1);
+        queueScoreAwards(result);
 
         if (result.completed) {
           setTimeout(() => {
             router.push(`/result/guest/${activeId}`);
-          }, COMPLETION_FEEDBACK_MS);
+          }, feedbackDurationMs(awards, COMPLETION_FEEDBACK_MS));
           return;
         }
       }
 
+      const awards = buildScoreAwards(correctPoints!, {
+        pointsEarnedRef,
+        streakBonusRef,
+      });
       setTimeout(() => {
         setCurrentIndex((index) => index + 1);
         setAnswer("");
         clearFeedback();
-      }, SUCCESS_FEEDBACK_MS);
+      }, feedbackDurationMs(awards, SUCCESS_FEEDBACK_MS));
     } catch (err) {
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
     } finally {
@@ -230,8 +363,10 @@ export function PlayClient({ auth }: PlayClientProps) {
     setAnswer("");
     setRunningScore(0);
     setPendingPoints(null);
-    setFeedbackPointsEarned(null);
+    setPendingFlyLabel(null);
+    setFeedbackPoints(null);
     pendingPointsRef.current = 0;
+    awardQueueRef.current = [];
     clearFeedback();
     setError(null);
   };
@@ -322,8 +457,12 @@ export function PlayClient({ auth }: PlayClientProps) {
         <RunningScore
           score={runningScore}
           pointsEarned={pendingPoints}
+          flyLabel={pendingFlyLabel}
+          flyDelayMs={pendingFlyDelayMs}
+          flyDurationMs={pendingFlyDurationMs}
+          flyClassName={pendingFlyClassName}
           animId={scoreAnimId}
-          flyFromRef={pointsEarnedRef}
+          getFlyFromElement={getFlyFromElement}
           onPointsApplied={applyPendingPoints}
         />
       </div>
@@ -361,10 +500,23 @@ export function PlayClient({ auth }: PlayClientProps) {
               </div>
               <p className="feedback-success">🎉 {feedback} 🎉</p>
               <div className="feedback-points-slot">
-                {feedbackPointsEarned != null && (
-                  <p ref={pointsEarnedRef} className="feedback-points-earned">
-                    +{feedbackPointsEarned}点
-                  </p>
+                {feedbackPoints != null && (
+                  <div
+                    className={
+                      feedbackPoints.streakBonusEarned > 0
+                        ? "feedback-points-stack feedback-points-stack--with-streak"
+                        : "feedback-points-stack"
+                    }
+                  >
+                    <p ref={pointsEarnedRef} className="feedback-points-earned">
+                      +{feedbackPoints.pointsEarned}点
+                    </p>
+                    {feedbackPoints.streakBonusEarned > 0 && (
+                      <p ref={streakBonusRef} className="feedback-points-streak">
+                        +{feedbackPoints.streakBonusEarned} 連続ボーナス!
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

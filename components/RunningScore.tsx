@@ -2,15 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const FLY_DELAY_MS = 400;
-const FLY_DURATION_MS = 700;
+export const SCORE_FLY_DELAY_MS = 400;
+export const SCORE_FLY_DURATION_MS = 700;
+export const SCORE_ANIM_STEP_MS = SCORE_FLY_DELAY_MS + SCORE_FLY_DURATION_MS;
+
 const POP_DURATION_MS = 400;
 
 type RunningScoreProps = {
   score: number;
   pointsEarned: number | null;
+  flyLabel: string | null;
+  flyDelayMs?: number;
+  flyDurationMs?: number;
+  flyClassName?: string;
   animId: number;
-  flyFromRef: React.RefObject<HTMLElement | null>;
+  getFlyFromElement: () => HTMLElement | null;
   onPointsApplied: () => void;
 };
 
@@ -21,8 +27,12 @@ function prefersReducedMotion(): boolean {
 export function RunningScore({
   score,
   pointsEarned,
+  flyLabel,
+  flyDelayMs = SCORE_FLY_DELAY_MS,
+  flyDurationMs = SCORE_FLY_DURATION_MS,
+  flyClassName = "",
   animId,
-  flyFromRef,
+  getFlyFromElement,
   onPointsApplied,
 }: RunningScoreProps) {
   const targetRef = useRef<HTMLParagraphElement>(null);
@@ -52,7 +62,7 @@ export function RunningScore({
     let mergeTimer: ReturnType<typeof setTimeout>;
 
     const flyTimer = setTimeout(() => {
-      const fromEl = flyFromRef.current;
+      const fromEl = getFlyFromElement();
       const toEl = targetRef.current;
       if (!fromEl || !toEl) {
         onPointsApplied();
@@ -81,15 +91,15 @@ export function RunningScore({
         onPointsApplied();
         setPopping(true);
         setTimeout(() => setPopping(false), POP_DURATION_MS);
-      }, FLY_DURATION_MS);
-    }, FLY_DELAY_MS);
+      }, flyDurationMs);
+    }, flyDelayMs);
 
     return () => {
       clearTimeout(flyTimer);
       clearTimeout(mergeTimer);
       setFlying(false);
     };
-  }, [animId, pointsEarned, flyFromRef, onPointsApplied]);
+  }, [animId, flyDelayMs, flyDurationMs, getFlyFromElement, onPointsApplied, pointsEarned]);
 
   return (
     <>
@@ -100,9 +110,18 @@ export function RunningScore({
       >
         {score}点
       </p>
-      {flying && pointsEarned != null && (
-        <span className="score-fly-badge" style={flyStyle} aria-hidden="true">
-          +{pointsEarned}点
+      {flying && flyLabel != null && (
+        <span
+          className={`score-fly-badge ${flyClassName}`.trim()}
+          style={
+            {
+              ...flyStyle,
+              ["--fly-duration" as string]: `${flyDurationMs}ms`,
+            } as React.CSSProperties
+          }
+          aria-hidden="true"
+        >
+          {flyLabel}
         </span>
       )}
     </>

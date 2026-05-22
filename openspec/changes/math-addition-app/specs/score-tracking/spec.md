@@ -12,7 +12,11 @@ timeBonus    = level × remainingSeconds   (if answered within 10 seconds, else 
 pointsEarned = basePoints + timeBonus
 ```
 
-Where `remainingSeconds = max(0, 10 - floor(elapsedSeconds))`.
+Where `remainingSeconds = max(0, 10 - floor(max(0, elapsedSeconds - 1)))` (the first 1 second after a question appears does not advance the countdown).
+
+#### Scenario: Grace period at question start
+- **WHEN** a new question is shown
+- **THEN** the time bonus countdown does not decrease during the first 1 second
 
 #### Scenario: Correct on first attempt quickly
 - **WHEN** a player submits the correct answer on the first attempt within 10 seconds at level 1

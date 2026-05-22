@@ -1,6 +1,20 @@
 import type { Level } from "@/lib/questions";
 
 export const SCORE_TIME_LIMIT_SECONDS = 10;
+/** 問題表示直後はカウントダウンを進めない猶予（秒） */
+export const SCORE_TIME_GRACE_SECONDS = 1;
+
+export function getElapsedWholeSecondsForBonus(elapsedSeconds: number): number {
+  const safeElapsed = Math.max(0, Math.min(elapsedSeconds, 300));
+  const adjusted = Math.max(0, safeElapsed - SCORE_TIME_GRACE_SECONDS);
+  return Math.floor(adjusted);
+}
+
+export function getRemainingBonusSeconds(elapsedSeconds: number): number {
+  const elapsedWholeSeconds = getElapsedWholeSecondsForBonus(elapsedSeconds);
+  return Math.max(0, SCORE_TIME_LIMIT_SECONDS - elapsedWholeSeconds);
+}
+
 export const STAR_COUNT = 5;
 /** この割合以上で星5（満点は公表しない） */
 export const STAR_FULL_SCORE_RATIO = 0.9;
@@ -26,10 +40,9 @@ export function calculateQuestionScore(
   level: Level,
   elapsedSeconds: number,
 ): QuestionScoreBreakdown {
-  const safeElapsed = Math.max(0, Math.min(elapsedSeconds, 300));
   const basePoints = level * 10;
-  const elapsedWholeSeconds = Math.floor(safeElapsed);
-  const remainingSeconds = Math.max(0, SCORE_TIME_LIMIT_SECONDS - elapsedWholeSeconds);
+  const elapsedWholeSeconds = getElapsedWholeSecondsForBonus(elapsedSeconds);
+  const remainingSeconds = getRemainingBonusSeconds(elapsedSeconds);
   const timeBonus =
     elapsedWholeSeconds < SCORE_TIME_LIMIT_SECONDS ? level * remainingSeconds : 0;
 

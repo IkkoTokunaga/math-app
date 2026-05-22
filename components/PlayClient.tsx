@@ -32,6 +32,7 @@ import {
 } from "@/lib/mascot-comments";
 import { type Level } from "@/lib/questions";
 import {
+  SCORE_TIME_GRACE_SECONDS,
   STAR_COUNT,
   calculateMaxPossibleSessionScore,
   calculateStars,
@@ -252,11 +253,15 @@ export function PlayClient({ auth }: PlayClientProps) {
     };
   }, []);
 
+  const resetQuestionTimer = useCallback(() => {
+    questionStartedAtRef.current = Date.now() + SCORE_TIME_GRACE_SECONDS * 1000;
+  }, []);
+
   useEffect(() => {
     if (sessionId || localId) {
-      questionStartedAtRef.current = Date.now();
+      resetQuestionTimer();
     }
-  }, [currentIndex, sessionId, localId]);
+  }, [currentIndex, sessionId, localId, resetQuestionTimer]);
 
   const inQuiz = Boolean(sessionId || localId);
   const quizPanelRef = useRef<HTMLDivElement>(null);
@@ -362,7 +367,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       pendingPointsRef.current = 0;
       awardQueueRef.current = [];
       clearFeedback();
-      questionStartedAtRef.current = Date.now();
+      resetQuestionTimer();
     } catch (err) {
       setError(err instanceof Error ? err.message : "セッション開始に失敗しました");
     } finally {
@@ -379,7 +384,10 @@ export function PlayClient({ auth }: PlayClientProps) {
     setSubmitting(true);
     clearFeedback();
 
-    const elapsedSeconds = (Date.now() - questionStartedAtRef.current) / 1000;
+    const elapsedSeconds = Math.max(
+      0,
+      (Date.now() - questionStartedAtRef.current) / 1000,
+    );
 
     try {
       let correctPoints: CorrectAnswerPoints | null = null;

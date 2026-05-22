@@ -137,7 +137,7 @@ question_logs
 
 ```
 basePoints         = level × 10                                    // 正解時
-timeBonus          = level × remainingSeconds (within 10s)         // 正解時
+timeBonus          = level × remainingSeconds (within 10s after 1s grace) // 正解時
 questionPoints     = basePoints + timeBonus
 baseScore          = sum of (level × 10) per question              // 時間ボーナス除く
 bonusScore         = timeBonus sum + streakBonus

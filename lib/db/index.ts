@@ -22,7 +22,8 @@ function createDb(): Db {
   }
 
   client = postgres(connectionString, {
-    max: 1,
+    max: isLocalDatabase(connectionString) ? 5 : 1,
+    idle_timeout: 20,
     ssl: isLocalDatabase(connectionString) ? false : "require",
     prepare: connectionString.includes("-pooler") ? false : undefined,
   });

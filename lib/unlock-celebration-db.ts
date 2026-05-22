@@ -3,6 +3,8 @@ import { getDb } from "@/lib/db";
 import { playerUnlockCelebrations } from "@/lib/db/schema";
 import type { Level } from "@/lib/questions";
 
+type DbExecutor = Pick<ReturnType<typeof getDb>, "insert">;
+
 export async function getMemberCelebratedLevels(playerId: string): Promise<Level[]> {
   const rows = await getDb()
     .select({ level: playerUnlockCelebrations.level })
@@ -34,13 +36,14 @@ export async function markMemberUnlockCelebrated(
 export async function importMemberCelebratedLevels(
   playerId: string,
   levels: readonly number[],
+  db: DbExecutor = getDb(),
 ): Promise<void> {
   const uniqueLevels = [...new Set(levels.filter((level) => level >= 2))];
   if (uniqueLevels.length === 0) {
     return;
   }
 
-  await getDb()
+  await db
     .insert(playerUnlockCelebrations)
     .values(uniqueLevels.map((level) => ({ playerId, level })))
     .onConflictDoNothing({

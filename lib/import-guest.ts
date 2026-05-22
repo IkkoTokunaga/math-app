@@ -91,7 +91,7 @@ export async function importGuestData(
       }
     }
 
-    await importMemberCelebratedLevels(player.id, celebratedLevels);
+    await importMemberCelebratedLevels(player.id, celebratedLevels, tx);
 
     return { userId: user.id, playerId: player.id };
   });

@@ -164,16 +164,18 @@ function LiveScoreProgressBarAnimated({
             className="live-score-progress-milestone"
             style={{ left: `${percent}%` }}
           >
-            <span
-              className={[
-                "live-score-progress-star",
-                earned ? "live-score-progress-star--earned" : "",
-                poppingStar === starCount ? "live-score-progress-star--pop" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {earned ? "★" : "☆"}
+            <span className="live-score-progress-star-slot">
+              <span
+                className={[
+                  "live-score-progress-star",
+                  earned ? "live-score-progress-star--earned" : "",
+                  poppingStar === starCount ? "live-score-progress-star--pop" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {earned ? "★" : "☆"}
+              </span>
             </span>
             <span className="live-score-progress-line" />
           </div>

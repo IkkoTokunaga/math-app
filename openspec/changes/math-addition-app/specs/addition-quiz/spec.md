@@ -26,7 +26,11 @@ The system SHALL display each question as `operandA + operandB = ?`, where the `
 
 ### Requirement: No vertical scroll during quiz
 
-During an active quiz session, the problem screen SHALL NOT cause vertical page scrolling. The existing layout structure (header, progress bar, equation, keypad) SHALL be preserved; the system MAY scale the quiz panel to fit the viewport when needed.
+During an active quiz session, the problem screen SHALL NOT cause vertical page scrolling. The existing layout structure (header, progress bar, equation, keypad) SHALL be preserved; the system MAY scale the quiz panel to fit the viewport when needed. On mobile browsers, the top of the quiz screen SHALL remain visible below the address bar and device safe areas (notch, home indicator).
+
+#### Scenario: Mobile top inset
+- **WHEN** a player opens the quiz on a phone browser with a visible address bar
+- **THEN** the header and mascot are not hidden under the browser chrome
 
 #### Scenario: Viewport fit on short screens
 - **WHEN** a player is answering a question on a viewport shorter than the default layout height

@@ -37,26 +37,36 @@ body {
     radial-gradient(circle at 60% 40%, rgb(255 255 255 / 0.015) 0%, transparent 25%),
     linear-gradient(175deg, #152820 0%, #1a2e24 40%, #1f352a 100%);
   color: var(--chalk);
-  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   font-family: var(--font-klee), "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
 }
 
 .page-shell {
+  box-sizing: border-box;
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   max-width: 960px;
-  padding: 1.5rem;
+  padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+  padding-right: calc(1.5rem + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(1.5rem + env(safe-area-inset-left, 0px));
 }
 
 .page-shell--quiz {
   box-sizing: border-box;
+  height: 100svh;
   height: 100dvh;
+  max-height: 100svh;
   max-height: 100dvh;
+  min-height: 100svh;
   min-height: 100dvh;
   overflow: hidden;
-  padding: clamp(0.5rem, 1.2vh, 1.5rem);
-  padding-top: max(clamp(0.5rem, 1.2vh, 1.5rem), env(safe-area-inset-top));
-  padding-bottom: max(clamp(0.5rem, 1.2vh, 1.5rem), env(safe-area-inset-bottom));
+  padding-top: calc(clamp(0.75rem, 2vh, 1.25rem) + env(safe-area-inset-top, 0px));
+  padding-right: calc(clamp(0.75rem, 3vw, 1.5rem) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(clamp(0.5rem, 1.2vh, 1.5rem) + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(clamp(0.75rem, 3vw, 1.5rem) + env(safe-area-inset-left, 0px));
 }
 
 html.quiz-active,
@@ -1124,6 +1134,9 @@ button.keypad-btn-submit:active:not(:disabled) {
 
 @media (min-width: 768px) {
   .page-shell:not(.page-shell--quiz) {
-    padding: 2.5rem;
+    padding-top: calc(2.5rem + env(safe-area-inset-top, 0px));
+    padding-right: calc(2.5rem + env(safe-area-inset-right, 0px));
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
   }
 }

@@ -36,12 +36,12 @@ The session score SHALL be the sum of all question points plus streak bonuses. T
 
 ### Requirement: Live score during quiz
 
-During an active quiz session, the system SHALL display the player's accumulated score in the top-right of the quiz header. The displayed score SHALL be the sum of question `pointsEarned` plus any streak milestone bonuses earned so far during the session. Below the header, the system SHALL display a progress bar filled according to the running total score relative to the theoretical maximum. The bar SHALL NOT show a large star row or points-to-next-star text. Instead, the bar element SHALL include milestone markers at each star threshold (★1 through ★5). Each marker SHALL use a single horizontal anchor so the star sits directly above the vertical line on the track at that star's score threshold.
+During an active quiz session, the system SHALL display the player's accumulated score in the top-right of the quiz header. The displayed score SHALL be the sum of question `pointsEarned` plus any streak milestone bonuses earned so far during the session. Below the header, the system SHALL display a progress bar filled according to the running total score relative to the theoretical maximum. The bar SHALL NOT show a large star row or points-to-next-star text. Instead, the bar element SHALL include milestone markers for stars ★1 through ★5. Stars ★1 through ★4 SHALL sit directly above vertical lines on the track at each star's score threshold. Star ★5 SHALL sit at the right end of the bar track without a vertical line. Each non-final marker SHALL use a single horizontal anchor so the star sits directly above its vertical line.
 
 #### Scenario: Milestone markers on quiz bar
 - **WHEN** a player is answering questions during an active quiz session
-- **THEN** the quiz view shows a progress bar with five milestone markers positioned at star thresholds
-- **AND** each marker shows a star directly above its vertical line; the line SHALL be positioned on the track at that star's score threshold (same percentage as the bar fill scale)
+- **THEN** the quiz view shows milestone markers for stars ★1 through ★4 positioned at star thresholds with vertical lines on the track
+- **AND** star ★5 is positioned at the right end of the bar without a vertical line
 - **AND** earned milestones show a filled star (★) and unearned milestones show an empty star (☆)
 
 #### Scenario: Score updates on correct answer
@@ -59,6 +59,8 @@ During an active quiz session, the system SHALL display the player's accumulated
 #### Scenario: Perfect stars on final question
 - **WHEN** a player submits a correct answer on the last question of a session and the resulting score earns 5 stars
 - **THEN** after the final score increment lands in the total, the live progress bar animates to the right end of the track (100% fill) instead of stopping at the score ratio alone
+- **AND** star ★5 becomes earned only after the bar fill completes at the right end
+- **AND** star ★5 plays a larger earn pop animation when the bar reaches the end
 - **AND** the bar switches to the rainbow appearance when the fill completes
 - **AND** navigation to the result screen waits long enough for the completion fill animation to finish unless reduced motion is enabled
 

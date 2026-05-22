@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
   STAR_COUNT,
   calculateMaxPossibleSessionScore,
@@ -12,6 +12,7 @@ import { QUESTIONS_PER_SESSION, type Level } from "@/lib/questions";
 const BAR_ANIMATION_DURATION_MS = 650;
 const COMPLETION_BAR_FILL_MS = 1000;
 const STAR_POP_DURATION_MS = 450;
+const STAR_POP_FINAL_DURATION_MS = 800;
 
 export { COMPLETION_BAR_FILL_MS };
 
@@ -60,7 +61,7 @@ function LiveScoreProgressBarAnimated({
 
   const committedFillRef = useRef(0);
   const currentFillRef = useRef(0);
-  const previousStarsRef = useRef(0);
+  const previousEarnedRef = useRef<boolean[]>(Array(STAR_COUNT).fill(false));
 
   const [committedFillPercent, setCommittedFillPercent] = useState(0);
   const [animFromFill, setAnimFromFill] = useState(0);
@@ -80,17 +81,29 @@ function LiveScoreProgressBarAnimated({
   const displayStars = calculateStars(totalScore, maxPossibleScore);
   const effectiveDone = prefersReducedMotion || done;
   const barPhase = Math.min(1, displayFillPercent / 100);
-  const showRainbowBar = isPerfect && effectiveDone && (fillToEnd ? displayFillPercent >= 99.9 : true);
+  const barFullyExtended = displayFillPercent >= 99.9 && effectiveDone;
+  const showRainbowBar = isPerfect && barFullyExtended && fillToEnd;
 
-  const milestones = Array.from({ length: STAR_COUNT }, (_, index) => {
-    const starCount = index + 1;
-    const threshold = getStarScoreThreshold(starCount, maxPossibleScore);
-    return {
-      starCount,
-      percent: getThresholdPercent(threshold, maxPossibleScore),
-      earned: displayStars >= starCount,
-    };
-  });
+  const milestones = useMemo(
+    () =>
+      Array.from({ length: STAR_COUNT }, (_, index) => {
+        const starCount = index + 1;
+        const isFinalStar = starCount === STAR_COUNT;
+        const threshold = getStarScoreThreshold(starCount, maxPossibleScore);
+        const earned = isFinalStar
+          ? isPerfect && barFullyExtended
+          : displayStars >= starCount;
+
+        return {
+          starCount,
+          percent: isFinalStar ? 100 : getThresholdPercent(threshold, maxPossibleScore),
+          isFinalStar,
+          showLine: !isFinalStar,
+          earned,
+        };
+      }),
+    [barFullyExtended, displayStars, isPerfect, maxPossibleScore],
+  );
 
   useEffect(() => {
     if (prefersReducedMotion) {
@@ -140,28 +153,39 @@ function LiveScoreProgressBarAnimated({
   }, [fillToEnd, prefersReducedMotion, targetFillPercent, totalScore]);
 
   useEffect(() => {
-    if (displayStars > previousStarsRef.current) {
-      const earnedStar = displayStars;
-      previousStarsRef.current = displayStars;
-      setPoppingStar(earnedStar);
-      const timer = window.setTimeout(() => setPoppingStar(null), STAR_POP_DURATION_MS);
-      return () => window.clearTimeout(timer);
+    let poppedStar: number | null = null;
+
+    milestones.forEach(({ starCount, earned }) => {
+      const index = starCount - 1;
+      if (earned && !previousEarnedRef.current[index]) {
+        poppedStar = starCount;
+      }
+      previousEarnedRef.current[index] = earned;
+    });
+
+    if (poppedStar == null) {
+      return undefined;
     }
 
-    if (displayStars < previousStarsRef.current) {
-      previousStarsRef.current = displayStars;
-    }
-
-    return undefined;
-  }, [displayStars]);
+    setPoppingStar(poppedStar);
+    const duration =
+      poppedStar === STAR_COUNT ? STAR_POP_FINAL_DURATION_MS : STAR_POP_DURATION_MS;
+    const timer = window.setTimeout(() => setPoppingStar(null), duration);
+    return () => window.clearTimeout(timer);
+  }, [milestones]);
 
   return (
     <div className="live-score-progress-bar" aria-hidden="true">
       <div className="live-score-progress-frame">
-        {milestones.map(({ starCount, percent, earned }) => (
+        {milestones.map(({ starCount, percent, isFinalStar, showLine, earned }) => (
           <div
             key={starCount}
-            className="live-score-progress-milestone"
+            className={[
+              "live-score-progress-milestone",
+              isFinalStar ? "live-score-progress-milestone--end" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             style={{ left: `${percent}%` }}
           >
             <span className="live-score-progress-star-slot">
@@ -169,7 +193,11 @@ function LiveScoreProgressBarAnimated({
                 className={[
                   "live-score-progress-star",
                   earned ? "live-score-progress-star--earned" : "",
-                  poppingStar === starCount ? "live-score-progress-star--pop" : "",
+                  poppingStar === starCount
+                    ? isFinalStar
+                      ? "live-score-progress-star--pop-final"
+                      : "live-score-progress-star--pop"
+                    : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -177,7 +205,7 @@ function LiveScoreProgressBarAnimated({
                 {earned ? "★" : "☆"}
               </span>
             </span>
-            <span className="live-score-progress-line" />
+            {showLine && <span className="live-score-progress-line" />}
           </div>
         ))}
         <div className="live-score-progress-track">

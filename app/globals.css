@@ -395,6 +395,16 @@ body {
   pointer-events: none;
 }
 
+.live-score-progress-milestone--end {
+  transform: translateX(-100%);
+}
+
+.live-score-progress-milestone--end .live-score-progress-star-slot {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
 .live-score-progress-star-slot {
   position: absolute;
   top: 0;
@@ -426,6 +436,10 @@ body {
   animation: live-score-star-earn 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.live-score-progress-star--pop-final {
+  animation: live-score-star-earn-final 800ms cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
 @keyframes live-score-star-earn {
   0% {
     transform: scale(1);
@@ -433,6 +447,24 @@ body {
 
   45% {
     transform: scale(1.24);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes live-score-star-earn-final {
+  0% {
+    transform: scale(1);
+  }
+
+  35% {
+    transform: scale(1.65);
+  }
+
+  55% {
+    transform: scale(1.65);
   }
 
   100% {
@@ -596,6 +628,7 @@ body {
   .star-display-icon--pop,
   .star-display-icon--pop-final,
   .live-score-progress-star--pop,
+  .live-score-progress-star--pop-final,
   .star-display-icon--sparkle,
   .star-sparkle-particle,
   .star-sparkle-glyph,

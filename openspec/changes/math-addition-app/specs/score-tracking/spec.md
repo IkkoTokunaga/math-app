@@ -48,6 +48,19 @@ During an active quiz session, the system SHALL display the player's accumulated
 - **WHEN** a player submits a correct answer during a quiz
 - **THEN** the top-right score increases by that question's `pointsEarned` and any streak milestone bonus awarded on that answer
 - **AND** the progress bar fill and milestone stars update to reflect the new running total
+- **AND** the bar fill animates smoothly from its current position to the new fill level after each score increment lands in the total
+- **AND** while the bar is filling, its color transitions from light blue toward orange based on fill progress
+- **AND** when a milestone star is newly earned during the fill animation, that star pops in with a brief scale animation
+
+#### Scenario: Reduced motion for live progress bar
+- **WHEN** the user prefers reduced motion
+- **THEN** the live progress bar fill and milestone stars update immediately without fill or pop animations
+
+#### Scenario: Perfect stars on final question
+- **WHEN** a player submits a correct answer on the last question of a session and the resulting score earns 5 stars
+- **THEN** after the final score increment lands in the total, the live progress bar animates to the right end of the track (100% fill) instead of stopping at the score ratio alone
+- **AND** the bar switches to the rainbow appearance when the fill completes
+- **AND** navigation to the result screen waits long enough for the completion fill animation to finish unless reduced motion is enabled
 
 #### Scenario: Score resets on new session
 - **WHEN** a player starts a new quiz session or returns to level selection

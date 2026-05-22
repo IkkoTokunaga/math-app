@@ -11,7 +11,10 @@ import {
 } from "@/app/actions/session";
 import { AuthLinks } from "@/components/AuthLinks";
 import { Keypad } from "@/components/Keypad";
-import { LiveScoreProgressBar } from "@/components/LiveScoreProgressBar";
+import {
+  COMPLETION_BAR_FILL_MS,
+  LiveScoreProgressBar,
+} from "@/components/LiveScoreProgressBar";
 import { RunningScore, SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import type { AuthState } from "@/lib/auth/state";
 import { getGuestLabel } from "@/lib/guest-storage";
@@ -23,6 +26,11 @@ import {
 import { useIsClient } from "@/lib/use-is-client";
 import { MAX_LEVEL } from "@/lib/levels";
 import { type Level } from "@/lib/questions";
+import {
+  STAR_COUNT,
+  calculateMaxPossibleSessionScore,
+  calculateStars,
+} from "@/lib/scoring";
 
 type Question = {
   operandA: number;
@@ -96,6 +104,29 @@ function buildScoreAwards(
   return awards;
 }
 
+function willPerfectOnFinalQuestion(
+  level: Level,
+  questionCount: number,
+  currentIndex: number,
+  runningScore: number,
+  points: CorrectAnswerPoints,
+): boolean {
+  if (currentIndex !== questionCount - 1) {
+    return false;
+  }
+  const projectedScore = runningScore + points.pointsEarned + points.streakBonusEarned;
+  const maxPossibleScore = calculateMaxPossibleSessionScore(level, questionCount);
+  return calculateStars(projectedScore, maxPossibleScore) >= STAR_COUNT;
+}
+
+function completionRedirectMs(awards: ScoreAward[], fillToEnd: boolean): number {
+  const base = feedbackDurationMs(awards, COMPLETION_FEEDBACK_MS);
+  if (!fillToEnd || prefersReducedMotion()) {
+    return base;
+  }
+  return base + COMPLETION_BAR_FILL_MS;
+}
+
 const SUCCESS_FEEDBACK_MS = 1500;
 const COMPLETION_FEEDBACK_MS = 1800;
 const RETRY_FEEDBACK_MS = 1500;
@@ -122,6 +153,7 @@ export function PlayClient({ auth }: PlayClientProps) {
   const [pendingFlyClassName, setPendingFlyClassName] = useState("");
   const [feedbackPoints, setFeedbackPoints] = useState<CorrectAnswerPoints | null>(null);
   const [scoreAnimId, setScoreAnimId] = useState(0);
+  const [fillBarToEnd, setFillBarToEnd] = useState(false);
   const [unlockedLevel, setUnlockedLevel] = useState<Level>(1);
   const questionStartedAtRef = useRef<number>(0);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -251,6 +283,7 @@ export function PlayClient({ auth }: PlayClientProps) {
       setCurrentIndex(0);
       setAnswer("");
       setRunningScore(0);
+      setFillBarToEnd(false);
       setPendingPoints(null);
       setPendingFlyLabel(null);
       setFeedbackPoints(null);
@@ -303,9 +336,21 @@ export function PlayClient({ auth }: PlayClientProps) {
         queueScoreAwards(result);
 
         if (result.completed) {
+          const fillToEnd =
+            level != null &&
+            willPerfectOnFinalQuestion(
+              level,
+              questions.length,
+              currentIndex,
+              runningScore,
+              result,
+            );
+          if (fillToEnd) {
+            setFillBarToEnd(true);
+          }
           setTimeout(() => {
             router.push(`/result/${activeId}`);
-          }, feedbackDurationMs(awards, COMPLETION_FEEDBACK_MS));
+          }, completionRedirectMs(awards, fillToEnd));
           return;
         }
       } else {
@@ -332,9 +377,21 @@ export function PlayClient({ auth }: PlayClientProps) {
         queueScoreAwards(result);
 
         if (result.completed) {
+          const fillToEnd =
+            level != null &&
+            willPerfectOnFinalQuestion(
+              level,
+              questions.length,
+              currentIndex,
+              runningScore,
+              result,
+            );
+          if (fillToEnd) {
+            setFillBarToEnd(true);
+          }
           setTimeout(() => {
             router.push(`/result/guest/${activeId}`);
-          }, feedbackDurationMs(awards, COMPLETION_FEEDBACK_MS));
+          }, completionRedirectMs(awards, fillToEnd));
           return;
         }
       }
@@ -363,6 +420,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     setCurrentIndex(0);
     setAnswer("");
     setRunningScore(0);
+    setFillBarToEnd(false);
     setPendingPoints(null);
     setPendingFlyLabel(null);
     setFeedbackPoints(null);
@@ -469,7 +527,12 @@ export function PlayClient({ auth }: PlayClientProps) {
       </div>
 
       {level != null && (
-        <LiveScoreProgressBar level={level} totalScore={runningScore} />
+        <LiveScoreProgressBar
+          key={sessionId ?? localId ?? "quiz"}
+          level={level}
+          totalScore={runningScore}
+          fillToEnd={fillBarToEnd}
+        />
       )}
 
       <section

@@ -33,13 +33,48 @@ Every **new** time attack session SHALL begin at **level 1**, regardless of the 
 - **THEN** the first wave uses level 1 questions and level 1 boss parameters
 
 #### Scenario: Development shortcut to boss stage
-- **WHEN** the app runs in development and the player opens `/play/time-attack?devStart=<level>` (optional `devEnma=<1–10>` when `devStart=10`)
-- **THEN** a new time attack session starts at the requested level and Enma number with full boss HP
+- **WHEN** the app runs in development and the player opens `/play/time-attack?devStart=<level>` (1–10)
+- **THEN** a new time attack session starts at the requested level with full boss HP
 - **AND** any in-progress time attack session is abandoned first
 
 #### Scenario: Development shortcut ignored in production
-- **WHEN** the app runs outside development and the URL includes `devStart` or `devEnma`
+- **WHEN** the app runs outside development and the URL includes `devStart`
 - **THEN** the session starts at level 1 as usual
+
+### Requirement: Time attack level question generation
+
+Time attack SHALL use **dedicated question generation rules per level**. Levels 1–6 SHALL match the standard mode addition rules. Levels 7–10 SHALL use the time-attack-specific rules below.
+
+| Level | Operands | Carry rule |
+|-------|----------|------------|
+| Lv1 | 1–9 + 1–9 | No carry (sum ≤ 9) |
+| Lv2 | 1–9 + 1–9 | With carry (sum ≥ 10) |
+| Lv3 | 1–9 + 10–99 (either order) | No carry in any column |
+| Lv4 | 1–9 + 10–99 (either order) | At least one carry |
+| Lv5 | 10–99 + 10–99 | No carry in any column |
+| Lv6 | 10–99 + 10–99 | At least one carry |
+| Lv7 | 10–99 + 10–99 | Tens column carries to hundreds (sum ≥ 100) |
+| Lv8 | 1–999 + 1–99 (either order) | Any |
+| Lv9 | 1–999 + 1–999 | Any (閻魔) |
+| Lv10 | 1–999 + 1–999 | Any (黒い閻魔) |
+
+Answer input SHALL accept up to **3 digits** for levels 1–7 and **4 digits** for levels 8–10.
+
+#### Scenario: Level 7 question generation
+- **WHEN** a level 7 wave begins
+- **THEN** each question uses two operands of 10–99 whose tens digits sum to 10 or more
+
+#### Scenario: Level 8 question generation
+- **WHEN** a level 8 wave begins
+- **THEN** one operand is 1–999 and the other is 1–99
+
+#### Scenario: Level 9 question generation
+- **WHEN** a level 9 wave begins against 閻魔大王
+- **THEN** each operand is 1–999
+
+#### Scenario: Level 10 question generation
+- **WHEN** a level 10 wave begins against 閻魔大王
+- **THEN** each operand is 1–999
 
 ### Requirement: Five-question waves with server generation and scoring
 
@@ -105,9 +140,9 @@ When the mistake count reaches **3**, the time attack session SHALL end and navi
 
 Each question SHALL have an internal time limit used for **time bonus calculation only**. The limit SHALL NOT be shown to the player. When the limit elapses, the session SHALL **NOT** end. The player MAY continue answering; a correct answer after timeout SHALL award **base points only** (time bonus = 0). Timeout SHALL NOT increment the mistake counter.
 
-For levels 1–9 (non-Enma bosses), the limit SHALL be **10 seconds**.
+For levels 1–9 (non–double-HP bosses), the limit SHALL be **10 seconds**.
 
-For Enma bosses at level 10, the limit SHALL follow the Enma stage table (see Requirement: Enma stage parameters).
+For the final 閻魔大王 at level 10, the limit SHALL be **7 seconds** with time bonus multiplier **×10**.
 
 The first **1 second** after a question appears SHALL NOT advance the bonus countdown (same grace as standard mode).
 
@@ -154,8 +189,9 @@ Level-scaled HP ratio:
 |------|---------------|
 | Lv1–3 oni | 5 |
 | Lv4–7 oni | 3 |
-| Lv8–9 oni | 2 |
-| Enma (level 10) | 2 |
+| Lv8 oni | 2 |
+| Lv9 閻魔 | 2 |
+| Lv10 閻魔（黒） | 4 |
 
 When a wave ends, `remainingHp -= waveScore`. If remaining HP is **greater than 0**, the same boss continues and **HP carries over** to the next wave. If remaining HP is **≤ 0**, the boss is defeated.
 
@@ -194,56 +230,28 @@ defeatBonus = floor(waveScore × 0.5)
 - **WHEN** a boss is defeated on a wave that earned 400 points
 - **THEN** 200 points are added to the session total as defeat bonus
 
-### Requirement: Level progression through oni bosses
+### Requirement: Level progression through oni and Enma bosses
 
-Levels 1–9 SHALL use colored oni bosses. Defeating the oni at level N SHALL advance the player to level N+1 with a fresh boss HP pool for the new level.
+Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** (purple `/enma.png`). Level 10 SHALL use **閻魔大王** with **red skin** and a **large black aura** on `/enma.png`, and double the HP ratio of level 9. Both Enma stages SHALL display the label **閻魔大王** only (no 「体力倍」 suffix). Defeating the boss at level N SHALL advance the player to level N+1 with a fresh boss HP pool.
 
 #### Scenario: Level 1 oni defeated
 - **WHEN** the level 1 oni is defeated
 - **THEN** the next wave starts at level 2 with newly calculated HP
 
-#### Scenario: Level 9 oni defeated
-- **WHEN** the level 9 oni is defeated
-- **THEN** the next wave starts at level 10 against Enma #1
+#### Scenario: Level 8 oni defeated
+- **WHEN** the level 8 oni is defeated
+- **THEN** the next wave starts at level 9 against 閻魔大王
 
-### Requirement: Enma stage parameters
+#### Scenario: Level 9 Enma defeated
+- **WHEN** 閻魔大王 at level 9 is defeated
+- **THEN** the next wave starts at level 10 against 閻魔大王 (red skin, black aura)
 
-At level 10, the player SHALL fight **Enma Daio** (閻魔大王). Up to **10 Enma bosses** SHALL be fought sequentially. Parameters per Enma number:
+### Requirement: Clear on level 10 Enma defeat
 
-| Enma | Time limit (sec) | Time bonus multiplier |
-|------|------------------|----------------------|
-| #1 | 10 | ×1 |
-| #2 | 9 | ×2 |
-| #3 | 8 | ×3 |
-| #4 | 7 | ×4 |
-| #5 | 7 | ×5 |
-| #6 | 7 | ×6 |
-| #7 | 7 | ×7 |
-| #8 | 7 | ×8 |
-| #9 | 7 | ×9 |
-| #10 | 7 | ×10 |
-
-Formulas:
-
-```
-timeLimitSeconds    = max(7, 11 - enmaNumber)
-timeBonusMultiplier = enmaNumber
-```
-
-#### Scenario: Enma #5 parameters
-- **WHEN** the player faces Enma #5
-- **THEN** each question has a 7-second limit and time bonus multiplier ×5
-
-#### Scenario: Enma #10 parameters
-- **WHEN** the player faces Enma #10
-- **THEN** each question has a 7-second limit and time bonus multiplier ×10
-
-### Requirement: Clear on Enma #10 defeat
-
-After defeating **Enma #10**, the time attack session SHALL end with status **cleared** and navigate to the result screen. No further waves SHALL be offered.
+After defeating **閻魔大王** at level 10, the time attack session SHALL end with status **cleared** and navigate to the result screen. No further waves SHALL be offered.
 
 #### Scenario: Game clear
-- **WHEN** the player defeats Enma #10
+- **WHEN** the player defeats 閻魔大王 at level 10
 - **THEN** the session status is cleared
 - **AND** the result screen shows a clear/victory state
 
@@ -284,19 +292,23 @@ When a player answers correctly, the system SHALL NOT show earned points in the 
 
 ### Requirement: Oni score display
 
-The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–9 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 10 (Enma) SHALL use a dedicated `/enma.png` image depicting **Enma Daio** in traditional judge attire with **purple** as the primary color. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score and question progress in the center, and the boss image on the right. The player name and level label SHALL NOT appear in the header.
+The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–8 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 9 閻魔 SHALL use `/enma.png` with a **purple** tint. Level 10 閻魔 SHALL use `/enma.png` with **red skin** and a **large black aura**. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score and question progress in the center, and the boss image on the right. The player name and level label SHALL NOT appear in the header.
 
 #### Scenario: Header row layout
 - **WHEN** a player is in time attack
 - **THEN** the teacher mascot, total score with question/mistake counts, and boss image appear side by side in the header
 
 #### Scenario: Oni color changes by level
-- **WHEN** the player faces an oni boss at level N (1–9)
+- **WHEN** the player faces an oni boss at level N (1–8)
 - **THEN** the header shows `/oni.png` with a level-specific color tint distinct from other levels
 
 #### Scenario: Enma uses dedicated artwork
-- **WHEN** the player faces Enma at level 10
-- **THEN** the header shows `/enma.png` (purple Enma in judge robes) instead of the tinted oni image
+- **WHEN** the player faces 閻魔 at level 9
+- **THEN** the header shows `/enma.png` with a purple tint
+
+#### Scenario: Final Enma at level 10
+- **WHEN** the player faces 閻魔 at level 10
+- **THEN** the header shows `/enma.png` with red skin and a large black aura distinct from level 9
 
 #### Scenario: No name or level in header
 - **WHEN** the quiz header is displayed
@@ -306,7 +318,7 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 
 When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot launches a **light orb** toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
 
-**Non-defeat waves SHALL NOT show an attack popup** (no 「鬼へ攻撃！」). **Boss defeat SHALL pause question progression** and show a **「鬼撃破！」** popup until dismissed, then proceed to the next boss entrance and next wave. **While question input is blocked and before the defeat popup appears**, a **full-screen loading overlay with a spinning indicator and 「読み込み中...」** SHALL be shown (same pattern as route loading). **Enma #10 defeat (game clear) SHALL use a longer defeat effect sequence** and display **「鬼、すべて撃破！」** instead of the standard defeat popup text, then navigate to the clear result screen.
+**Non-defeat waves SHALL NOT show an attack popup** (no 「鬼へ攻撃！」). **Boss defeat SHALL pause question progression** and show a **「鬼撃破！」** popup until dismissed, then proceed to the next boss entrance and next wave. **While question input is blocked and before the defeat popup appears**, a **full-screen loading overlay with a spinning indicator and 「読み込み中...」** SHALL be shown (same pattern as route loading). **Level 10 閻魔 defeat (game clear) SHALL use a longer defeat effect sequence** and display **「鬼、すべて撃破！」** instead of the standard defeat popup text, then navigate to the clear result screen.
 
 #### Scenario: No attack popup on non-defeat wave
 - **WHEN** a wave ends without defeating the boss
@@ -314,14 +326,14 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th
 - **AND** the next wave question begins after the animation completes
 
 #### Scenario: Defeat popup on boss defeat
-- **WHEN** a boss is defeated by wave damage (except Enma #10 final clear)
+- **WHEN** a boss is defeated by wave damage (except level 10 final clear)
 - **THEN** question input is blocked
 - **AND** a loading overlay with a spinner and **「読み込み中...」** is shown until the attack preamble completes
 - **AND** a **「鬼撃破！」** popup is shown
 - **AND** the popup remains until the defeat sequence (explosion, next boss entrance) completes
 
 #### Scenario: Final Enma defeat celebration
-- **WHEN** Enma #10 is defeated
+- **WHEN** 閻魔大王 at level 10 is defeated
 - **THEN** question input is blocked
 - **AND** a longer defeat effect sequence plays (extended explosion / celebration versus normal boss defeat)
 - **AND** a **「鬼、すべて撃破！」** popup is shown
@@ -397,7 +409,7 @@ Star rating from standard mode SHALL NOT be applied to time attack sessions.
 - **THEN** the result screen shows game over with accumulated stats
 
 #### Scenario: Clear result
-- **WHEN** a session ends by defeating Enma #10
+- **WHEN** a session ends by defeating 閻魔大王 at level 10
 - **THEN** the result screen shows clear with accumulated stats
 
 ### Requirement: Reuse standard quiz input UX

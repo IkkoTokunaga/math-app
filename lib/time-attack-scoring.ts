@@ -4,8 +4,11 @@ import type { Level } from "@/lib/questions";
 export const WAVE_QUESTION_COUNT = 5;
 export const DEFEAT_BONUS_RATIO = 0.5;
 export const MAX_MISTAKES = 3;
-export function getOniHpRatio(level: Level, _enmaNumber: number): number {
-  if (level >= 10) {
+export function getOniHpRatio(level: Level, enmaNumber: number): number {
+  if (level >= 10 && enmaNumber === 2) {
+    return 4;
+  }
+  if (level >= 9) {
     return 2;
   }
   if (level <= 3) {

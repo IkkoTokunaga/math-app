@@ -22,7 +22,7 @@ If `remainingSeconds` is 0, **timeBonus = 0** but the player MAY still submit a 
 
 For levels 1–9: `timeLimitSeconds = 10`, `timeBonusMultiplier = 1`.
 
-For Enma at level 10: values come from the Enma stage table in the time-attack spec.
+For the final 閻魔大王 at level 10: `timeLimitSeconds = 7`, `timeBonusMultiplier = 10`.
 
 #### Scenario: Level 3 correct with time remaining
 - **WHEN** a player answers correctly at level 3 with 7 remaining bonus seconds (multiplier ×1)
@@ -33,8 +33,8 @@ For Enma at level 10: values come from the Enma stage table in the time-attack s
 - **THEN** pointsEarned = 30 (base only)
 - **AND** the session continues
 
-#### Scenario: Enma #10 instant answer
-- **WHEN** a player answers correctly at Enma #10 with 7 remaining bonus seconds
+#### Scenario: Level 10 Enma double instant answer
+- **WHEN** a player answers correctly at level 10 with 7 remaining bonus seconds
 - **THEN** basePoints = 100
 - **AND** timeBonus = 10 × 7 × 10 = 700
 - **AND** pointsEarned = 800
@@ -59,7 +59,7 @@ Boss HP SHALL use:
 oniMaxHp = floor(waveMaxScore × getOniHpRatio(level, enmaNumber))
 ```
 
-Level-scaled ratios: Lv1–3 → 5, Lv4–7 → 3, Lv8–9 → 2, Enma → 2.
+Level-scaled ratios: Lv1–3 → 5, Lv4–7 → 3, Lv8 → 2, Lv9 閻魔 → 2, Lv10 黒い閻魔 → 4.
 
 This value SHALL be used for the wave progress bar maximum and boss HP calculation.
 
@@ -71,10 +71,10 @@ This value SHALL be used for the wave progress bar maximum and boss HP calculati
 - **WHEN** a level 1 oni appears
 - **THEN** oniMaxHp = floor(100 × 5) = 500
 
-#### Scenario: Enma #6 wave maximum at level 10
-- **WHEN** an Enma #6 wave begins (7 sec, ×6)
-- **THEN** maxPerQuestion = 100 + 10 × 7 × 6 = 520
-- **AND** waveMaxScore = 2600
+#### Scenario: Level 10 Enma wave maximum
+- **WHEN** a level 10 閻魔 wave begins (7 sec, ×10)
+- **THEN** maxPerQuestion = 100 + 10 × 7 × 10 = 800
+- **AND** waveMaxScore = 4000
 
 ### Requirement: Time attack session total score
 

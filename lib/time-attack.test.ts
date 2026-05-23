@@ -4,8 +4,9 @@ import { createDevTimeAttackState } from "./dev-time-attack-setup";
 import {
   applyWaveDamage,
   createInitialTimeAttackState,
-  getEnmaParams,
-  MAX_ENMA_NUMBER,
+  ENMA_STAGE_DOUBLE_HP,
+  ENMA_STAGE_NORMAL,
+  getBossParams,
 } from "./time-attack";
 import {
   calculateDefeatBonus,
@@ -30,13 +31,14 @@ describe("time-attack-scoring", () => {
   it("uses level-scaled HP ratios", () => {
     assert.equal(getOniHpRatio(1, 0), 5);
     assert.equal(getOniHpRatio(5, 0), 3);
-    assert.equal(getOniHpRatio(9, 0), 2);
-    assert.equal(getOniHpRatio(10, 6), 2);
+    assert.equal(getOniHpRatio(8, 0), 2);
+    assert.equal(getOniHpRatio(9, 1), 2);
+    assert.equal(getOniHpRatio(10, 2), 4);
   });
 
-  it("calculates Enma #6 wave maximum at level 10", () => {
-    assert.equal(calculateWaveMaxScore(10, 7, 6), 2600);
-    assert.equal(calculateOniMaxHp(10, 7, 6, 6), 5200);
+  it("calculates level 10 Enma double HP wave maximum", () => {
+    assert.equal(calculateWaveMaxScore(10, 7, 10), 4000);
+    assert.equal(calculateOniMaxHp(10, 7, 10, 2), 16000);
   });
 
   it("awards base points only after bonus time expires", () => {
@@ -46,7 +48,7 @@ describe("time-attack-scoring", () => {
     assert.equal(score.pointsEarned, 30);
   });
 
-  it("applies time bonus multiplier for Enma #10", () => {
+  it("applies time bonus multiplier for level 10 Enma double", () => {
     const score = calculateTimeAttackQuestionScore(10, 1, 7, 10);
     assert.equal(score.basePoints, 100);
     assert.equal(score.timeBonus, 700);
@@ -92,24 +94,31 @@ describe("time-attack state", () => {
     }
   });
 
-  it("clears after Enma #10 defeat", () => {
-    const params = getEnmaParams(MAX_ENMA_NUMBER);
-    const hp = calculateOniMaxHp(
-      10,
-      params.timeLimitSeconds,
-      params.timeBonusMultiplier,
-      MAX_ENMA_NUMBER,
-    );
-    const state = {
-      ...createInitialTimeAttackState(),
-      currentLevel: 10 as const,
-      enmaNumber: MAX_ENMA_NUMBER,
-      oniHpRemaining: hp,
-      oniHpMax: hp,
-      timeLimitSeconds: params.timeLimitSeconds,
-      timeBonusMultiplier: params.timeBonusMultiplier,
-    };
-    const result = applyWaveDamage(state, hp);
+  it("advances from level 8 to Enma at level 9", () => {
+    const state = createDevTimeAttackState({ level: 8, enmaNumber: 0 });
+    const result = applyWaveDamage(state, state.oniHpMax);
+    assert.equal(result.kind, "defeated");
+    if (result.kind === "defeated") {
+      assert.equal(result.state.currentLevel, 9);
+      assert.equal(result.state.enmaNumber, ENMA_STAGE_NORMAL);
+      assert.equal(result.cleared, false);
+    }
+  });
+
+  it("advances from Enma level 9 to double-HP level 10", () => {
+    const state = createDevTimeAttackState({ level: 9, enmaNumber: ENMA_STAGE_NORMAL });
+    const result = applyWaveDamage(state, state.oniHpMax);
+    assert.equal(result.kind, "defeated");
+    if (result.kind === "defeated") {
+      assert.equal(result.state.currentLevel, 10);
+      assert.equal(result.state.enmaNumber, ENMA_STAGE_DOUBLE_HP);
+      assert.equal(result.cleared, false);
+    }
+  });
+
+  it("clears after level 10 Enma double HP defeat", () => {
+    const state = createDevTimeAttackState({ level: 10, enmaNumber: ENMA_STAGE_DOUBLE_HP });
+    const result = applyWaveDamage(state, state.oniHpMax);
     assert.equal(result.kind, "defeated");
     if (result.kind === "defeated") {
       assert.equal(result.cleared, true);
@@ -117,8 +126,11 @@ describe("time-attack state", () => {
     }
   });
 
-  it("maps Enma #5 parameters", () => {
-    assert.deepEqual(getEnmaParams(5), { timeLimitSeconds: 7, timeBonusMultiplier: 5 });
+  it("maps level 10 boss parameters", () => {
+    assert.deepEqual(getBossParams(10, ENMA_STAGE_DOUBLE_HP), {
+      timeLimitSeconds: 7,
+      timeBonusMultiplier: 10,
+    });
   });
 });
 
@@ -131,17 +143,21 @@ describe("dev-time-attack-setup", () => {
     assert.equal(state.phase, "wave_active");
   });
 
-  it("starts at requested Enma number", () => {
-    const state = createDevTimeAttackState({ level: 10, enmaNumber: 5 });
-    assert.equal(state.currentLevel, 10);
-    assert.equal(state.enmaNumber, 5);
-    assert.equal(state.bossesDefeated, 13);
-    assert.equal(state.timeLimitSeconds, 7);
-    assert.equal(state.timeBonusMultiplier, 5);
+  it("starts at requested Enma level 9", () => {
+    const state = createDevTimeAttackState({ level: 9, enmaNumber: 0 });
+    assert.equal(state.currentLevel, 9);
+    assert.equal(state.enmaNumber, ENMA_STAGE_NORMAL);
+    assert.equal(state.bossesDefeated, 8);
+    assert.equal(state.timeLimitSeconds, 10);
+    assert.equal(state.timeBonusMultiplier, 1);
   });
 
-  it("ignores enmaNumber below level 10", () => {
-    const state = createDevTimeAttackState({ level: 3, enmaNumber: 7 });
-    assert.equal(state.enmaNumber, 0);
+  it("starts at requested Enma level 10 double HP", () => {
+    const state = createDevTimeAttackState({ level: 10, enmaNumber: 0 });
+    assert.equal(state.currentLevel, 10);
+    assert.equal(state.enmaNumber, ENMA_STAGE_DOUBLE_HP);
+    assert.equal(state.bossesDefeated, 9);
+    assert.equal(state.timeLimitSeconds, 7);
+    assert.equal(state.timeBonusMultiplier, 10);
   });
 });

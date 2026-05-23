@@ -7,7 +7,9 @@ import {
 
 export { getOniHpRatio, WAVE_QUESTION_COUNT } from "@/lib/time-attack-scoring";
 
-export const MAX_ENMA_NUMBER = 10;
+/** Lv9 = 紫の閻魔、Lv10 = 赤肌・黒オーラの閻魔（HP倍率×4） */
+export const ENMA_STAGE_NORMAL = 1;
+export const ENMA_STAGE_DOUBLE_HP = 2;
 
 export type TimeAttackPhase = "wave_active" | "cleared" | "failed";
 
@@ -33,22 +35,17 @@ export type EnmaParams = {
   timeBonusMultiplier: number;
 };
 
-export function getEnmaParams(enmaNumber: number): EnmaParams {
-  const clamped = Math.max(1, Math.min(MAX_ENMA_NUMBER, enmaNumber));
-  return {
-    timeLimitSeconds: Math.max(7, 11 - clamped),
-    timeBonusMultiplier: clamped,
-  };
-}
-
 export function getBossParams(level: Level, enmaNumber: number): EnmaParams {
-  if (level < 10) {
+  if (level < 9) {
     return { timeLimitSeconds: 10, timeBonusMultiplier: 1 };
   }
-  if (enmaNumber <= 0) {
-    return getEnmaParams(1);
+  if (level === 9) {
+    return { timeLimitSeconds: 10, timeBonusMultiplier: 1 };
   }
-  return getEnmaParams(enmaNumber);
+  if (enmaNumber === ENMA_STAGE_DOUBLE_HP) {
+    return { timeLimitSeconds: 7, timeBonusMultiplier: 10 };
+  }
+  return { timeLimitSeconds: 10, timeBonusMultiplier: 1 };
 }
 
 export function createInitialTimeAttackState(): TimeAttackState {
@@ -79,13 +76,13 @@ export function createInitialTimeAttackState(): TimeAttackState {
   };
 }
 
-export function isEnmaBoss(level: Level, enmaNumber: number): boolean {
-  return level >= 10 && enmaNumber > 0;
+export function isEnmaBoss(level: Level): boolean {
+  return level >= 9;
 }
 
 export function getBossLabel(state: TimeAttackState): string {
-  if (isEnmaBoss(state.currentLevel, state.enmaNumber)) {
-    return `閻魔大王 #${state.enmaNumber}`;
+  if (isEnmaBoss(state.currentLevel)) {
+    return "閻魔大王";
   }
   return `おに Lv${state.currentLevel}`;
 }
@@ -101,6 +98,30 @@ export type WaveResolution =
       defeatBonus: number;
       cleared: boolean;
     };
+
+function buildBossState(
+  afterBonus: TimeAttackState,
+  level: Level,
+  enmaNumber: number,
+): TimeAttackState {
+  const params = getBossParams(level, enmaNumber);
+  const oniHpMax = calculateOniMaxHp(
+    level,
+    params.timeLimitSeconds,
+    params.timeBonusMultiplier,
+    enmaNumber,
+  );
+
+  return {
+    ...afterBonus,
+    currentLevel: level,
+    enmaNumber,
+    oniHpRemaining: oniHpMax,
+    oniHpMax,
+    timeLimitSeconds: params.timeLimitSeconds,
+    timeBonusMultiplier: params.timeBonusMultiplier,
+  };
+}
 
 export function applyWaveDamage(state: TimeAttackState, waveScore: number): WaveResolution {
   const next: TimeAttackState = {
@@ -130,68 +151,36 @@ export function applyWaveDamage(state: TimeAttackState, waveScore: number): Wave
     bossesDefeated: state.bossesDefeated + 1,
   };
 
-  if (state.currentLevel < 10) {
+  if (state.currentLevel < 9) {
     const newLevel = (state.currentLevel + 1) as Level;
-    const enmaNumber = newLevel === 10 ? 1 : 0;
-    const params = getBossParams(newLevel, enmaNumber);
-    const oniHpMax = calculateOniMaxHp(
-      newLevel,
-      params.timeLimitSeconds,
-      params.timeBonusMultiplier,
-      enmaNumber,
-    );
+    const enmaNumber = newLevel >= 9 ? ENMA_STAGE_NORMAL : 0;
 
     return {
       kind: "defeated",
       defeatBonus,
       cleared: false,
-      state: {
-        ...afterBonus,
-        currentLevel: newLevel,
-        enmaNumber,
-        oniHpRemaining: oniHpMax,
-        oniHpMax,
-        timeLimitSeconds: params.timeLimitSeconds,
-        timeBonusMultiplier: params.timeBonusMultiplier,
-      },
+      state: buildBossState(afterBonus, newLevel, enmaNumber),
     };
   }
 
-  if (state.enmaNumber >= MAX_ENMA_NUMBER) {
+  if (state.currentLevel === 9) {
     return {
       kind: "defeated",
       defeatBonus,
-      cleared: true,
-      state: {
-        ...afterBonus,
-        currentLevel: 10,
-        enmaNumber: MAX_ENMA_NUMBER,
-        phase: "cleared",
-      },
+      cleared: false,
+      state: buildBossState(afterBonus, 10, ENMA_STAGE_DOUBLE_HP),
     };
   }
-
-  const advancedEnma = state.enmaNumber + 1;
-  const params = getEnmaParams(advancedEnma);
-  const oniHpMax = calculateOniMaxHp(
-    10,
-    params.timeLimitSeconds,
-    params.timeBonusMultiplier,
-    advancedEnma,
-  );
 
   return {
     kind: "defeated",
     defeatBonus,
-    cleared: false,
+    cleared: true,
     state: {
       ...afterBonus,
       currentLevel: 10,
-      enmaNumber: advancedEnma,
-      oniHpRemaining: oniHpMax,
-      oniHpMax,
-      timeLimitSeconds: params.timeLimitSeconds,
-      timeBonusMultiplier: params.timeBonusMultiplier,
+      enmaNumber: ENMA_STAGE_DOUBLE_HP,
+      phase: "cleared",
     },
   };
 }

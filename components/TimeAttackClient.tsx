@@ -20,8 +20,8 @@ import { getWaveMaxScoreForState, type TimeAttackState } from "@/lib/time-attack
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
 import {
   formatQuestionExpression,
-  getMaxAnswerDigits,
 } from "@/lib/questions";
+import { getTimeAttackMaxAnswerDigits } from "@/lib/time-attack-questions";
 import { useIsClient } from "@/lib/use-is-client";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
 
@@ -729,7 +729,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
             onChange={setAnswer}
             onSubmit={() => void submitAnswer()}
             disabled={submitting || timerPaused}
-            maxDigits={getMaxAnswerDigits(timeAttackState.currentLevel)}
+            maxDigits={getTimeAttackMaxAnswerDigits(timeAttackState.currentLevel)}
           />
         </div>
       )}

@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { questionLogs, sessions } from "@/lib/db/schema";
 import type { Question, TimeAttackState as DbTimeAttackState } from "@/lib/db/schema";
-import { generateQuestions, getCorrectAnswer, type Level } from "@/lib/questions";
+import { generateTimeAttackQuestions } from "@/lib/time-attack-questions";
+import { getCorrectAnswer, type Level } from "@/lib/questions";
 import {
   createDevTimeAttackState,
   type DevTimeAttackStart,
@@ -155,7 +156,7 @@ async function completeWave(
   const resolution = applyWaveDamage(state, waveScore);
 
   if (resolution.kind === "continue") {
-    const questions = generateQuestions(
+    const questions = generateTimeAttackQuestions(
       resolution.state.currentLevel,
       WAVE_QUESTION_COUNT,
     );
@@ -196,7 +197,7 @@ async function completeWave(
     };
   }
 
-  const questions = generateQuestions(
+  const questions = generateTimeAttackQuestions(
     resolution.state.currentLevel,
     WAVE_QUESTION_COUNT,
   );
@@ -295,7 +296,7 @@ export async function startTimeAttackSessionAction(
   const initialState = devStartActive
     ? createDevTimeAttackState(devStart)
     : createInitialTimeAttackState();
-  const questions = generateQuestions(initialState.currentLevel, WAVE_QUESTION_COUNT);
+  const questions = generateTimeAttackQuestions(initialState.currentLevel, WAVE_QUESTION_COUNT);
 
   const [session] = await getDb()
     .insert(sessions)

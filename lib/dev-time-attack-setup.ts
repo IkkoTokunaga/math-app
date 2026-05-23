@@ -1,7 +1,8 @@
 import type { Level } from "@/lib/questions";
 import {
+  ENMA_STAGE_DOUBLE_HP,
+  ENMA_STAGE_NORMAL,
   getBossParams,
-  MAX_ENMA_NUMBER,
   type TimeAttackState,
 } from "@/lib/time-attack";
 import { calculateOniMaxHp } from "@/lib/time-attack-scoring";
@@ -27,10 +28,20 @@ function toSearchParams(
   return search;
 }
 
-/** 開発用: 指定 Lv / 閻魔番号から wave_active 状態を生成する */
+function resolveEnmaNumber(level: Level): number {
+  if (level >= 10) {
+    return ENMA_STAGE_DOUBLE_HP;
+  }
+  if (level >= 9) {
+    return ENMA_STAGE_NORMAL;
+  }
+  return 0;
+}
+
+/** 開発用: 指定 Lv から wave_active 状態を生成する */
 export function createDevTimeAttackState(start: DevTimeAttackStart): TimeAttackState {
   const level = start.level;
-  const enmaNumber = level >= 10 ? start.enmaNumber : 0;
+  const enmaNumber = resolveEnmaNumber(level);
   const params = getBossParams(level, enmaNumber);
   const oniHpMax = calculateOniMaxHp(
     level,
@@ -38,7 +49,7 @@ export function createDevTimeAttackState(start: DevTimeAttackStart): TimeAttackS
     params.timeBonusMultiplier,
     enmaNumber,
   );
-  const bossesDefeated = level < 10 ? level - 1 : 9 + (enmaNumber - 1);
+  const bossesDefeated = level < 9 ? level - 1 : 8 + (enmaNumber - 1);
 
   return {
     currentLevel: level,
@@ -75,16 +86,5 @@ export function parseDevTimeAttackStart(
     return null;
   }
 
-  if (level < 10) {
-    return { level: level as Level, enmaNumber: 0 };
-  }
-
-  const devEnma = search.get("devEnma");
-  const parsedEnma = devEnma ? Number.parseInt(devEnma, 10) : 1;
-  const enmaNumber =
-    Number.isFinite(parsedEnma) && parsedEnma >= 1 && parsedEnma <= MAX_ENMA_NUMBER
-      ? parsedEnma
-      : 1;
-
-  return { level: level as Level, enmaNumber };
+  return { level: level as Level, enmaNumber: resolveEnmaNumber(level as Level) };
 }

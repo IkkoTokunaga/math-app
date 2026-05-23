@@ -27,7 +27,7 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
 
         <div className="my-8 grid gap-4">
           {isClear ? (
-            <p className="text-success text-2xl font-bold">閻魔大王 #10 を倒した！</p>
+            <p className="text-success text-2xl font-bold">閻魔大王を倒した！</p>
           ) : (
             failLabel && <p className="text-lg text-muted">終了理由: {failLabel}</p>
           )}

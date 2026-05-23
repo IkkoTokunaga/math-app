@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import type { OniPhase } from "@/components/MascotBeam";
 import {
   SCORE_FLY_DELAY_MS,
   SCORE_FLY_DURATION_MS,
@@ -17,13 +18,28 @@ type TimeAttackOniScoreProps = {
   animId: number;
   getFlyFromElement: () => HTMLElement | null;
   onPointsApplied: () => void;
-  hpHit?: boolean;
+  oniPhase?: OniPhase;
+  oniRef?: RefObject<HTMLDivElement | null>;
+  bossKey?: string;
   layout?: "combined" | "split";
   meta?: React.ReactNode;
 };
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function oniPhaseClass(phase: OniPhase): string {
+  switch (phase) {
+    case "shaking":
+      return "time-attack-oni-score--shake";
+    case "exploding":
+      return "time-attack-oni-score--exploding";
+    case "entering":
+      return "time-attack-oni-score--enter";
+    default:
+      return "";
+  }
 }
 
 export function TimeAttackOniScore({
@@ -35,7 +51,9 @@ export function TimeAttackOniScore({
   animId,
   getFlyFromElement,
   onPointsApplied,
-  hpHit = false,
+  oniPhase = "idle",
+  oniRef,
+  bossKey = "oni",
   layout = "combined",
   meta = null,
 }: TimeAttackOniScoreProps) {
@@ -44,6 +62,9 @@ export function TimeAttackOniScore({
   const [flying, setFlying] = useState(false);
   const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
   const [popping, setPopping] = useState(false);
+
+  const showOni = oniPhase !== "hidden";
+  const phaseClass = oniPhaseClass(oniPhase);
 
   useEffect(() => {
     if (pointsEarned == null || pointsEarned <= 0 || animId === 0) {
@@ -115,12 +136,34 @@ export function TimeAttackOniScore({
     </p>
   );
 
-  const oniEl = (
+  const oniBody = showOni ? (
     <img
+      key={bossKey}
       src="/oni.png"
       alt=""
       className="time-attack-oni-score__image"
     />
+  ) : null;
+
+  const oniWrap = (
+    <div
+      ref={oniRef}
+      className={`time-attack-top__oni time-attack-oni-score ${phaseClass}`.trim()}
+    >
+      {oniBody}
+      {oniPhase === "exploding" && (
+        <div className="oni-explosion" aria-hidden="true">
+          <span className="oni-explosion__ring" />
+          <span className="oni-explosion__flash" />
+          <span className="oni-explosion__particle oni-explosion__particle--1" />
+          <span className="oni-explosion__particle oni-explosion__particle--2" />
+          <span className="oni-explosion__particle oni-explosion__particle--3" />
+          <span className="oni-explosion__particle oni-explosion__particle--4" />
+          <span className="oni-explosion__particle oni-explosion__particle--5" />
+          <span className="oni-explosion__particle oni-explosion__particle--6" />
+        </div>
+      )}
+    </div>
   );
 
   if (layout === "split") {
@@ -130,11 +173,7 @@ export function TimeAttackOniScore({
           {scoreEl}
           {meta}
         </div>
-        <div
-          className={`time-attack-top__oni time-attack-oni-score ${hpHit ? "time-attack-oni-score--hit" : ""}`}
-        >
-          {oniEl}
-        </div>
+        {oniWrap}
         {flying && flyLabel != null && (
           <span
             className="score-fly-badge"
@@ -155,10 +194,8 @@ export function TimeAttackOniScore({
 
   return (
     <>
-      <div
-        className={`time-attack-oni-score ${hpHit ? "time-attack-oni-score--hit" : ""}`}
-      >
-        {oniEl}
+      <div className={`time-attack-oni-score ${phaseClass}`.trim()}>
+        {oniBody}
         {scoreEl}
       </div>
       {flying && flyLabel != null && (

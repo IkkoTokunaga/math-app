@@ -66,6 +66,8 @@ When the mistake count reaches **3**, the time attack session SHALL end immediat
 
 Each question SHALL have a countdown time limit. If the limit elapses before a correct answer is submitted, the session SHALL end immediately and navigate to the result screen. The question SHALL award 0 points.
 
+The countdown SHALL be shown as a **circular gauge** in the **top-left corner of the question blackboard** (the equation card).
+
 For levels 1–9 (non-Enma bosses), the limit SHALL be **10 seconds**.
 
 For Enma bosses at level 10, the limit SHALL follow the Enma stage table (see Requirement: Enma stage parameters).
@@ -80,6 +82,11 @@ The first **1 second** after a question appears SHALL NOT advance the countdown 
 #### Scenario: Grace period
 - **WHEN** a new question is displayed
 - **THEN** the countdown does not decrease during the first 1 second
+
+#### Scenario: Circular timer on blackboard
+- **WHEN** a question is displayed during time attack
+- **THEN** a circular countdown gauge appears at the top-left of the question blackboard
+- **AND** the gauge shows remaining seconds (or a brief start indicator during the grace period)
 
 ### Requirement: Alert effects
 
@@ -193,11 +200,25 @@ After defeating **Enma #10**, the time attack session SHALL end with status **cl
 
 ### Requirement: Wave score progress bar
 
-During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 10-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. A separate **鬼 HP** gauge SHALL remain visible at all times. The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
+During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 10-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. Numeric score values SHALL NOT be shown on the attack or HP gauges. A separate **鬼 HP** gauge SHALL remain visible at all times. The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
+
+When a player answers correctly, the system SHALL NOT show earned points in the success popup. The success popup SHALL dismiss after approximately **1 second**, and the next question SHALL become available at that time (except when the wave is complete). The light and gauge charge animation SHALL continue independently in the background until it finishes. White sparkling light orbs SHALL gather from a wide area around the feedback, merge into one cluster at the center, and then travel together toward the attack gauge. The gauge fill SHALL increase when the cluster reaches the gauge.
 
 #### Scenario: Bar updates on correct answer
 - **WHEN** a player earns points during a wave
-- **THEN** the attack gauge fill increases toward the wave maximum
+- **THEN** white sparkling light orbs gather from a wide area into one cluster
+- **AND** the cluster travels to the attack gauge
+- **AND** the attack gauge fill increases when the cluster reaches the gauge
+
+#### Scenario: Success popup dismisses before light animation completes
+- **WHEN** a player answers correctly
+- **THEN** the success popup dismisses after approximately 1 second
+- **AND** the next question is shown (unless the wave is complete)
+- **AND** the light gather and gauge charge animation continues until the cluster reaches the attack gauge
+
+#### Scenario: No numeric values on gauges
+- **WHEN** the quiz view is displayed
+- **THEN** the attack and HP gauges do not show numeric score or HP values
 
 #### Scenario: HP gauge visible
 - **WHEN** a player is in time attack
@@ -226,15 +247,25 @@ The session total score SHALL be shown together with the provided oni artwork (`
 
 ### Requirement: Mascot beam attack
 
-When a wave completes, the mascot character SHALL fire a beam attack from the header. On impact, the **鬼 HP** gauge SHALL decrease to reflect damage.
+When a wave completes, the mascot character SHALL fire a beam attack from the header **toward the oni mascot** on screen. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
 
-#### Scenario: Mascot fires beam
+#### Scenario: Mascot fires beam at oni
 - **WHEN** a 10-question wave completes
-- **THEN** the mascot fires a beam using the wave score as visual intensity
+- **THEN** the mascot fires a beam from its position toward the current oni image
+- **AND** the beam uses the wave score as visual intensity
+
+#### Scenario: Oni shakes on beam hit
+- **WHEN** the beam reaches the oni
+- **THEN** the oni image shakes before HP updates are finalized
 
 #### Scenario: HP decreases after beam
-- **WHEN** the beam finishes
+- **WHEN** the beam finishes and the shake completes
 - **THEN** the HP gauge updates to the remaining boss HP
+
+#### Scenario: Boss defeat explosion and respawn
+- **WHEN** a boss is defeated by the wave damage
+- **THEN** the oni plays an explosion effect and the image disappears
+- **AND** after a brief pause the next boss oni appears with an entrance animation
 
 #### Scenario: Boss defeat message
 - **WHEN** a boss is defeated

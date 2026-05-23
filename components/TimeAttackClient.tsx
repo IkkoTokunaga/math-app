@@ -7,17 +7,17 @@ import {
   failTimeAttackTimeoutAction,
   submitTimeAttackAnswerAction,
 } from "@/app/actions/time-attack";
+import { GaugeLightCharge } from "@/components/GaugeLightCharge";
 import { Keypad } from "@/components/Keypad";
-import { MascotBeam } from "@/components/MascotBeam";
+import { MascotBeam, type OniPhase } from "@/components/MascotBeam";
 import { QuestionTimer } from "@/components/QuestionTimer";
 import { QuizMascot } from "@/components/QuizMascot";
-import { SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import { TimeAttackArena } from "@/components/TimeAttackArena";
 import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
 import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
 import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
-import type { TimeAttackState } from "@/lib/time-attack";
+import { getWaveMaxScoreForState, type TimeAttackState } from "@/lib/time-attack";
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
 import { TIME_ATTACK_COUNTDOWN_DISABLED } from "@/lib/time-attack-dev";
 import {
@@ -37,11 +37,27 @@ type TimeAttackClientProps = {
   initialSession: InitialSession;
 };
 
-const SUCCESS_FEEDBACK_MS = 1200;
 const WRONG_FEEDBACK_MS = 900;
-const BEAM_MS = 750;
-const DAMAGE_MS = 850;
+const CORRECT_POPUP_MS = 1000;
+const BEAM_MS = 720;
+const ONI_SHAKE_MS = 520;
+const ONI_EXPLODE_MS = 680;
+const ONI_ENTER_MS = 500;
 const DEFEAT_MSG_MS = 1100;
+
+type PendingAdvance = {
+  sessionId: string;
+  result: {
+    waveComplete?: boolean;
+    waveScore?: number;
+    bossDefeated?: boolean;
+    defeatBonus?: number;
+    cleared?: boolean;
+    sessionEnded?: boolean;
+    timeAttackState?: TimeAttackState;
+    questions?: Question[];
+  };
+};
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -70,19 +86,30 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [runningScore, setRunningScore] = useState(initialSession.timeAttackState.totalScore);
-  const [pendingPoints, setPendingPoints] = useState<number | null>(null);
-  const [pendingFlyLabel, setPendingFlyLabel] = useState<string | null>(null);
-  const [scoreAnimId, setScoreAnimId] = useState(0);
+  const [gaugeDisplayScore, setGaugeDisplayScore] = useState(
+    initialSession.timeAttackState.waveScoreAccumulated,
+  );
+  const [gaugeLightAnimId, setGaugeLightAnimId] = useState(0);
+  const [gaugeLightFillRatio, setGaugeLightFillRatio] = useState(0);
+  const [gaugeCharging, setGaugeCharging] = useState(false);
   const [beamFiring, setBeamFiring] = useState(false);
   const [previewWaveScore, setPreviewWaveScore] = useState<number | null>(null);
   const [damageAmount, setDamageAmount] = useState(0);
   const [timerPaused, setTimerPaused] = useState(false);
   const [waveMessage, setWaveMessage] = useState<string | null>(null);
+  const [oniPhase, setOniPhase] = useState<OniPhase>("idle");
 
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
-  const pointsEarnedRef = useRef<HTMLParagraphElement>(null);
   const quizPanelRef = useRef<HTMLDivElement>(null);
+  const mascotRef = useRef<HTMLButtonElement>(null);
+  const oniRef = useRef<HTMLDivElement>(null);
+  const feedbackPopupRef = useRef<HTMLDivElement>(null);
+  const attackGaugeRef = useRef<HTMLDivElement>(null);
+  const pendingGaugeTargetRef = useRef<number | null>(null);
+  const pendingTotalScoreRef = useRef<number | null>(null);
+  const pendingAdvanceRef = useRef<PendingAdvance | null>(null);
+  const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     questionStartedAtRef.current = Date.now();
@@ -91,6 +118,9 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     return () => {
       document.documentElement.classList.remove("quiz-active");
       document.body.classList.remove("quiz-active");
+      if (correctPopupTimerRef.current != null) {
+        clearTimeout(correctPopupTimerRef.current);
+      }
     };
   }, []);
 
@@ -154,49 +184,110 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     await new Promise((resolve) => setTimeout(resolve, motionMs(BEAM_MS, 280)));
     setBeamFiring(false);
 
+    setOniPhase("shaking");
     setHpHit(true);
     setDisplayHp(hpAfter);
 
-    await new Promise((resolve) => setTimeout(resolve, motionMs(DAMAGE_MS, 320)));
+    await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_SHAKE_MS, 320)));
     setHpHit(false);
 
     if (result.bossDefeated) {
-      setWaveMessage(
-        result.cleared
-          ? `閻魔大王を倒した！クリア！ +${result.defeatBonus ?? 0}点`
-          : `ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
+      setOniPhase("exploding");
+      await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_EXPLODE_MS, 350)));
+      setOniPhase("hidden");
 
       if (result.sessionEnded) {
+        setWaveMessage(
+          result.cleared
+            ? `閻魔大王を倒した！クリア！ +${result.defeatBonus ?? 0}点`
+            : `ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
         redirectToResult(id);
         return;
       }
 
       syncBossDisplay(result.timeAttackState);
+      setTimeAttackState(result.timeAttackState);
+      if (result.questions) {
+        setQuestions(result.questions);
+      }
+      setRunningScore(result.timeAttackState.totalScore);
+      setGaugeDisplayScore(result.timeAttackState.waveScoreAccumulated);
+      setPreviewWaveScore(null);
+
+      setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
+
+      await new Promise((resolve) => setTimeout(resolve, motionMs(80, 40)));
+      setOniPhase("entering");
+      await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_ENTER_MS, 250)));
+      setOniPhase("idle");
+
+      await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
+      setWaveMessage(null);
     } else {
+      setOniPhase("idle");
       setArenaState(result.timeAttackState);
       setDisplayHpMax(result.timeAttackState.oniHpMax);
+      setPreviewWaveScore(null);
+      setTimeAttackState(result.timeAttackState);
+      if (result.questions) {
+        setQuestions(result.questions);
+      }
+      setRunningScore(result.timeAttackState.totalScore);
+      setGaugeDisplayScore(result.timeAttackState.waveScoreAccumulated);
     }
 
-    setPreviewWaveScore(null);
-    setTimeAttackState(result.timeAttackState);
-    if (result.questions) {
-      setQuestions(result.questions);
-    }
-    setRunningScore(result.timeAttackState.totalScore);
     setAnswer("");
-    if (!result.bossDefeated) {
-      setWaveMessage(null);
-    }
     questionStartedAtRef.current = Date.now();
     setTimerPaused(false);
     submitLockRef.current = false;
     setSubmitting(false);
+  };
 
-    if (result.bossDefeated && !result.sessionEnded) {
-      setWaveMessage(null);
+  const handleGaugeReach = () => {
+    if (pendingGaugeTargetRef.current != null) {
+      setGaugeDisplayScore(pendingGaugeTargetRef.current);
+      pendingGaugeTargetRef.current = null;
     }
+    if (pendingTotalScoreRef.current != null) {
+      setRunningScore(pendingTotalScoreRef.current);
+      pendingTotalScoreRef.current = null;
+    }
+
+    setGaugeCharging(true);
+    setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
+  };
+
+  const handleGaugeChargeComplete = () => {
+    const advance = pendingAdvanceRef.current;
+    if (advance) {
+      pendingAdvanceRef.current = null;
+      void advanceAfterWave(advance.sessionId, advance.result);
+    }
+  };
+
+  const dismissCorrectPopup = (waveComplete: boolean) => {
+    setFeedback(null);
+    setFeedbackType(null);
+
+    if (!waveComplete) {
+      setAnswer("");
+      questionStartedAtRef.current = Date.now();
+      setTimerPaused(false);
+      submitLockRef.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const scheduleCorrectPopupDismiss = (waveComplete: boolean) => {
+    if (correctPopupTimerRef.current != null) {
+      clearTimeout(correctPopupTimerRef.current);
+    }
+    correctPopupTimerRef.current = setTimeout(() => {
+      correctPopupTimerRef.current = null;
+      dismissCorrectPopup(waveComplete);
+    }, motionMs(CORRECT_POPUP_MS, 350));
   };
 
   const submitAnswer = async () => {
@@ -224,6 +315,33 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         return;
       }
 
+      if (result.correct) {
+        const waveComplete = "waveComplete" in result && result.waveComplete;
+
+        setFeedback("正解！");
+        setFeedbackType("success");
+
+        if (result.timeAttackState) {
+          pendingGaugeTargetRef.current = result.timeAttackState.waveScoreAccumulated;
+          pendingTotalScoreRef.current = result.timeAttackState.totalScore;
+          const maxScore = getWaveMaxScoreForState(result.timeAttackState);
+          setGaugeLightFillRatio(
+            maxScore > 0 ? result.timeAttackState.waveScoreAccumulated / maxScore : 0,
+          );
+          setTimeAttackState(result.timeAttackState);
+        }
+
+        if (waveComplete) {
+          pendingAdvanceRef.current = { sessionId, result };
+        } else {
+          pendingAdvanceRef.current = null;
+        }
+
+        setGaugeLightAnimId((id) => id + 1);
+        scheduleCorrectPopupDismiss(waveComplete);
+        return;
+      }
+
       if (result.sessionEnded) {
         if ("waveComplete" in result && result.waveComplete) {
           await advanceAfterWave(sessionId, result);
@@ -233,39 +351,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         } else {
           redirectToResult(sessionId);
         }
-        return;
-      }
-
-      if (result.correct) {
-        setFeedback("正解！");
-        setFeedbackType("success");
-        setPendingPoints(result.pointsEarned);
-        setPendingFlyLabel(`+${result.pointsEarned}点`);
-        setScoreAnimId((id) => id + 1);
-        if (result.timeAttackState) {
-          setTimeAttackState(result.timeAttackState);
-          setRunningScore(result.timeAttackState.totalScore);
-        }
-
-        if ("waveComplete" in result && result.waveComplete) {
-          setTimeout(async () => {
-            setFeedback(null);
-            setFeedbackType(null);
-            await advanceAfterWave(sessionId, result);
-          }, motionMs(SUCCESS_FEEDBACK_MS, 200));
-          return;
-        }
-
-        setTimeout(() => {
-          setFeedback(null);
-          setFeedbackType(null);
-          setPendingPoints(null);
-          setAnswer("");
-          questionStartedAtRef.current = Date.now();
-          setTimerPaused(false);
-          submitLockRef.current = false;
-          setSubmitting(false);
-        }, motionMs(SUCCESS_FEEDBACK_MS, 200));
         return;
       }
 
@@ -328,7 +413,12 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
   return (
     <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-3">
-      <MascotBeam active={beamFiring} intensity={previewWaveScore ?? damageAmount} />
+      <MascotBeam
+        active={beamFiring}
+        fromRef={mascotRef}
+        toRef={oniRef}
+        intensity={previewWaveScore ?? damageAmount}
+      />
 
       {alertType === "yellow" && (
         <div className="time-attack-alert time-attack-alert--yellow" aria-hidden="true" />
@@ -336,6 +426,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
       <div className="time-attack-top relative z-20">
         <QuizMascot
+          ref={mascotRef}
           className="time-attack-top__mascot"
           comment={waveMessage}
           onHomeClick={backToPlay}
@@ -344,14 +435,14 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         <TimeAttackOniScore
           layout="split"
           score={runningScore}
-          pointsEarned={pendingPoints}
-          flyLabel={pendingFlyLabel}
-          flyDelayMs={SCORE_FLY_DELAY_MS}
-          flyDurationMs={SCORE_FLY_DURATION_MS}
-          animId={scoreAnimId}
-          getFlyFromElement={() => pointsEarnedRef.current}
-          onPointsApplied={() => setPendingPoints(null)}
-          hpHit={hpHit}
+          pointsEarned={null}
+          flyLabel={null}
+          animId={0}
+          getFlyFromElement={() => null}
+          onPointsApplied={() => {}}
+          oniPhase={oniPhase}
+          oniRef={oniRef}
+          bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
           meta={
             <p className="time-attack-top__meta">
               問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}
@@ -363,8 +454,11 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           }
         />
         <TimeAttackScoreBar
+          ref={attackGaugeRef}
           className="time-attack-top__attack"
           state={timeAttackState}
+          displayScore={gaugeDisplayScore}
+          charging={gaugeCharging}
           previewWaveScore={previewWaveScore}
         />
         <TimeAttackArena
@@ -376,22 +470,30 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         />
       </div>
 
-      <div className="relative z-20">
-        {!TIME_ATTACK_COUNTDOWN_DISABLED && (
-          <QuestionTimer
-            key={questionKey}
-            timeLimitSeconds={timeAttackState.timeLimitSeconds}
-            questionKey={questionKey}
-            onTimeout={() => void handleTimeout()}
-            paused={timerPaused || submitting}
-          />
-        )}
-      </div>
+      <GaugeLightCharge
+        animId={gaugeLightAnimId}
+        fromRef={feedbackPopupRef}
+        toRef={attackGaugeRef}
+        fillRatio={gaugeLightFillRatio}
+        onReachGauge={handleGaugeReach}
+        onComplete={handleGaugeChargeComplete}
+      />
 
       {question && (
         <section
           className={`card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
         >
+          {!TIME_ATTACK_COUNTDOWN_DISABLED && (
+            <QuestionTimer
+              key={questionKey}
+              variant="ring"
+              className="question-timer--board"
+              timeLimitSeconds={timeAttackState.timeLimitSeconds}
+              questionKey={questionKey}
+              onTimeout={() => void handleTimeout()}
+              paused={timerPaused || submitting}
+            />
+          )}
           <div className="chalk-heading equation-display mb-4 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
             <span className="whitespace-nowrap">
               {formatQuestionExpression(question)} =
@@ -408,16 +510,12 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           aria-live="polite"
         >
           <div
+            ref={feedbackPopupRef}
             className={`feedback-popup ${feedbackType === "success" ? "feedback-popup-success" : "feedback-popup-retry"}`}
           >
             <p className={feedbackType === "success" ? "feedback-success" : "feedback-retry"}>
               {feedback}
             </p>
-            {feedbackType === "success" && pendingPoints != null && (
-              <p ref={pointsEarnedRef} className="feedback-points-earned">
-                +{pendingPoints}点
-              </p>
-            )}
           </div>
         </div>
       )}

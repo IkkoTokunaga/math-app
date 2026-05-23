@@ -27,9 +27,6 @@ export function TimeAttackArena({
         <div className="time-attack-gauge time-attack-gauge--hp">
           <div className="time-attack-gauge__header">
             <span>鬼 HP</span>
-            <span className="time-attack-gauge__values">
-              {Math.max(0, Math.round(displayHp))} / {hpMax}
-            </span>
           </div>
           <div className="time-attack-gauge__track">
             <div

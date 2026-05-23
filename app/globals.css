@@ -1472,6 +1472,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   pointer-events: none;
   line-height: 0;
   margin-bottom: -1.35rem;
+  position: relative;
 }
 
 .time-attack-top__attack {
@@ -1530,6 +1531,71 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: oni-score-hit 0.45s ease;
 }
 
+.time-attack-oni-score--shake {
+  animation: oni-score-shake 0.52s ease;
+}
+
+.time-attack-oni-score--shake .time-attack-oni-score__image {
+  animation: oni-body-shake 0.52s ease;
+}
+
+.time-attack-oni-score--exploding .time-attack-oni-score__image {
+  animation: oni-body-explode 0.68s ease forwards;
+}
+
+.time-attack-oni-score--enter .time-attack-oni-score__image {
+  animation: oni-body-enter 0.5s ease forwards;
+}
+
+.oni-explosion {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.oni-explosion__flash {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 4.5rem;
+  height: 4.5rem;
+  transform: translate(-50%, -50%) scale(0.2);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(255 250 220 / 0.95) 0%, rgb(255 120 80 / 0.55) 45%, transparent 70%);
+  animation: oni-explosion-flash 0.68s ease-out forwards;
+}
+
+.oni-explosion__ring {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 3rem;
+  height: 3rem;
+  transform: translate(-50%, -50%) scale(0.3);
+  border-radius: 999px;
+  border: 3px solid rgb(255 220 120 / 0.85);
+  animation: oni-explosion-ring 0.68s ease-out forwards;
+}
+
+.oni-explosion__particle {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #ffb347;
+  box-shadow: 0 0 8px rgb(255 150 80 / 0.8);
+  animation: oni-explosion-particle 0.68s ease-out forwards;
+}
+
+.oni-explosion__particle--1 { --ex-dx: -2.2rem; --ex-dy: -1.6rem; }
+.oni-explosion__particle--2 { --ex-dx: 2rem; --ex-dy: -1.4rem; animation-delay: 0.03s; }
+.oni-explosion__particle--3 { --ex-dx: -1.5rem; --ex-dy: 1.2rem; animation-delay: 0.05s; }
+.oni-explosion__particle--4 { --ex-dx: 1.8rem; --ex-dy: 1rem; animation-delay: 0.02s; }
+.oni-explosion__particle--5 { --ex-dx: 0; --ex-dy: -2rem; animation-delay: 0.04s; }
+.oni-explosion__particle--6 { --ex-dx: 0.4rem; --ex-dy: 1.8rem; animation-delay: 0.06s; }
+
 .time-attack-oni-score--pop .time-attack-oni-score__points,
 .time-attack-oni-score__points--pop {
   animation: score-total-pop 0.4s ease;
@@ -1540,6 +1606,50 @@ button.keypad-btn-submit:active:not(:disabled) {
   25% { transform: translateX(-4px); }
   50% { transform: translateX(4px); }
   75% { transform: translateX(-2px); }
+}
+
+@keyframes oni-score-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+}
+
+@keyframes oni-body-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-3deg); }
+  80% { transform: rotate(2deg); }
+}
+
+@keyframes oni-body-explode {
+  0% { transform: scale(1); opacity: 1; filter: brightness(1); }
+  35% { transform: scale(1.08); opacity: 1; filter: brightness(1.6); }
+  100% { transform: scale(0.2); opacity: 0; filter: brightness(2); }
+}
+
+@keyframes oni-body-enter {
+  0% { transform: translateY(0.75rem) scale(0.72); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes oni-explosion-flash {
+  0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
+}
+
+@keyframes oni-explosion-ring {
+  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+@keyframes oni-explosion-particle {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--ex-dx)), calc(-50% + var(--ex-dy))) scale(0.2); opacity: 0; }
 }
 
 .time-attack-arena {
@@ -1639,6 +1749,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 .time-attack-gauge__fill--attack {
   background: linear-gradient(90deg, #5ee7ff, #9dffaf 55%, #fff4a3);
   box-shadow: 0 0 14px rgb(94 231 255 / 0.45);
+  transition: width 0.55s cubic-bezier(0.22, 0.85, 0.28, 1);
 }
 
 .time-attack-gauge--attack {
@@ -1652,22 +1763,103 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: gauge-pulse 0.55s ease;
 }
 
+.time-attack-gauge--charging .time-attack-gauge__fill--attack {
+  filter: brightness(1.2);
+  box-shadow: 0 0 16px rgb(255 255 255 / 0.75);
+}
+
+.gauge-light-charge {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.gauge-light-charge__particle {
+  position: fixed;
+  margin: 0;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, #fff 0%, #fff 35%, rgb(255 255 255 / 0.55) 62%, transparent 100%);
+  box-shadow:
+    0 0 6px rgb(255 255 255 / 1),
+    0 0 14px rgb(255 255 255 / 0.85),
+    0 0 22px rgb(255 255 255 / 0.45);
+  animation:
+    gauge-light-sparkle 0.38s ease-in-out infinite alternate,
+    gauge-light-gather var(--gather-duration, 1100ms) cubic-bezier(0.18, 0.82, 0.24, 1) var(--gather-delay, 0ms) forwards;
+}
+
+.gauge-light-charge__particle::after {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.9) 0%, transparent 68%);
+  animation: gauge-light-twinkle 0.55s ease-in-out infinite;
+  animation-delay: var(--sparkle-offset, 0ms);
+}
+
+.gauge-light-charge__cluster {
+  position: fixed;
+  width: 1.65rem;
+  height: 1.65rem;
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 999px;
+  opacity: 0;
+  background: radial-gradient(circle, #fff 0%, #fff 42%, rgb(255 255 255 / 0.5) 72%, transparent 100%);
+  box-shadow:
+    0 0 10px rgb(255 255 255 / 1),
+    0 0 24px rgb(255 255 255 / 0.95),
+    0 0 40px rgb(255 255 255 / 0.55);
+  animation:
+    gauge-light-sparkle 0.28s ease-in-out infinite alternate,
+    gauge-light-cluster-fly var(--fly-duration, 580ms) cubic-bezier(0.4, 0, 0.15, 1) var(--cluster-delay, 1260ms) forwards;
+}
+
+.gauge-light-charge__cluster::before,
+.gauge-light-charge__cluster::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.gauge-light-charge__cluster::before {
+  inset: -50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.75) 0%, transparent 70%);
+  animation: gauge-light-twinkle 0.45s ease-in-out infinite;
+}
+
+.gauge-light-charge__cluster::after {
+  inset: -120%;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  animation: gauge-light-ring 0.55s ease-out var(--cluster-delay, 1260ms) forwards;
+}
+
 .mascot-beam-layer {
   position: fixed;
   inset: 0;
   z-index: 35;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
-.mascot-beam {
-  position: absolute;
-  left: clamp(4.5rem, 14vw, 6rem);
-  top: clamp(5.5rem, 16vw, 7.5rem);
-  width: clamp(8rem, 42vw, 16rem);
+.mascot-beam-aim {
+  position: fixed;
+  transform-origin: 0 50%;
+  z-index: 36;
+}
+
+.mascot-beam--aimed {
+  position: relative;
+  left: 0;
+  top: 0;
   height: 0.95rem;
+  margin-top: -0.475rem;
   transform-origin: left center;
-  transform: rotate(8deg) scaleX(0);
+  transform: scaleX(0);
   animation: mascot-beam-shoot 0.72s ease-out forwards;
   opacity: calc(0.75 + var(--beam-power) * 0.2);
 }
@@ -1717,6 +1909,61 @@ button.keypad-btn-submit:active:not(:disabled) {
   background: rgb(0 0 0 / 0.2);
 }
 
+.question-timer--ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.35);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+.question-timer--board {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  z-index: 2;
+}
+
+.question-timer__ring-svg {
+  display: block;
+}
+
+.question-timer__ring-track {
+  stroke: rgb(255 255 255 / 0.14);
+}
+
+.question-timer__ring-fill {
+  stroke: #7df9ff;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.15s linear;
+}
+
+.question-timer--ring.question-timer--red .question-timer__ring-fill {
+  stroke: #ff6b6b;
+}
+
+.question-timer__ring-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--chalk-yellow);
+}
+
+.question-timer--ring.question-timer--red .question-timer__ring-value {
+  color: #ffb4b4;
+}
+
 .question-timer__value {
   font-size: 2rem;
   font-weight: 800;
@@ -1727,6 +1974,13 @@ button.keypad-btn-submit:active:not(:disabled) {
   background: rgb(120 20 20 / 0.45);
   box-shadow: inset 0 0 0 2px rgb(255 100 100 / 0.7);
   animation: timer-red-pulse 0.8s ease-in-out infinite;
+}
+
+.question-timer--ring.question-timer--red {
+  background: rgb(120 20 20 / 0.55);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 100 100 / 0.55),
+    0 0 12px rgb(255 80 80 / 0.35);
 }
 
 .question-timer--red-static {
@@ -1757,9 +2011,9 @@ button.keypad-btn-submit:active:not(:disabled) {
 }
 
 @keyframes mascot-beam-shoot {
-  0% { transform: rotate(8deg) scaleX(0.05); opacity: 0.2; }
+  0% { transform: scaleX(0.05); opacity: 0.2; }
   20% { opacity: 1; }
-  100% { transform: rotate(8deg) scaleX(1); opacity: 0.95; }
+  100% { transform: scaleX(1); opacity: 0.95; }
 }
 
 @keyframes mascot-fire-pulse {
@@ -1776,6 +2030,70 @@ button.keypad-btn-submit:active:not(:disabled) {
 @keyframes gauge-pulse {
   0%, 100% { box-shadow: 0 0 0 rgb(125 249 255 / 0); }
   50% { box-shadow: 0 0 18px rgb(125 249 255 / 0.45); }
+}
+
+@keyframes gauge-light-gather {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.15);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  88% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--gather-dx)), calc(-50% + var(--gather-dy))) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--gather-dx)), calc(-50% + var(--gather-dy))) scale(0.35);
+  }
+}
+
+@keyframes gauge-light-cluster-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+
+  8% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+
+  18% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.2);
+  }
+}
+
+@keyframes gauge-light-sparkle {
+  0% { filter: brightness(1) saturate(1); }
+  100% { filter: brightness(1.45) saturate(1.1); }
+}
+
+@keyframes gauge-light-twinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes gauge-light-ring {
+  0% {
+    opacity: 0.8;
+    transform: scale(0.4);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
 }
 
 @keyframes timer-red-pulse {
@@ -1805,16 +2123,32 @@ button.keypad-btn-submit:active:not(:disabled) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mascot-beam,
+  .mascot-beam--aimed,
+  .mascot-beam__spark,
   .quiz-header-mascot--firing,
   .time-attack-gauge--pulse,
   .time-attack-oni-score--hit,
+  .time-attack-oni-score--shake,
+  .time-attack-oni-score--shake .time-attack-oni-score__image,
+  .time-attack-oni-score--exploding .time-attack-oni-score__image,
+  .time-attack-oni-score--enter .time-attack-oni-score__image,
+  .oni-explosion__flash,
+  .oni-explosion__ring,
+  .oni-explosion__particle,
+  .gauge-light-charge__particle,
+  .gauge-light-charge__cluster,
+  .gauge-light-charge__cluster::before,
+  .gauge-light-charge__cluster::after,
   .question-timer--red,
   .time-attack-alert--yellow {
     animation: none;
   }
 
   .time-attack-gauge__fill {
+    transition: none;
+  }
+
+  .question-timer__ring-fill {
     transition: none;
   }
 }

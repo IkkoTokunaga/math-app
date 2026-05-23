@@ -614,13 +614,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
           currentLevel={arenaState.currentLevel}
           onEnterAnimationComplete={handleOniEnterAnimationComplete}
-          meta={
-            awaitingNextOni ? null : (
-              <p className="time-attack-top__meta">
-                問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}
-              </p>
-            )
-          }
         />
         <TimeAttackScoreBar
           ref={attackGaugeRef}

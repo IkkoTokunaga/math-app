@@ -48,6 +48,7 @@ const BEAM_MS = 720;
 const ONI_SHAKE_MS = 520;
 const ONI_EXPLODE_MS = 680;
 const ONI_ENTER_MS = 500;
+const ONI_SETTLE_MS = 200;
 const DEFEAT_MSG_MS = 1100;
 
 type WrongAnswerResult = {
@@ -98,7 +99,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [hpHit, setHpHit] = useState(false);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [feedbackType, setFeedbackType] = useState<"success" | "wrong" | null>(null);
+  const [feedbackType, setFeedbackType] = useState<"success" | "wrong" | "attack" | null>(null);
   const [alertType, setAlertType] = useState<"yellow" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -118,6 +119,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [timerPaused, setTimerPaused] = useState(false);
   const [waveMessage, setWaveMessage] = useState<string | null>(null);
   const [oniPhase, setOniPhase] = useState<OniPhase>("idle");
+  const [awaitingNextOni, setAwaitingNextOni] = useState(false);
   const [displayMistakeCount, setDisplayMistakeCount] = useState(
     initialSession.timeAttackState.mistakeCount,
   );
@@ -140,6 +142,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const mascotLightDoneRef = useRef<(() => void) | null>(null);
   const evilOrbDoneRef = useRef<(() => void) | null>(null);
   const pendingWrongResultRef = useRef<WrongAnswerResult | null>(null);
+  const oniEnterDoneRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     questionStartedAtRef.current = Date.now();
@@ -169,6 +172,43 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     setArenaState(state);
     setDisplayHp(state.oniHpRemaining);
     setDisplayHpMax(state.oniHpMax);
+  };
+
+  const showAttackPopup = () => {
+    if (correctPopupTimerRef.current != null) {
+      clearTimeout(correctPopupTimerRef.current);
+      correctPopupTimerRef.current = null;
+    }
+    setFeedback("鬼へ攻撃！");
+    setFeedbackType("attack");
+    setAlertType(null);
+  };
+
+  const clearFeedbackPopup = () => {
+    setFeedback(null);
+    setFeedbackType(null);
+  };
+
+  const waitForOniEnterComplete = () =>
+    new Promise<void>((resolve) => {
+      oniEnterDoneRef.current = resolve;
+    });
+
+  const handleOniEnterAnimationComplete = () => {
+    oniEnterDoneRef.current?.();
+    oniEnterDoneRef.current = null;
+  };
+
+  const applyWaveAdvanceState = (state: TimeAttackState, nextQuestions?: Question[]) => {
+    pendingQuestionStateRef.current = null;
+    setTimeAttackState(state);
+    setDisplayMistakeCount(state.mistakeCount);
+    if (nextQuestions) {
+      setQuestions(nextQuestions);
+    }
+    setRunningScore(state.totalScore);
+    setGaugeDisplayScore(state.waveScoreAccumulated);
+    setPreviewWaveScore(null);
   };
 
   const handleTimeout = useCallback(async () => {
@@ -211,6 +251,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
       waveScore > 0 ? waveScore : result.timeAttackState.waveScoreAccumulated;
 
     setTimerPaused(true);
+    showAttackPopup();
     setDamageAmount(waveScore);
     pendingGaugeTargetRef.current = null;
 
@@ -254,6 +295,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
       setOniPhase("hidden");
 
       if (result.sessionEnded) {
+        clearFeedbackPopup();
         setWaveMessage(
           result.cleared
             ? `閻魔大王を倒した！クリア！ +${result.defeatBonus ?? 0}点`
@@ -264,39 +306,32 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         return;
       }
 
-      syncBossDisplay(result.timeAttackState);
-      setTimeAttackState(result.timeAttackState);
-      setDisplayMistakeCount(result.timeAttackState.mistakeCount);
-      if (result.questions) {
-        setQuestions(result.questions);
-      }
-      setRunningScore(result.timeAttackState.totalScore);
-      setGaugeDisplayScore(result.timeAttackState.waveScoreAccumulated);
-      setPreviewWaveScore(null);
-
-      setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
+      setAwaitingNextOni(true);
 
       await new Promise((resolve) => setTimeout(resolve, motionMs(80, 40)));
+      syncBossDisplay(result.timeAttackState);
       setOniPhase("entering");
-      await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_ENTER_MS, 250)));
+      await Promise.race([
+        waitForOniEnterComplete(),
+        new Promise((resolve) => setTimeout(resolve, motionMs(ONI_ENTER_MS + 80, 320))),
+      ]);
+      oniEnterDoneRef.current = null;
       setOniPhase("idle");
+      await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_SETTLE_MS, 80)));
+      setAwaitingNextOni(false);
 
+      applyWaveAdvanceState(result.timeAttackState, result.questions);
+
+      setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
       await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
       setWaveMessage(null);
     } else {
       setOniPhase("idle");
-      setArenaState(result.timeAttackState);
-      setDisplayHpMax(result.timeAttackState.oniHpMax);
-      setPreviewWaveScore(null);
-      setTimeAttackState(result.timeAttackState);
-      setDisplayMistakeCount(result.timeAttackState.mistakeCount);
-      if (result.questions) {
-        setQuestions(result.questions);
-      }
-      setRunningScore(result.timeAttackState.totalScore);
-      setGaugeDisplayScore(result.timeAttackState.waveScoreAccumulated);
+      syncBossDisplay(result.timeAttackState);
+      applyWaveAdvanceState(result.timeAttackState, result.questions);
     }
 
+    clearFeedbackPopup();
     setAnswer("");
     questionStartedAtRef.current = Date.now();
     setTimerPaused(false);
@@ -424,12 +459,15 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   };
 
   const scheduleCorrectPopupDismiss = (waveComplete: boolean) => {
+    if (waveComplete) {
+      return;
+    }
     if (correctPopupTimerRef.current != null) {
       clearTimeout(correctPopupTimerRef.current);
     }
     correctPopupTimerRef.current = setTimeout(() => {
       correctPopupTimerRef.current = null;
-      dismissCorrectPopup(waveComplete);
+      dismissCorrectPopup(false);
     }, motionMs(CORRECT_POPUP_MS, 350));
   };
 
@@ -516,7 +554,9 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     );
   }
 
-  const question = questions[timeAttackState.waveQuestionIndex];
+  const question = awaitingNextOni
+    ? null
+    : questions[timeAttackState.waveQuestionIndex];
   const questionKey = `${sessionId}-${timeAttackState.globalQuestionIndex}`;
 
   return (
@@ -553,10 +593,13 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           oniPhase={oniPhase}
           oniRef={oniRef}
           bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
+          onEnterAnimationComplete={handleOniEnterAnimationComplete}
           meta={
-            <p className="time-attack-top__meta">
-              問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}
-            </p>
+            awaitingNextOni ? null : (
+              <p className="time-attack-top__meta">
+                問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}
+              </p>
+            )
           }
         />
         <TimeAttackScoreBar
@@ -640,24 +683,40 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         >
           <div
             ref={feedbackPopupRef}
-            className={`feedback-popup ${feedbackType === "success" ? "feedback-popup-success" : "feedback-popup-retry"}`}
+            className={`feedback-popup ${
+              feedbackType === "success"
+                ? "feedback-popup-success"
+                : feedbackType === "attack"
+                  ? "feedback-popup-attack"
+                  : "feedback-popup-retry"
+            }`}
           >
-            <p className={feedbackType === "success" ? "feedback-success" : "feedback-retry"}>
+            <p
+              className={
+                feedbackType === "success"
+                  ? "feedback-success"
+                  : feedbackType === "attack"
+                    ? "feedback-attack"
+                    : "feedback-retry"
+              }
+            >
               {feedback}
             </p>
           </div>
         </div>
       )}
 
-      <div className="time-attack-keypad relative z-20">
-        <Keypad
-          value={answer}
-          onChange={setAnswer}
-          onSubmit={() => void submitAnswer()}
-          disabled={submitting || timerPaused}
-          maxDigits={getMaxAnswerDigits(timeAttackState.currentLevel)}
-        />
-      </div>
+      {!awaitingNextOni && (
+        <div className="time-attack-keypad relative z-20">
+          <Keypad
+            value={answer}
+            onChange={setAnswer}
+            onSubmit={() => void submitAnswer()}
+            disabled={submitting || timerPaused}
+            maxDigits={getMaxAnswerDigits(timeAttackState.currentLevel)}
+          />
+        </div>
+      )}
 
       {error && <p className="feedback-error">{error}</p>}
     </div>

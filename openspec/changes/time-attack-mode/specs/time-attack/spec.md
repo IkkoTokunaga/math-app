@@ -266,6 +266,21 @@ The session total score SHALL be shown together with the provided oni artwork (`
 
 When a wave completes, the attack sequence SHALL proceed in order: (1) the **10th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot fires a beam toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
 
+#### Scenario: Attack popup during wave finish
+- **WHEN** the 10th question of a wave is answered and the attack sequence begins
+- **THEN** a **鬼へ攻撃！** popup is shown for the duration of the attack animation
+- **AND** the next wave question does not start until the attack sequence completes
+
+#### Scenario: Next question after non-defeat wave attack
+- **WHEN** a wave ends without defeating the boss
+- **THEN** the next question begins only after the attack animation finishes and the attack popup is dismissed
+
+#### Scenario: Next wave after boss defeat
+- **WHEN** a boss is defeated by wave damage
+- **THEN** the question board and keypad are hidden until the next boss oni entrance animation completes
+- **AND** the next wave question begins only after the new oni is visible in idle state
+- **AND** the defeat bonus mascot message is shown after the new wave question state is applied
+
 #### Scenario: Q10 result reflected before attack drain
 - **WHEN** a player completes the 10th question of a wave with a correct answer
 - **THEN** the attack gauge updates to include that question's score before the drain animation begins

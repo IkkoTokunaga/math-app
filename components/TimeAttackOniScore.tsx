@@ -23,6 +23,7 @@ type TimeAttackOniScoreProps = {
   bossKey?: string;
   layout?: "combined" | "split";
   meta?: React.ReactNode;
+  onEnterAnimationComplete?: () => void;
 };
 
 function prefersReducedMotion(): boolean {
@@ -56,6 +57,7 @@ export function TimeAttackOniScore({
   bossKey = "oni",
   layout = "combined",
   meta = null,
+  onEnterAnimationComplete,
 }: TimeAttackOniScoreProps) {
   const targetRef = useRef<HTMLParagraphElement>(null);
   const processedAnimIdRef = useRef(0);
@@ -65,6 +67,42 @@ export function TimeAttackOniScore({
 
   const showOni = oniPhase !== "hidden";
   const phaseClass = oniPhaseClass(oniPhase);
+
+  useEffect(() => {
+    if (oniPhase !== "entering" || !onEnterAnimationComplete) {
+      return;
+    }
+
+    let settled = false;
+    const settle = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      onEnterAnimationComplete();
+    };
+
+    const reduced = prefersReducedMotion();
+    const img = oniRef?.current?.querySelector<HTMLElement>(".time-attack-oni-score__image");
+    if (!img || reduced) {
+      settle();
+      return;
+    }
+
+    const handleAnimationEnd = (event: AnimationEvent) => {
+      if (event.animationName === "oni-body-enter") {
+        settle();
+      }
+    };
+
+    img.addEventListener("animationend", handleAnimationEnd);
+    const fallback = setTimeout(settle, 560);
+
+    return () => {
+      img.removeEventListener("animationend", handleAnimationEnd);
+      clearTimeout(fallback);
+    };
+  }, [bossKey, onEnterAnimationComplete, oniPhase, oniRef]);
 
   useEffect(() => {
     if (pointsEarned == null || pointsEarned <= 0 || animId === 0) {

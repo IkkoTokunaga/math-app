@@ -25,6 +25,7 @@ import {
   submitGuestAnswer,
 } from "@/lib/guest-session";
 import { useIsClient } from "@/lib/use-is-client";
+import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
 import { MAX_LEVEL } from "@/lib/levels";
 import {
   formatQuestionExpression,
@@ -302,52 +303,7 @@ export function PlayClient({ auth }: PlayClientProps) {
     };
   }, [inQuiz]);
 
-  useEffect(() => {
-    if (!inQuiz) {
-      return;
-    }
-
-    const panel = quizPanelRef.current;
-    const shell = document.querySelector(".page-shell");
-    if (!panel || !shell) {
-      return;
-    }
-
-    let frame = 0;
-
-    const fitPanel = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        panel.style.transform = "none";
-        panel.style.marginBottom = "";
-
-        const available = shell.clientHeight;
-        const needed = panel.offsetHeight;
-        if (needed <= available || needed === 0) {
-          return;
-        }
-
-        const scale = available / needed;
-        panel.style.transform = `scale(${scale})`;
-        panel.style.transformOrigin = "top center";
-        panel.style.marginBottom = `${needed * (scale - 1)}px`;
-      });
-    };
-
-    const observer = new ResizeObserver(fitPanel);
-    observer.observe(panel);
-    observer.observe(shell);
-    window.addEventListener("resize", fitPanel);
-    fitPanel();
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      window.removeEventListener("resize", fitPanel);
-      panel.style.transform = "";
-      panel.style.marginBottom = "";
-    };
-  }, [inQuiz, currentIndex, level, error, submitting]);
+  useQuizPanelFit(quizPanelRef, inQuiz);
 
   const guestUnlocked = isClient ? getGuestUnlockedLevel() : 1;
   const effectiveUnlocked = auth.loggedIn ? unlockedLevel : guestUnlocked;

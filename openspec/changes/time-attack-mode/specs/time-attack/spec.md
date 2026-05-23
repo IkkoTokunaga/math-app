@@ -300,8 +300,18 @@ Star rating from standard mode SHALL NOT be applied to time attack sessions.
 
 ### Requirement: Reuse standard quiz input UX
 
-Time attack SHALL reuse the standard quiz input experience: inline `?` answer display, calculator-style keypad, keyboard shortcuts (0–9, Backspace, Delete, Enter), and viewport-fit layout without vertical scroll during play.
+Time attack SHALL reuse the standard quiz input experience: inline `?` answer display, calculator-style keypad, keyboard shortcuts (0–9, Backspace, Delete, Enter), and viewport-fit layout without vertical scroll during play. When the stacked play UI exceeds the available viewport height, the system SHALL scale the play panel down from the top (same behavior as standard quiz mode) rather than inserting flexible space between the question board and keypad.
 
 #### Scenario: Keypad input
 - **WHEN** a player uses the on-screen keypad during time attack
 - **THEN** input behavior matches standard quiz mode
+
+#### Scenario: Submit button visible on desktop viewport
+- **WHEN** a player plays time attack on a desktop-sized viewport
+- **THEN** the full keypad including the submit (`答える`) button fits within the viewport without vertical scroll
+- **AND** the submit button is not clipped below the visible area
+
+#### Scenario: Question and keypad spacing
+- **WHEN** the play layout fits within the viewport with room to spare
+- **THEN** the question board and keypad appear with consistent tight spacing
+- **AND** excess vertical space is not inserted between the question board and keypad

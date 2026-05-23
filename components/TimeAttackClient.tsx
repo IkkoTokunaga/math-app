@@ -25,6 +25,7 @@ import {
   getMaxAnswerDigits,
 } from "@/lib/questions";
 import { useIsClient } from "@/lib/use-is-client";
+import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
 
 type InitialSession = {
   sessionId: string;
@@ -123,6 +124,8 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
       }
     };
   }, []);
+
+  useQuizPanelFit(quizPanelRef, isClient && Boolean(sessionId));
 
   const getElapsedSeconds = () => (Date.now() - questionStartedAtRef.current) / 1000;
 
@@ -481,7 +484,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
       {question && (
         <section
-          className={`card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
+          className={`time-attack-board card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
         >
           {!TIME_ATTACK_COUNTDOWN_DISABLED && (
             <QuestionTimer
@@ -494,7 +497,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
               paused={timerPaused || submitting}
             />
           )}
-          <div className="chalk-heading equation-display mb-4 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
+          <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
             <span className="whitespace-nowrap">
               {formatQuestionExpression(question)} =
             </span>
@@ -520,7 +523,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         </div>
       )}
 
-      <div className="relative z-20">
+      <div className="time-attack-keypad relative z-20">
         <Keypad
           value={answer}
           onChange={setAnswer}

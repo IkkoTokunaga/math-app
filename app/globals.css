@@ -1426,6 +1426,11 @@ button.keypad-btn-submit:active:not(:disabled) {
 /* Time Attack */
 .time-attack-client {
   position: relative;
+  transform-origin: top center;
+}
+
+.time-attack-board .equation-display {
+  margin-bottom: 0;
 }
 
 .time-attack-top {

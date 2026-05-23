@@ -94,47 +94,26 @@ When the mistake count reaches **3**, the time attack session SHALL end and navi
 
 ### Requirement: Per-question time limit without session end on timeout
 
-Each question SHALL have a countdown time limit used for **time bonus calculation** and UI feedback. When the limit elapses, the session SHALL **NOT** end. The player MAY continue answering; a correct answer after timeout SHALL award **base points only** (time bonus = 0). Timeout SHALL NOT increment the mistake counter.
-
-The countdown SHALL be shown as a **circular gauge** in the **top-left corner of the question blackboard** (the equation card).
-
-When bonus time reaches 0, the timer gauge SHALL switch to a **gray** appearance and a short label **「ボーナスなし（基本点のみ）」** SHALL appear near the timer.
+Each question SHALL have an internal time limit used for **time bonus calculation only**. The limit SHALL NOT be shown to the player. When the limit elapses, the session SHALL **NOT** end. The player MAY continue answering; a correct answer after timeout SHALL award **base points only** (time bonus = 0). Timeout SHALL NOT increment the mistake counter.
 
 For levels 1–9 (non-Enma bosses), the limit SHALL be **10 seconds**.
 
 For Enma bosses at level 10, the limit SHALL follow the Enma stage table (see Requirement: Enma stage parameters).
 
-The first **1 second** after a question appears SHALL NOT advance the countdown (same grace as standard mode).
+The first **1 second** after a question appears SHALL NOT advance the bonus countdown (same grace as standard mode).
 
 #### Scenario: Timeout does not end session
-- **WHEN** the per-question time limit expires
+- **WHEN** the per-question time limit expires internally
 - **THEN** the session continues
-- **AND** the timer shows gray with the base-points-only label
-- **AND** the player may still submit an answer
+- **AND** the player may still submit an answer for base points only
 
 #### Scenario: Grace period
 - **WHEN** a new question is displayed
-- **THEN** the countdown does not decrease during the first 1 second
-
-#### Scenario: Circular timer on blackboard
-- **WHEN** a question is displayed during time attack
-- **THEN** a circular countdown gauge appears at the top-left of the question blackboard
-- **AND** the gauge shows remaining seconds (or a brief start indicator during the grace period)
+- **THEN** the internal bonus countdown does not decrease during the first 1 second
 
 ### Requirement: Alert effects
 
-The time attack quiz view SHALL show visual alert effects:
-
-| Condition | Effect |
-|-----------|--------|
-| Remaining bonus time ≤ 5 seconds | Red alert |
-| Incorrect submission | Yellow alert, then evil orb from oni to mascot |
-
-Red alert timing SHALL be **fixed at 5 seconds remaining**, even when the Enma stage uses a shorter total limit (e.g. 7 seconds). Red alert SHALL NOT apply after bonus time has expired.
-
-#### Scenario: Red alert at five seconds
-- **WHEN** the countdown reaches 5 seconds or less while bonus time remains
-- **THEN** a red alert effect is shown until bonus time expires or the question ends
+The time attack quiz view SHALL show a visual alert effect on incorrect submission: yellow alert, then evil orb from oni to mascot.
 
 #### Scenario: Yellow alert on mistake
 - **WHEN** a player submits an incorrect answer

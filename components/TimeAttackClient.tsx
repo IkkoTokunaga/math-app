@@ -10,7 +10,6 @@ import { GaugeLightCharge } from "@/components/GaugeLightCharge";
 import { Keypad } from "@/components/Keypad";
 import { MascotLightOrb, type OniPhase } from "@/components/MascotLightOrb";
 import { OniEvilOrb } from "@/components/OniEvilOrb";
-import { QuestionTimer } from "@/components/QuestionTimer";
 import { QuizMascot } from "@/components/QuizMascot";
 import { TimeAttackArena } from "@/components/TimeAttackArena";
 import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
@@ -578,7 +577,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const question = awaitingNextOni
     ? null
     : questions[timeAttackState.waveQuestionIndex];
-  const questionKey = `${sessionId}-${timeAttackState.globalQuestionIndex}`;
 
   return (
     <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-3">
@@ -684,14 +682,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         <section
           className={`time-attack-board card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
         >
-          <QuestionTimer
-            key={questionKey}
-            variant="ring"
-            className="question-timer--board"
-            timeLimitSeconds={timeAttackState.timeLimitSeconds}
-            questionKey={questionKey}
-            paused={timerPaused || submitting}
-          />
           <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
             <span className="whitespace-nowrap">
               {formatQuestionExpression(question)} =

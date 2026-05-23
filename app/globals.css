@@ -1504,7 +1504,7 @@ button.keypad-btn-submit:disabled {
   grid-row: 1;
   align-self: end;
   justify-self: end;
-  z-index: 6;
+  z-index: 3;
   pointer-events: none;
   line-height: 0;
   margin-bottom: -1.35rem;
@@ -1517,8 +1517,6 @@ button.keypad-btn-submit:disabled {
   align-self: stretch;
   min-width: 0;
   margin-top: 0;
-  position: relative;
-  z-index: 1;
 }
 
 .time-attack-gauge--attack .time-attack-lives {

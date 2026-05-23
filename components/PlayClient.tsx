@@ -732,14 +732,40 @@ export function PlayClient({ auth }: PlayClientProps) {
             />
             <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">たしざん</h1>
           </div>
-          <p className="mt-2 text-lg text-muted">10問チャレンジ！</p>
+          <p className="mt-2 text-lg text-muted">モードを選んでね</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-        <p className="text-center text-xl font-bold">{displayName}</p>
-        <Link href="/progress" className="big-btn big-btn-secondary text-center">
-          これまでの記録
-        </Link>
-        <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
+          <p className="text-center text-xl font-bold">{displayName}</p>
+          <Link href="/progress" className="big-btn big-btn-secondary text-center">
+            これまでの記録
+          </Link>
+          <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById("standard-mode-section");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="big-btn big-btn-primary"
+          >
+            通常モード（10問チャレンジ）
+          </button>
+          {auth.loggedIn ? (
+            <Link href="/play/time-attack" className="big-btn big-btn-secondary text-center">
+              タイムアタック（鬼退治）
+            </Link>
+          ) : (
+            <div className="mode-select-locked">
+              <button type="button" disabled className="big-btn w-full opacity-50">
+                🔒 タイムアタック（鬼退治）
+              </button>
+              <p className="mt-2 text-center text-sm text-muted">
+                タイムアタックはログインすると遊べます
+              </p>
+            </div>
+          )}
+          <div id="standard-mode-section" className="mt-4">
+            <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
         <div className={`level-select-list ${celebratingLevel != null ? "level-select-list--celebrating" : ""}`}>
         {Array.from({ length: MAX_LEVEL }, (_, index) => {
           const lv = (index + 1) as Level;
@@ -783,6 +809,7 @@ export function PlayClient({ auth }: PlayClientProps) {
           );
         })}
         </div>
+          </div>
         {error && <p className="feedback-error">{error}</p>}
         <AuthLinks auth={auth} />
         {auth.loggedIn && (

@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { questionLogs, sessions } from "./db/schema";
 import { getUnlockProgress, getUnlockedLevel } from "./levels";
@@ -17,7 +17,13 @@ export async function getProgressData(playerId: string) {
       playedAt: sessions.playedAt,
     })
     .from(sessions)
-    .where(and(eq(sessions.playerId, playerId), eq(sessions.status, "completed")))
+    .where(
+      and(
+        eq(sessions.playerId, playerId),
+        eq(sessions.status, "completed"),
+        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+      ),
+    )
     .orderBy(desc(sessions.playedAt));
 
   const recentSessions = completedSessions.slice(0, 5).map((session) => ({
@@ -61,6 +67,7 @@ export async function getProgressData(playerId: string) {
       and(
         eq(sessions.playerId, playerId),
         eq(questionLogs.isFirstAttemptCorrect, false),
+        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
       ),
     )
     .groupBy(questionLogs.operandA, questionLogs.operandB, questionLogs.operandC)

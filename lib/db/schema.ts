@@ -17,6 +17,27 @@ export type Question = {
 
 export type AttemptCounts = Record<string, number>;
 
+export type SessionMode = "standard" | "time_attack";
+
+export type TimeAttackPhase = "wave_active" | "cleared" | "failed";
+
+export type TimeAttackState = {
+  currentLevel: number;
+  enmaNumber: number;
+  oniHpRemaining: number;
+  oniHpMax: number;
+  mistakeCount: number;
+  waveQuestionIndex: number;
+  globalQuestionIndex: number;
+  waveScoreAccumulated: number;
+  totalScore: number;
+  timeLimitSeconds: number;
+  timeBonusMultiplier: number;
+  bossesDefeated: number;
+  phase: TimeAttackPhase;
+  failReason?: "timeout" | "mistakes";
+};
+
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
@@ -51,8 +72,10 @@ export const sessions = pgTable("sessions", {
     .references(() => players.id)
     .notNull(),
   level: smallint("level").notNull(),
+  mode: varchar("mode", { length: 20 }).notNull().default("standard"),
   status: varchar("status", { length: 20 }).notNull().default("in_progress"),
   questions: jsonb("questions").$type<Question[]>().notNull(),
+  timeAttackState: jsonb("time_attack_state").$type<TimeAttackState>(),
   attemptCounts: jsonb("attempt_counts")
     .$type<AttemptCounts>()
     .notNull()

@@ -1422,3 +1422,179 @@ button.keypad-btn-submit:active:not(:disabled) {
     padding-left: calc(2.5rem + env(safe-area-inset-left, 0px));
   }
 }
+
+/* Time Attack */
+.time-attack-client {
+  position: relative;
+}
+
+.oni-boss-display {
+  position: relative;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: rgb(0 0 0 / 0.2);
+  overflow: hidden;
+}
+
+.oni-boss-display__figure {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.oni-boss-display__figure--enma {
+  opacity: 0.45;
+}
+
+.oni-boss-display__emoji {
+  font-size: clamp(4rem, 18vw, 7rem);
+  line-height: 1;
+}
+
+.oni-boss-display__beam {
+  position: absolute;
+  left: 10%;
+  right: 45%;
+  top: 50%;
+  height: 0.75rem;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #7df9ff 30%, #fff 70%, #ffd699);
+  box-shadow: 0 0 24px rgb(125 249 255 / 0.8);
+  animation: oni-beam-fire 0.8s ease-out infinite alternate;
+}
+
+.oni-boss-display__info {
+  position: relative;
+  z-index: 1;
+}
+
+.oni-boss-display__name {
+  font-weight: 700;
+  text-align: center;
+}
+
+.oni-boss-display__hp-track {
+  margin-top: 0.5rem;
+  height: 0.75rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.35);
+  overflow: hidden;
+}
+
+.oni-boss-display__hp-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff6b6b, #ffd699);
+  transition: width 0.4s ease;
+}
+
+.oni-boss-display__hp-text {
+  margin-top: 0.35rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--chalk-muted);
+}
+
+.time-attack-score-bar__labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.time-attack-score-bar__track {
+  height: 0.65rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.3);
+  overflow: hidden;
+}
+
+.time-attack-score-bar__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7df9ff, #ffd699);
+  transition: width 0.35s ease;
+}
+
+.question-timer {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  background: rgb(0 0 0 / 0.2);
+}
+
+.question-timer__value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.question-timer--red {
+  background: rgb(120 20 20 / 0.45);
+  box-shadow: inset 0 0 0 2px rgb(255 100 100 / 0.7);
+  animation: timer-red-pulse 0.8s ease-in-out infinite;
+}
+
+.question-timer--red-static {
+  animation: none;
+}
+
+.question-timer__grace {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--chalk-green);
+}
+
+.time-attack-alert {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.time-attack-alert--yellow {
+  box-shadow: inset 0 0 0 4px rgb(255 214 0 / 0.75);
+  animation: alert-yellow-flash 0.45s ease-out;
+}
+
+.mode-select-locked {
+  border-radius: 1rem;
+  padding: 0.25rem;
+}
+
+@keyframes oni-beam-fire {
+  from { transform: translateY(-50%) scaleX(0.85); opacity: 0.7; }
+  to { transform: translateY(-50%) scaleX(1); opacity: 1; }
+}
+
+@keyframes timer-red-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.25); }
+}
+
+@keyframes alert-yellow-flash {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oni-boss-display__beam,
+  .question-timer--red,
+  .time-attack-alert--yellow {
+    animation: none;
+  }
+
+  .time-attack-score-bar__fill,
+  .oni-boss-display__hp-fill {
+    transition: none;
+  }
+}

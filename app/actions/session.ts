@@ -1,6 +1,6 @@
 "use server";
 
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, isNull, ne, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { questionLogs, sessions } from "@/lib/db/schema";
@@ -30,7 +30,13 @@ export async function getPlayerUnlockedLevelAction(playerId: string): Promise<Le
       totalScore: sessions.totalScore,
     })
     .from(sessions)
-    .where(and(eq(sessions.playerId, playerId), eq(sessions.status, "completed")));
+    .where(
+      and(
+        eq(sessions.playerId, playerId),
+        eq(sessions.status, "completed"),
+        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+      ),
+    );
 
   return getUnlockedLevel(
     completed.map((session) => ({
@@ -49,7 +55,13 @@ export async function startSessionAction(playerId: string, level: Level) {
       totalScore: sessions.totalScore,
     })
     .from(sessions)
-    .where(and(eq(sessions.playerId, playerId), eq(sessions.status, "completed")));
+    .where(
+      and(
+        eq(sessions.playerId, playerId),
+        eq(sessions.status, "completed"),
+        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+      ),
+    );
 
   const unlockedLevel = getUnlockedLevel(
     completed.map((session) => ({

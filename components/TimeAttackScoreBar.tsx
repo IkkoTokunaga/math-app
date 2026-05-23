@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import { TimeAttackLives } from "@/components/TimeAttackLives";
 import { getWaveMaxScoreForState } from "@/lib/time-attack";
 import type { TimeAttackState } from "@/lib/time-attack";
 
@@ -12,6 +13,8 @@ type TimeAttackScoreBarProps = {
   displayScore?: number;
   charging?: boolean;
   draining?: boolean;
+  mistakeCount?: number;
+  maxMistakes?: number;
   className?: string;
 };
 
@@ -23,6 +26,8 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
       displayScore,
       charging = false,
       draining = false,
+      mistakeCount = 0,
+      maxMistakes = 3,
       className = "",
     },
     ref,
@@ -46,6 +51,7 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
             style={{ width: `${fillPercent}%` }}
           />
         </div>
+        <TimeAttackLives mistakeCount={mistakeCount} maxMistakes={maxMistakes} />
       </div>
     );
   },

@@ -10,6 +10,7 @@ import {
 import { GaugeLightCharge } from "@/components/GaugeLightCharge";
 import { Keypad } from "@/components/Keypad";
 import { MascotBeam, type OniPhase } from "@/components/MascotBeam";
+import { OniEvilOrb } from "@/components/OniEvilOrb";
 import { QuestionTimer } from "@/components/QuestionTimer";
 import { QuizMascot } from "@/components/QuizMascot";
 import { TimeAttackArena } from "@/components/TimeAttackArena";
@@ -38,8 +39,9 @@ type TimeAttackClientProps = {
   initialSession: InitialSession;
 };
 
-const WRONG_FEEDBACK_MS = 900;
 const CORRECT_POPUP_MS = 1000;
+const HEART_LOSS_PAUSE_MS = 220;
+const DARK_FADE_MS = 950;
 const GAUGE_DRAIN_MS = 580;
 const GAUGE_REFLECT_PAUSE_MS = 240;
 const BEAM_MS = 720;
@@ -47,6 +49,18 @@ const ONI_SHAKE_MS = 520;
 const ONI_EXPLODE_MS = 680;
 const ONI_ENTER_MS = 500;
 const DEFEAT_MSG_MS = 1100;
+
+type WrongAnswerResult = {
+  sessionEnded?: boolean;
+  waveComplete?: boolean;
+  cleared?: boolean;
+  bossDefeated?: boolean;
+  defeatBonus?: number;
+  waveScore?: number;
+  mistakeCount?: number;
+  timeAttackState?: TimeAttackState;
+  questions?: Question[];
+};
 
 type PendingAdvance = {
   sessionId: string;
@@ -104,6 +118,12 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [timerPaused, setTimerPaused] = useState(false);
   const [waveMessage, setWaveMessage] = useState<string | null>(null);
   const [oniPhase, setOniPhase] = useState<OniPhase>("idle");
+  const [displayMistakeCount, setDisplayMistakeCount] = useState(
+    initialSession.timeAttackState.mistakeCount,
+  );
+  const [evilOrbAnimId, setEvilOrbAnimId] = useState(0);
+  const [mascotHit, setMascotHit] = useState(false);
+  const [screenDarkening, setScreenDarkening] = useState(false);
 
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
@@ -118,6 +138,8 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const pendingQuestionStateRef = useRef<TimeAttackState | null>(null);
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mascotLightDoneRef = useRef<(() => void) | null>(null);
+  const evilOrbDoneRef = useRef<(() => void) | null>(null);
+  const pendingWrongResultRef = useRef<WrongAnswerResult | null>(null);
 
   useEffect(() => {
     questionStartedAtRef.current = Date.now();
@@ -244,6 +266,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
       syncBossDisplay(result.timeAttackState);
       setTimeAttackState(result.timeAttackState);
+      setDisplayMistakeCount(result.timeAttackState.mistakeCount);
       if (result.questions) {
         setQuestions(result.questions);
       }
@@ -266,6 +289,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
       setDisplayHpMax(result.timeAttackState.oniHpMax);
       setPreviewWaveScore(null);
       setTimeAttackState(result.timeAttackState);
+      setDisplayMistakeCount(result.timeAttackState.mistakeCount);
       if (result.questions) {
         setQuestions(result.questions);
       }
@@ -310,11 +334,78 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
   const handleGaugeChargeComplete = () => {};
 
+  const getMistakeCountFromResult = (result: WrongAnswerResult) =>
+    result.timeAttackState?.mistakeCount ?? result.mistakeCount ?? displayMistakeCount;
+
+  const playEvilOrbAttack = () =>
+    new Promise<void>((resolve) => {
+      evilOrbDoneRef.current = resolve;
+      setEvilOrbAnimId((current) => current + 1);
+    });
+
+  const handleEvilOrbHit = () => {
+    const result = pendingWrongResultRef.current;
+    if (!result) {
+      return;
+    }
+    setFeedback(null);
+    setFeedbackType(null);
+    setAlertType(null);
+    setDisplayMistakeCount(getMistakeCountFromResult(result));
+    setMascotHit(true);
+    setTimeout(() => setMascotHit(false), motionMs(480, 180));
+  };
+
+  const handleEvilOrbComplete = () => {
+    evilOrbDoneRef.current?.();
+    evilOrbDoneRef.current = null;
+  };
+
+  const finishWrongAnswerSequence = async (result: WrongAnswerResult) => {
+    pendingWrongResultRef.current = null;
+
+    if (result.sessionEnded) {
+      setScreenDarkening(true);
+      await new Promise((resolve) => setTimeout(resolve, motionMs(DARK_FADE_MS, 400)));
+      redirectToResult(sessionId);
+      return;
+    }
+
+    if (result.waveComplete) {
+      await beginWaveAttack(sessionId, result);
+      return;
+    }
+
+    applyPendingQuestionState();
+    setAnswer("");
+    questionStartedAtRef.current = Date.now();
+    setTimerPaused(false);
+    submitLockRef.current = false;
+    setSubmitting(false);
+  };
+
+  const handleWrongAnswer = async (result: WrongAnswerResult) => {
+    pendingWrongResultRef.current = result;
+    if (result.timeAttackState) {
+      pendingQuestionStateRef.current = result.timeAttackState;
+    }
+
+    setFeedback("不正解…");
+    setFeedbackType("wrong");
+    setAlertType("yellow");
+
+    await playEvilOrbAttack();
+    await new Promise((resolve) => setTimeout(resolve, motionMs(HEART_LOSS_PAUSE_MS, 80)));
+
+    await finishWrongAnswerSequence(result);
+  };
+
   const applyPendingQuestionState = () => {
     const pending = pendingQuestionStateRef.current;
     if (pending) {
       pendingQuestionStateRef.current = null;
       setTimeAttackState(pending);
+      setDisplayMistakeCount(pending.mistakeCount);
     }
   };
 
@@ -396,46 +487,8 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         return;
       }
 
-      if (result.sessionEnded) {
-        if ("waveComplete" in result && result.waveComplete) {
-          await beginWaveAttack(sessionId, result);
-          if (!("cleared" in result && result.cleared)) {
-            redirectToResult(sessionId);
-          }
-        } else {
-          redirectToResult(sessionId);
-        }
-        return;
-      }
-
-      setFeedback("不正解…");
-      setFeedbackType("wrong");
-      setAlertType("yellow");
-      if (result.timeAttackState && !("waveComplete" in result && result.waveComplete)) {
-        pendingQuestionStateRef.current = result.timeAttackState;
-      }
-
-      if ("waveComplete" in result && result.waveComplete) {
-        setTimeout(async () => {
-          setFeedback(null);
-          setFeedbackType(null);
-          setAlertType(null);
-          await beginWaveAttack(sessionId, result);
-        }, motionMs(WRONG_FEEDBACK_MS, 200));
-        return;
-      }
-
-      setTimeout(() => {
-        setFeedback(null);
-        setFeedbackType(null);
-        setAlertType(null);
-        applyPendingQuestionState();
-        setAnswer("");
-        questionStartedAtRef.current = Date.now();
-        setTimerPaused(false);
-        submitLockRef.current = false;
-        setSubmitting(false);
-      }, motionMs(WRONG_FEEDBACK_MS, 200));
+      await handleWrongAnswer(result);
+      return;
     } catch (err) {
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
       submitLockRef.current = false;
@@ -486,6 +539,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           comment={waveMessage}
           onHomeClick={backToPlay}
           chargeActive={mascotCharging}
+          hitActive={mascotHit}
           beamActive={beamFiring}
         />
         <TimeAttackOniScore
@@ -502,10 +556,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           meta={
             <p className="time-attack-top__meta">
               問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}
-              <span className="time-attack-top__meta-sep" aria-hidden="true">
-                {" "}
-              </span>
-              ミス {timeAttackState.mistakeCount}/{MAX_MISTAKES}
             </p>
           }
         />
@@ -517,6 +567,8 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           charging={gaugeCharging}
           draining={gaugeDraining}
           previewWaveScore={previewWaveScore}
+          mistakeCount={displayMistakeCount}
+          maxMistakes={MAX_MISTAKES}
         />
         <TimeAttackArena
           className="time-attack-arena--inline time-attack-top__hp"
@@ -545,6 +597,16 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         onReachTarget={handleMascotLightReach}
         onComplete={handleMascotLightComplete}
       />
+
+      <OniEvilOrb
+        animId={evilOrbAnimId}
+        fromRef={oniRef}
+        toRef={mascotRef}
+        onHit={handleEvilOrbHit}
+        onComplete={handleEvilOrbComplete}
+      />
+
+      {screenDarkening && <div className="time-attack-dark-overlay" aria-hidden="true" />}
 
       {question && (
         <section

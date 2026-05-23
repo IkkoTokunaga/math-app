@@ -1488,6 +1488,44 @@ button.keypad-btn-submit:active:not(:disabled) {
   margin-top: 0;
 }
 
+.time-attack-gauge--attack .time-attack-lives {
+  margin-top: 0.35rem;
+}
+
+.time-attack-lives {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: clamp(0.4rem, 1.6vw, 0.62rem);
+  min-height: clamp(1.05rem, 4vw, 1.4rem);
+}
+
+.time-attack-lives__heart {
+  display: block;
+  width: 1em;
+  font-size: clamp(1.05rem, 4.2vw, 1.38rem);
+  line-height: 1;
+  flex-shrink: 0;
+  text-align: center;
+  transform-origin: center;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    color 0.25s ease,
+    text-shadow 0.25s ease;
+}
+
+.time-attack-lives__heart--full {
+  color: #ff5c7a;
+  text-shadow: 0 0 10px rgb(255 92 122 / 0.6);
+}
+
+.time-attack-lives__heart--lost {
+  color: rgb(255 255 255 / 0.22);
+  text-shadow: none;
+  transform: scale(0.88);
+}
+
 .time-attack-top__hp {
   grid-column: 3;
   grid-row: 2;
@@ -1919,6 +1957,55 @@ button.keypad-btn-submit:active:not(:disabled) {
 .mascot-beam__spark--2 { left: 48%; animation-delay: 0.08s; }
 .mascot-beam__spark--3 { left: 78%; animation-delay: 0.14s; }
 
+.oni-evil-orb-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.oni-evil-orb,
+.oni-evil-orb__trail {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.oni-evil-orb {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #e9d5ff 0%, #9333ea 38%, #581c87 72%, #2e1065 100%);
+  box-shadow:
+    0 0 10px rgb(147 51 234 / 0.95),
+    0 0 22px rgb(168 85 247 / 0.75),
+    0 0 36px rgb(88 28 135 / 0.55),
+    inset 0 0 10px rgb(255 255 255 / 0.25);
+  animation: oni-evil-orb-fly calc(var(--evil-charge-duration, 300ms) + var(--evil-fly-duration, 720ms))
+    cubic-bezier(0.35, 0, 0.2, 1) forwards;
+}
+
+.oni-evil-orb__trail {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(196 181 253 / 0.85) 0%, rgb(109 40 217 / 0.35) 55%, transparent 100%);
+  filter: blur(2px);
+  opacity: 0;
+  animation: oni-evil-orb-trail calc(var(--evil-charge-duration, 300ms) + var(--evil-fly-duration, 720ms))
+    ease-out forwards;
+}
+
+.time-attack-dark-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgb(0 0 0 / 0);
+  pointer-events: none;
+  animation: time-attack-dark-fade 0.95s ease forwards;
+}
+
 .quiz-header-mascot--firing {
   filter: drop-shadow(0 0 10px rgb(125 249 255 / 0.85));
   animation: mascot-fire-pulse 0.45s ease-in-out 2;
@@ -1927,6 +2014,11 @@ button.keypad-btn-submit:active:not(:disabled) {
 .quiz-header-mascot--charging {
   filter: drop-shadow(0 0 8px rgb(255 255 255 / 0.75)) drop-shadow(0 0 16px rgb(125 249 255 / 0.65));
   animation: mascot-charge-glow 0.85s ease-in-out infinite alternate;
+}
+
+.quiz-header-mascot--evil-hit {
+  filter: drop-shadow(0 0 12px rgb(147 51 234 / 0.9)) drop-shadow(0 0 20px rgb(88 28 135 / 0.75));
+  animation: mascot-evil-hit 0.48s ease;
 }
 
 .question-timer {
@@ -2063,6 +2155,73 @@ button.keypad-btn-submit:active:not(:disabled) {
   }
 }
 
+@keyframes oni-evil-orb-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+
+  28% {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.72);
+  }
+}
+
+@keyframes oni-evil-orb-trail {
+  0%,
+  24% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+
+  35% {
+    opacity: 0.75;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(1.6);
+  }
+}
+
+@keyframes mascot-evil-hit {
+  0%,
+  100% {
+    transform: translateX(0) scale(1);
+  }
+
+  20% {
+    transform: translateX(-0.18rem) scale(0.97);
+  }
+
+  45% {
+    transform: translateX(0.14rem) scale(1.02);
+  }
+
+  70% {
+    transform: translateX(-0.08rem) scale(0.99);
+  }
+}
+
+@keyframes time-attack-dark-fade {
+  0% {
+    background: rgb(0 0 0 / 0);
+  }
+
+  100% {
+    background: rgb(0 0 0 / 0.94);
+  }
+}
+
 @keyframes beam-spark {
   0% { opacity: 0; transform: translateY(0) scale(0.5); }
   30% { opacity: 1; }
@@ -2169,6 +2328,10 @@ button.keypad-btn-submit:active:not(:disabled) {
   .mascot-beam__spark,
   .quiz-header-mascot--firing,
   .quiz-header-mascot--charging,
+  .quiz-header-mascot--evil-hit,
+  .oni-evil-orb,
+  .oni-evil-orb__trail,
+  .time-attack-dark-overlay,
   .time-attack-gauge--pulse,
   .time-attack-oni-score--hit,
   .time-attack-oni-score--shake,

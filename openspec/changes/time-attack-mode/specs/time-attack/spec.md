@@ -55,11 +55,28 @@ During time attack, each question SHALL allow **one submission only**. On an inc
 
 ### Requirement: Session end on three mistakes
 
-When the mistake count reaches **3**, the time attack session SHALL end immediately and navigate to the time attack result screen.
+When the mistake count reaches **3**, the time attack session SHALL end and navigate to the time attack result screen after a **screen darkening** transition. The quiz view SHALL show **three heart icons** directly below the attack gauge within the attack gauge frame; each incorrect answer SHALL remove one heart **after** the evil-orb hit animation completes. No caption or label SHALL appear beside the hearts.
+
+#### Scenario: Evil orb on incorrect answer
+- **WHEN** a player submits an incorrect answer
+- **THEN** an incorrect-answer popup is shown while a purple evil orb flies from the oni toward the teacher mascot
+- **AND** the popup dismisses when the orb hits the mascot and a heart is lost
+- **AND** the next question does not appear until the orb hit and heart-loss sequence completes
+
+#### Scenario: Heart lost after orb hit
+- **WHEN** the evil orb reaches the teacher mascot
+- **THEN** one heart is removed
+- **AND** the mascot plays a brief hit reaction
+
+#### Scenario: Hearts reflect remaining lives
+- **WHEN** a player is in time attack
+- **THEN** three hearts appear below the attack gauge inside the attack gauge frame
+- **AND** each mistake removes one heart until none remain
 
 #### Scenario: Third mistake
 - **WHEN** a player submits a third incorrect answer in one time attack session
-- **THEN** the session ends with status failed
+- **THEN** the final heart is removed after the evil orb hits
+- **AND** the screen darkens
 - **AND** the result screen is shown
 
 ### Requirement: Per-question time limit and immediate end on timeout
@@ -95,7 +112,7 @@ The time attack quiz view SHALL show visual alert effects:
 | Condition | Effect |
 |-----------|--------|
 | Remaining time ≤ 5 seconds | Red alert |
-| Incorrect submission | Yellow alert |
+| Incorrect submission | Yellow alert, then evil orb from oni to mascot |
 
 Red alert timing SHALL be **fixed at 5 seconds remaining**, even when the Enma stage uses a shorter total limit (e.g. 7 seconds).
 

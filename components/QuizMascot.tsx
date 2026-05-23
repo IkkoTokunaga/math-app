@@ -9,12 +9,21 @@ type QuizMascotProps = {
   beamActive?: boolean;
   /** 攻撃ゲージから光を集める演出 */
   chargeActive?: boolean;
+  /** 邪気玉ヒット演出 */
+  hitActive?: boolean;
   className?: string;
 };
 
 export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
   function QuizMascot(
-    { comment, onHomeClick, beamActive = false, chargeActive = false, className = "" },
+    {
+      comment,
+      onHomeClick,
+      beamActive = false,
+      chargeActive = false,
+      hitActive = false,
+      className = "",
+    },
     ref,
   ) {
     return (
@@ -32,7 +41,7 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
           ref={ref}
           type="button"
           onClick={onHomeClick}
-          className={`quiz-header-mascot rounded-md transition-opacity hover:opacity-85 active:opacity-70 ${chargeActive ? "quiz-header-mascot--charging" : ""} ${beamActive ? "quiz-header-mascot--firing" : ""}`}
+          className={`quiz-header-mascot rounded-md transition-opacity hover:opacity-85 active:opacity-70 ${chargeActive ? "quiz-header-mascot--charging" : ""} ${hitActive ? "quiz-header-mascot--evil-hit" : ""} ${beamActive ? "quiz-header-mascot--firing" : ""}`}
           aria-label="ホームにもどる"
         >
           <img

@@ -1,0 +1,90 @@
+import type { Level } from "@/lib/questions";
+import {
+  getBossParams,
+  MAX_ENMA_NUMBER,
+  type TimeAttackState,
+} from "@/lib/time-attack";
+import { calculateOniMaxHp } from "@/lib/time-attack-scoring";
+
+export type DevTimeAttackStart = {
+  level: Level;
+  enmaNumber: number;
+};
+
+function toSearchParams(
+  params: URLSearchParams | Record<string, string | undefined>,
+): URLSearchParams {
+  if (params instanceof URLSearchParams) {
+    return params;
+  }
+
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      search.set(key, value);
+    }
+  }
+  return search;
+}
+
+/** 開発用: 指定 Lv / 閻魔番号から wave_active 状態を生成する */
+export function createDevTimeAttackState(start: DevTimeAttackStart): TimeAttackState {
+  const level = start.level;
+  const enmaNumber = level >= 10 ? start.enmaNumber : 0;
+  const params = getBossParams(level, enmaNumber);
+  const oniHpMax = calculateOniMaxHp(
+    level,
+    params.timeLimitSeconds,
+    params.timeBonusMultiplier,
+    enmaNumber,
+  );
+  const bossesDefeated = level < 10 ? level - 1 : 9 + (enmaNumber - 1);
+
+  return {
+    currentLevel: level,
+    enmaNumber,
+    oniHpRemaining: oniHpMax,
+    oniHpMax,
+    mistakeCount: 0,
+    waveQuestionIndex: 0,
+    globalQuestionIndex: 0,
+    waveScoreAccumulated: 0,
+    totalScore: 0,
+    timeLimitSeconds: params.timeLimitSeconds,
+    timeBonusMultiplier: params.timeBonusMultiplier,
+    bossesDefeated,
+    phase: "wave_active",
+  };
+}
+
+export function parseDevTimeAttackStart(
+  params: URLSearchParams | Record<string, string | undefined>,
+): DevTimeAttackStart | null {
+  if (process.env.NODE_ENV !== "development") {
+    return null;
+  }
+
+  const search = toSearchParams(params);
+  const devStart = search.get("devStart");
+  if (!devStart) {
+    return null;
+  }
+
+  const level = Number.parseInt(devStart, 10);
+  if (!Number.isFinite(level) || level < 1 || level > 10) {
+    return null;
+  }
+
+  if (level < 10) {
+    return { level: level as Level, enmaNumber: 0 };
+  }
+
+  const devEnma = search.get("devEnma");
+  const parsedEnma = devEnma ? Number.parseInt(devEnma, 10) : 1;
+  const enmaNumber =
+    Number.isFinite(parsedEnma) && parsedEnma >= 1 && parsedEnma <= MAX_ENMA_NUMBER
+      ? parsedEnma
+      : 1;
+
+  return { level: level as Level, enmaNumber };
+}

@@ -7,6 +7,10 @@ import { questionLogs, sessions } from "@/lib/db/schema";
 import type { Question, TimeAttackState as DbTimeAttackState } from "@/lib/db/schema";
 import { generateQuestions, getCorrectAnswer, type Level } from "@/lib/questions";
 import {
+  createDevTimeAttackState,
+  type DevTimeAttackStart,
+} from "@/lib/dev-time-attack-setup";
+import {
   applyWaveDamage,
   createInitialTimeAttackState,
   getBossLabel,
@@ -268,20 +272,29 @@ export async function resumeTimeAttackSessionAction(playerId: string) {
   return buildSessionPayload(session.id, session.questions as Question[], state);
 }
 
-export async function startTimeAttackSessionAction(playerId: string, forceNew = false) {
+export async function startTimeAttackSessionAction(
+  playerId: string,
+  forceNew = false,
+  devStart: DevTimeAttackStart | null = null,
+) {
+  const devStartActive =
+    devStart !== null && process.env.NODE_ENV === "development";
+
   const existing = await findInProgressTimeAttackSession(playerId);
-  if (existing && !forceNew) {
+  if (existing && !forceNew && !devStartActive) {
     return {
       needsConfirm: true as const,
       existingSessionId: existing.id,
     };
   }
 
-  if (forceNew) {
+  if (forceNew || devStartActive) {
     await abandonInProgressTimeAttackSessions(playerId);
   }
 
-  const initialState = createInitialTimeAttackState();
+  const initialState = devStartActive
+    ? createDevTimeAttackState(devStart)
+    : createInitialTimeAttackState();
   const questions = generateQuestions(initialState.currentLevel, WAVE_QUESTION_COUNT);
 
   const [session] = await getDb()

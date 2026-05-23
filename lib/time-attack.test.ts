@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { createDevTimeAttackState } from "./dev-time-attack-setup";
 import {
   applyWaveDamage,
   createInitialTimeAttackState,
@@ -118,5 +119,29 @@ describe("time-attack state", () => {
 
   it("maps Enma #5 parameters", () => {
     assert.deepEqual(getEnmaParams(5), { timeLimitSeconds: 7, timeBonusMultiplier: 5 });
+  });
+});
+
+describe("dev-time-attack-setup", () => {
+  it("starts at requested oni level", () => {
+    const state = createDevTimeAttackState({ level: 5, enmaNumber: 0 });
+    assert.equal(state.currentLevel, 5);
+    assert.equal(state.enmaNumber, 0);
+    assert.equal(state.bossesDefeated, 4);
+    assert.equal(state.phase, "wave_active");
+  });
+
+  it("starts at requested Enma number", () => {
+    const state = createDevTimeAttackState({ level: 10, enmaNumber: 5 });
+    assert.equal(state.currentLevel, 10);
+    assert.equal(state.enmaNumber, 5);
+    assert.equal(state.bossesDefeated, 13);
+    assert.equal(state.timeLimitSeconds, 7);
+    assert.equal(state.timeBonusMultiplier, 5);
+  });
+
+  it("ignores enmaNumber below level 10", () => {
+    const state = createDevTimeAttackState({ level: 3, enmaNumber: 7 });
+    assert.equal(state.enmaNumber, 0);
   });
 });

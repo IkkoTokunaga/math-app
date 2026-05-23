@@ -32,6 +32,15 @@ Every **new** time attack session SHALL begin at **level 1**, regardless of the 
 - **WHEN** a logged-in player starts a new time attack session
 - **THEN** the first wave uses level 1 questions and level 1 boss parameters
 
+#### Scenario: Development shortcut to boss stage
+- **WHEN** the app runs in development and the player opens `/play/time-attack?devStart=<level>` (optional `devEnma=<1–10>` when `devStart=10`)
+- **THEN** a new time attack session starts at the requested level and Enma number with full boss HP
+- **AND** any in-progress time attack session is abandoned first
+
+#### Scenario: Development shortcut ignored in production
+- **WHEN** the app runs outside development and the URL includes `devStart` or `devEnma`
+- **THEN** the session starts at level 1 as usual
+
 ### Requirement: Five-question waves with server generation and scoring
 
 Time attack SHALL proceed in **waves of exactly 5 questions**. At the start of each wave, the server SHALL generate 5 questions for the current level using the same generation rules as standard mode. After each answer, the server SHALL score the submission. After the 5th question of a wave, the server SHALL aggregate the wave score and apply it as damage to the boss HP.

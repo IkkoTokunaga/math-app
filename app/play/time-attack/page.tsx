@@ -7,9 +7,10 @@ import {
 } from "@/app/actions/time-attack";
 import { TimeAttackClient } from "@/components/TimeAttackClient";
 import { getAuthState } from "@/lib/auth";
+import { parseDevTimeAttackStart } from "@/lib/dev-time-attack-setup";
 
 type TimeAttackPlayPageProps = {
-  searchParams: Promise<{ new?: string }>;
+  searchParams: Promise<{ new?: string; devStart?: string; devEnma?: string }>;
 };
 
 export default async function TimeAttackPlayPage({ searchParams }: TimeAttackPlayPageProps) {
@@ -19,11 +20,14 @@ export default async function TimeAttackPlayPage({ searchParams }: TimeAttackPla
     redirect("/play");
   }
 
-  const { new: newParam } = await searchParams;
-  const forceNew = newParam === "1";
+  const params = await searchParams;
+  const forceNew = params.new === "1";
+  const devStart = parseDevTimeAttackStart(params);
 
   let initialSession;
-  if (forceNew) {
+  if (devStart) {
+    initialSession = await startTimeAttackSessionAction(auth.playerId, true, devStart);
+  } else if (forceNew) {
     initialSession = await startTimeAttackSessionAction(auth.playerId, true);
   } else {
     initialSession = (await resumeTimeAttackSessionAction(auth.playerId)) ??

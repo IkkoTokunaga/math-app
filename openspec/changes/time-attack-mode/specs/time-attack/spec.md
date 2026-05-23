@@ -397,6 +397,16 @@ The system SHALL persist in-progress time attack sessions after each answer and 
 - **WHEN** a time attack session has status cleared or failed
 - **THEN** it cannot be resumed from 続きから
 
+#### Scenario: No continue after game over on play screen
+- **WHEN** a player ends a time attack session due to 3 mistakes and returns to the play screen
+- **THEN** 続きから is NOT shown
+- **AND** only the option to start a new time attack run is offered
+
+#### Scenario: Resume route without in-progress session
+- **WHEN** a logged-in player opens `/play/time-attack` without `new=1` and has no resumable in-progress session
+- **THEN** the system redirects to the play screen
+- **AND** does NOT create a new in-progress session automatically
+
 ### Requirement: Time attack result screen
 
 When a time attack session ends (failed, cleared, or abandoned mid-run), the system SHALL show a dedicated result screen with at minimum:

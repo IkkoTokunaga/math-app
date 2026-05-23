@@ -30,8 +30,10 @@ export default async function TimeAttackPlayPage({ searchParams }: TimeAttackPla
   } else if (forceNew) {
     initialSession = await startTimeAttackSessionAction(auth.playerId, true);
   } else {
-    initialSession = (await resumeTimeAttackSessionAction(auth.playerId)) ??
-      (await startTimeAttackSessionAction(auth.playerId));
+    initialSession = await resumeTimeAttackSessionAction(auth.playerId);
+    if (!initialSession) {
+      redirect("/play");
+    }
   }
 
   if ("needsConfirm" in initialSession) {

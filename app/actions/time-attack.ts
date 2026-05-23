@@ -67,29 +67,41 @@ async function findInProgressTimeAttackSession(playerId: string) {
 }
 
 async function abandonInProgressTimeAttackSessions(playerId: string) {
-  const inProgress = await findInProgressTimeAttackSession(playerId);
-  if (!inProgress?.timeAttackState) {
-    return;
-  }
+  const inProgressSessions = await getDb()
+    .select()
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.playerId, playerId),
+        eq(sessions.mode, "time_attack"),
+        eq(sessions.status, "in_progress"),
+      ),
+    );
 
-  const state = parseTimeAttackState(inProgress.timeAttackState);
-  await getDb()
-    .update(sessions)
-    .set({
-      status: "completed",
-      timeAttackState: serializeTimeAttackState({
-        ...state,
-        phase: "failed",
-      }),
-      completedAt: new Date(),
-      stars: null,
-      correctAnswers: null,
-      accuracy: null,
-      baseScore: null,
-      bonusScore: null,
-      bestStreak: null,
-    })
-    .where(eq(sessions.id, inProgress.id));
+  for (const session of inProgressSessions) {
+    if (!session.timeAttackState) {
+      continue;
+    }
+
+    const state = parseTimeAttackState(session.timeAttackState);
+    await getDb()
+      .update(sessions)
+      .set({
+        status: "completed",
+        timeAttackState: serializeTimeAttackState({
+          ...state,
+          phase: "failed",
+        }),
+        completedAt: new Date(),
+        stars: null,
+        correctAnswers: null,
+        accuracy: null,
+        baseScore: null,
+        bonusScore: null,
+        bestStreak: null,
+      })
+      .where(eq(sessions.id, session.id));
+  }
 }
 
 async function finalizeTimeAttackFailure(
@@ -247,7 +259,7 @@ export async function getTimeAttackResumeInfoAction(playerId: string) {
   }
 
   const state = parseTimeAttackState(session.timeAttackState);
-  if (state.phase !== "wave_active") {
+  if (state.phase !== "wave_active" || state.mistakeCount >= MAX_MISTAKES) {
     return null;
   }
 
@@ -266,7 +278,7 @@ export async function resumeTimeAttackSessionAction(playerId: string) {
   }
 
   const state = parseTimeAttackState(session.timeAttackState);
-  if (state.phase !== "wave_active") {
+  if (state.phase !== "wave_active" || state.mistakeCount >= MAX_MISTAKES) {
     return null;
   }
 

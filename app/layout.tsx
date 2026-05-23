@@ -1,14 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Klee_One } from "next/font/google";
+import "@fontsource/klee-one/400.css";
+import "@fontsource/klee-one/600.css";
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
-
-const kleeOne = Klee_One({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  variable: "--font-klee",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -47,7 +41,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={kleeOne.variable}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

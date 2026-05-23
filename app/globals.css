@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --font-klee: "Klee One", "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
   --background: #1a2e24;
   --foreground: #f0ebe0;
   --board: #2a4538;
@@ -39,7 +40,7 @@ body {
   color: var(--chalk);
   min-height: 100svh;
   min-height: 100dvh;
-  font-family: var(--font-klee), "Hiragino Maru Gothic ProN", "Yu Gothic UI", "Meiryo", sans-serif;
+  font-family: var(--font-klee);
 }
 
 .page-shell {
@@ -1569,57 +1570,58 @@ button.keypad-btn-submit:active:not(:disabled) {
 
 .time-attack-oni-score__image {
   --oni-shadow: drop-shadow(0 4px 12px rgb(0 0 0 / 0.35));
+  --oni-tint: var(--oni-shadow);
   width: auto;
   height: clamp(6.25rem, 21vw, 8.25rem);
   max-width: 100%;
   background: transparent;
   object-fit: contain;
   object-position: bottom right;
-  filter: var(--oni-shadow);
+  filter: var(--oni-tint);
   transition: transform 0.25s ease, filter 0.35s ease;
   display: block;
 }
 
 /* Lv1–9: ベース oni.png にステージごとの色変化 */
 .time-attack-oni-score__image--lv1 {
-  filter: var(--oni-shadow) hue-rotate(195deg) saturate(1.15);
+  --oni-tint: var(--oni-shadow) hue-rotate(195deg) saturate(1.15);
 }
 
 .time-attack-oni-score__image--lv2 {
-  filter: var(--oni-shadow) hue-rotate(125deg) saturate(1.2);
+  --oni-tint: var(--oni-shadow) hue-rotate(125deg) saturate(1.2);
 }
 
 .time-attack-oni-score__image--lv3 {
-  filter: var(--oni-shadow) hue-rotate(55deg) saturate(1.25);
+  --oni-tint: var(--oni-shadow) hue-rotate(55deg) saturate(1.25);
 }
 
 .time-attack-oni-score__image--lv4 {
-  filter: var(--oni-shadow) hue-rotate(18deg) saturate(1.15);
+  --oni-tint: var(--oni-shadow) hue-rotate(18deg) saturate(1.15);
 }
 
 .time-attack-oni-score__image--lv5 {
-  filter: var(--oni-shadow) saturate(1.05);
+  --oni-tint: var(--oni-shadow) saturate(1.05);
 }
 
 .time-attack-oni-score__image--lv6 {
-  filter: var(--oni-shadow) hue-rotate(315deg) saturate(1.2);
+  --oni-tint: var(--oni-shadow) hue-rotate(315deg) saturate(1.2);
 }
 
 .time-attack-oni-score__image--lv7 {
-  filter: var(--oni-shadow) hue-rotate(275deg) saturate(1.15);
+  --oni-tint: var(--oni-shadow) hue-rotate(275deg) saturate(1.15);
 }
 
 .time-attack-oni-score__image--lv8 {
-  filter: var(--oni-shadow) hue-rotate(230deg) saturate(1.1) brightness(0.92);
+  --oni-tint: var(--oni-shadow) hue-rotate(230deg) saturate(1.1) brightness(0.92);
 }
 
 .time-attack-oni-score__image--lv9 {
-  filter: var(--oni-shadow) hue-rotate(38deg) saturate(1.4) brightness(1.12);
+  --oni-tint: var(--oni-shadow) hue-rotate(38deg) saturate(1.4) brightness(1.12);
 }
 
 /* Lv10 閻魔大王: 紫の専用画像 */
 .time-attack-oni-score__image--enma {
-  filter: var(--oni-shadow) drop-shadow(0 0 10px rgb(147 51 234 / 0.35));
+  --oni-tint: var(--oni-shadow) drop-shadow(0 0 10px rgb(147 51 234 / 0.35));
 }
 
 .time-attack-oni-score__points {
@@ -1734,9 +1736,9 @@ button.keypad-btn-submit:active:not(:disabled) {
 }
 
 @keyframes oni-body-explode {
-  0% { transform: scale(1); opacity: 1; filter: brightness(1); }
-  35% { transform: scale(1.08); opacity: 1; filter: brightness(1.6); }
-  100% { transform: scale(0.2); opacity: 0; filter: brightness(2); }
+  0% { transform: scale(1); opacity: 1; filter: var(--oni-tint) brightness(1); }
+  35% { transform: scale(1.08); opacity: 1; filter: var(--oni-tint) brightness(1.6); }
+  100% { transform: scale(0.2); opacity: 0; filter: var(--oni-tint) brightness(2); }
 }
 
 @keyframes oni-body-enter {

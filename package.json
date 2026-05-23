@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@fontsource/klee-one": "^5.2.8",
     "@fontsource/noto-sans-jp": "^5.2.9",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
@@ -31,8 +32,8 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-    "tsx": "^4.20.6",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

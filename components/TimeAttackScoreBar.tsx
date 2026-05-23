@@ -43,7 +43,7 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
         className={`time-attack-gauge time-attack-gauge--attack ${pulsing ? "time-attack-gauge--pulse" : ""} ${charging ? "time-attack-gauge--charging" : ""} ${draining ? "time-attack-gauge--draining" : ""} ${className}`.trim()}
       >
         <div className="time-attack-gauge__header">
-          <span>攻撃ゲージ（10問）</span>
+          <span>攻撃ゲージ</span>
         </div>
         <div ref={ref} className="time-attack-gauge__track">
           <div

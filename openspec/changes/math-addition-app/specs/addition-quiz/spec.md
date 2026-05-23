@@ -69,10 +69,6 @@ Input SHALL accept at most **4 digits** per answer. Levels 1–9 SHALL only gene
 - **WHEN** a player taps the backspace button after entering digits
 - **THEN** the last entered digit is removed from the inline answer display
 
-#### Scenario: Rapid multi-digit entry on mobile
-- **WHEN** a player taps digits in quick succession on the on-screen keypad (e.g. entering a two-digit answer)
-- **THEN** each tap appends a digit in order without dropping or overwriting earlier digits
-
 ### Requirement: Keyboard shortcuts
 
 When playing on a device with a physical keyboard, the system SHALL support the following shortcuts during a quiz:

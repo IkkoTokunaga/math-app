@@ -1074,8 +1074,6 @@ body.level-unlock-active {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.06),
     0 4px 0 var(--frame-shadow);
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1083,13 +1081,11 @@ body.level-unlock-active {
   border-color: rgb(240 235 224 / 0.5);
 }
 
-@media (hover: hover) {
-  .keypad-btn:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      0 1px 0 var(--frame-shadow);
-  }
+.keypad-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 1px 0 var(--frame-shadow);
 }
 
 .keypad-btn:disabled {
@@ -1107,8 +1103,6 @@ button.keypad-btn-submit {
   letter-spacing: 0.05em;
   text-shadow: none;
   box-shadow: 0 4px 0 #8a7530;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
@@ -1124,11 +1118,9 @@ button.keypad-btn-submit:disabled {
   box-shadow: 0 4px 0 var(--frame-shadow);
 }
 
-@media (hover: hover) {
-  button.keypad-btn-submit:active:not(:disabled) {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 #8a7530;
-  }
+button.keypad-btn-submit:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #8a7530;
 }
 
 .feedback-success {

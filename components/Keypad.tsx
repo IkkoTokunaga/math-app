@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef, type PointerEvent } from "react";
 
 type KeypadProps = {
   value: string;
@@ -23,20 +23,46 @@ function BackspaceIcon() {
   );
 }
 
-export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: KeypadProps) {
-  const appendDigit = (digit: string) => {
-    if (disabled || value.length >= maxDigits) {
-      return;
-    }
-    onChange(value + digit);
-  };
+function handleKeypadPress(event: PointerEvent<HTMLButtonElement>, action: () => void) {
+  if (event.currentTarget.disabled) {
+    return;
+  }
+  // pointerdown で即反映し、モバイルの click 遅延・押下中の位置ズレを避ける
+  event.preventDefault();
+  action();
+}
 
-  const backspace = () => {
+export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: KeypadProps) {
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  const appendDigit = useCallback(
+    (digit: string) => {
+      if (disabled) {
+        return;
+      }
+      const current = valueRef.current;
+      if (current.length >= maxDigits) {
+        return;
+      }
+      const next = current + digit;
+      valueRef.current = next;
+      onChange(next);
+    },
+    [disabled, maxDigits, onChange],
+  );
+
+  const backspace = useCallback(() => {
     if (disabled) {
       return;
     }
-    onChange(value.slice(0, -1));
-  };
+    const next = valueRef.current.slice(0, -1);
+    valueRef.current = next;
+    onChange(next);
+  }, [disabled, onChange]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -46,21 +72,19 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
 
       if (/^[0-9]$/.test(event.key)) {
         event.preventDefault();
-        if (value.length < maxDigits) {
-          onChange(value + event.key);
-        }
+        appendDigit(event.key);
         return;
       }
 
       if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
-        onChange(value.slice(0, -1));
+        backspace();
         return;
       }
 
       if (event.key === "Enter") {
         event.preventDefault();
-        if (value.length > 0) {
+        if (valueRef.current.length > 0) {
           onSubmit();
         }
       }
@@ -68,7 +92,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [disabled, value, onChange, onSubmit, maxDigits]);
+  }, [disabled, appendDigit, backspace, onSubmit]);
 
   // テンキー（電卓）と同じ配列: 7-8-9 / 4-5-6 / 1-2-3
   const digits = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
@@ -80,6 +104,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
           key={digit}
           type="button"
           disabled={disabled}
+          onPointerDown={(event) => handleKeypadPress(event, () => appendDigit(digit))}
           onClick={() => appendDigit(digit)}
           className="keypad-btn"
         >
@@ -89,6 +114,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       <button
         type="button"
         disabled={disabled || value.length === 0}
+        onPointerDown={(event) => handleKeypadPress(event, backspace)}
         onClick={backspace}
         className="keypad-btn flex items-center justify-center"
         aria-label="1文字削除"
@@ -99,6 +125,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       <button
         type="button"
         disabled={disabled}
+        onPointerDown={(event) => handleKeypadPress(event, () => appendDigit("0"))}
         onClick={() => appendDigit("0")}
         className="keypad-btn"
       >
@@ -107,6 +134,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       <button
         type="button"
         disabled={disabled || value.length === 0}
+        onPointerDown={(event) => handleKeypadPress(event, onSubmit)}
         onClick={onSubmit}
         className="keypad-btn-submit"
         title="答える（Enter）"

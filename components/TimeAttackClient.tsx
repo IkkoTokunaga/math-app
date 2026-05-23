@@ -40,6 +40,8 @@ type TimeAttackClientProps = {
 
 const WRONG_FEEDBACK_MS = 900;
 const CORRECT_POPUP_MS = 1000;
+const GAUGE_DRAIN_MS = 580;
+const GAUGE_REFLECT_PAUSE_MS = 240;
 const BEAM_MS = 720;
 const ONI_SHAKE_MS = 520;
 const ONI_EXPLODE_MS = 680;
@@ -91,8 +93,11 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     initialSession.timeAttackState.waveScoreAccumulated,
   );
   const [gaugeLightAnimId, setGaugeLightAnimId] = useState(0);
+  const [mascotLightAnimId, setMascotLightAnimId] = useState(0);
   const [gaugeLightFillRatio, setGaugeLightFillRatio] = useState(0);
   const [gaugeCharging, setGaugeCharging] = useState(false);
+  const [gaugeDraining, setGaugeDraining] = useState(false);
+  const [mascotCharging, setMascotCharging] = useState(false);
   const [beamFiring, setBeamFiring] = useState(false);
   const [previewWaveScore, setPreviewWaveScore] = useState<number | null>(null);
   const [damageAmount, setDamageAmount] = useState(0);
@@ -112,6 +117,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const pendingAdvanceRef = useRef<PendingAdvance | null>(null);
   const pendingQuestionStateRef = useRef<TimeAttackState | null>(null);
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mascotLightDoneRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     questionStartedAtRef.current = Date.now();
@@ -160,7 +166,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     }
   }, [sessionId, timeAttackState, redirectToResult]);
 
-  const advanceAfterWave = async (
+  const beginWaveAttack = async (
     id: string,
     result: {
       waveComplete?: boolean;
@@ -179,12 +185,37 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
     const waveScore = result.waveScore ?? 0;
     const hpAfter = result.bossDefeated ? 0 : result.timeAttackState.oniHpRemaining;
+    const reflectedWaveScore =
+      waveScore > 0 ? waveScore : result.timeAttackState.waveScoreAccumulated;
 
     setTimerPaused(true);
-    setPreviewWaveScore(waveScore);
     setDamageAmount(waveScore);
-    setBeamFiring(true);
+    pendingGaugeTargetRef.current = null;
 
+    setGaugeDisplayScore(reflectedWaveScore);
+    if (pendingTotalScoreRef.current != null) {
+      setRunningScore(pendingTotalScoreRef.current);
+      pendingTotalScoreRef.current = null;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, motionMs(GAUGE_REFLECT_PAUSE_MS, 80)));
+
+    setGaugeDraining(true);
+    setMascotCharging(true);
+    setGaugeDisplayScore(0);
+
+    const mascotLightPromise = new Promise<void>((resolve) => {
+      mascotLightDoneRef.current = resolve;
+      setMascotLightAnimId((current) => current + 1);
+    });
+
+    await Promise.all([
+      new Promise((resolve) => setTimeout(resolve, motionMs(GAUGE_DRAIN_MS, 220))),
+      mascotLightPromise,
+    ]);
+    setGaugeDraining(false);
+
+    setBeamFiring(true);
     await new Promise((resolve) => setTimeout(resolve, motionMs(BEAM_MS, 280)));
     setBeamFiring(false);
 
@@ -261,15 +292,23 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
     setGaugeCharging(true);
     setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
-  };
 
-  const handleGaugeChargeComplete = () => {
     const advance = pendingAdvanceRef.current;
     if (advance) {
       pendingAdvanceRef.current = null;
-      void advanceAfterWave(advance.sessionId, advance.result);
+      void beginWaveAttack(advance.sessionId, advance.result);
     }
   };
+
+  const handleMascotLightReach = () => {
+    setMascotCharging(false);
+    mascotLightDoneRef.current?.();
+    mascotLightDoneRef.current = null;
+  };
+
+  const handleMascotLightComplete = () => {};
+
+  const handleGaugeChargeComplete = () => {};
 
   const applyPendingQuestionState = () => {
     const pending = pendingQuestionStateRef.current;
@@ -359,7 +398,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
       if (result.sessionEnded) {
         if ("waveComplete" in result && result.waveComplete) {
-          await advanceAfterWave(sessionId, result);
+          await beginWaveAttack(sessionId, result);
           if (!("cleared" in result && result.cleared)) {
             redirectToResult(sessionId);
           }
@@ -381,7 +420,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           setFeedback(null);
           setFeedbackType(null);
           setAlertType(null);
-          await advanceAfterWave(sessionId, result);
+          await beginWaveAttack(sessionId, result);
         }, motionMs(WRONG_FEEDBACK_MS, 200));
         return;
       }
@@ -446,6 +485,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           className="time-attack-top__mascot"
           comment={waveMessage}
           onHomeClick={backToPlay}
+          chargeActive={mascotCharging}
           beamActive={beamFiring}
         />
         <TimeAttackOniScore
@@ -475,6 +515,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           state={timeAttackState}
           displayScore={gaugeDisplayScore}
           charging={gaugeCharging}
+          draining={gaugeDraining}
           previewWaveScore={previewWaveScore}
         />
         <TimeAttackArena
@@ -491,8 +532,18 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         fromRef={feedbackPopupRef}
         toRef={attackGaugeRef}
         fillRatio={gaugeLightFillRatio}
-        onReachGauge={handleGaugeReach}
+        onReachTarget={handleGaugeReach}
         onComplete={handleGaugeChargeComplete}
+      />
+
+      <GaugeLightCharge
+        animId={mascotLightAnimId}
+        fromRef={attackGaugeRef}
+        toRef={mascotRef}
+        mode="gaugeToMascot"
+        attackStream
+        onReachTarget={handleMascotLightReach}
+        onComplete={handleMascotLightComplete}
       />
 
       {question && (

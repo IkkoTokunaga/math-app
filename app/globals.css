@@ -1773,6 +1773,26 @@ button.keypad-btn-submit:active:not(:disabled) {
   box-shadow: 0 0 16px rgb(255 255 255 / 0.75);
 }
 
+.time-attack-gauge--draining .time-attack-gauge__fill--attack,
+.time-attack-gauge__fill--attack.time-attack-gauge__fill--draining {
+  transition: width 0.58s cubic-bezier(0.45, 0, 0.85, 0.25);
+  filter: brightness(1.25);
+  box-shadow:
+    0 0 12px rgb(255 255 255 / 0.65),
+    0 0 22px rgb(94 231 255 / 0.55);
+}
+
+.time-attack-gauge--draining .time-attack-gauge__track {
+  box-shadow:
+    inset 0 2px 6px rgb(0 0 0 / 0.35),
+    0 0 14px rgb(125 249 255 / 0.25);
+}
+
+.gauge-light-charge--attack .gauge-light-charge__cluster {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
 .gauge-light-charge {
   position: fixed;
   inset: 0;
@@ -1904,6 +1924,11 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: mascot-fire-pulse 0.45s ease-in-out 2;
 }
 
+.quiz-header-mascot--charging {
+  filter: drop-shadow(0 0 8px rgb(255 255 255 / 0.75)) drop-shadow(0 0 16px rgb(125 249 255 / 0.65));
+  animation: mascot-charge-glow 0.85s ease-in-out infinite alternate;
+}
+
 .question-timer {
   display: flex;
   align-items: baseline;
@@ -2026,6 +2051,18 @@ button.keypad-btn-submit:active:not(:disabled) {
   50% { transform: scale(1.04); }
 }
 
+@keyframes mascot-charge-glow {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.55)) drop-shadow(0 0 12px rgb(125 249 255 / 0.45));
+  }
+
+  100% {
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 12px rgb(255 255 255 / 0.9)) drop-shadow(0 0 22px rgb(125 249 255 / 0.85));
+  }
+}
+
 @keyframes beam-spark {
   0% { opacity: 0; transform: translateY(0) scale(0.5); }
   30% { opacity: 1; }
@@ -2131,6 +2168,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   .mascot-beam--aimed,
   .mascot-beam__spark,
   .quiz-header-mascot--firing,
+  .quiz-header-mascot--charging,
   .time-attack-gauge--pulse,
   .time-attack-oni-score--hit,
   .time-attack-oni-score--shake,

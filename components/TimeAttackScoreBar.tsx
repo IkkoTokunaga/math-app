@@ -11,6 +11,7 @@ type TimeAttackScoreBarProps = {
   /** 光の演出が届くまでの表示用スコア */
   displayScore?: number;
   charging?: boolean;
+  draining?: boolean;
   className?: string;
 };
 
@@ -21,6 +22,7 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
       previewWaveScore = null,
       displayScore,
       charging = false,
+      draining = false,
       className = "",
     },
     ref,
@@ -29,18 +31,18 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
     const currentScore = previewWaveScore ?? displayScore ?? state.waveScoreAccumulated;
     const fillPercent =
       maxScore > 0 ? Math.min(100, (currentScore / maxScore) * 100) : 0;
-    const pulsing = previewWaveScore != null || charging;
+    const pulsing = previewWaveScore != null || charging || draining;
 
     return (
       <div
-        className={`time-attack-gauge time-attack-gauge--attack ${pulsing ? "time-attack-gauge--pulse" : ""} ${charging ? "time-attack-gauge--charging" : ""} ${className}`.trim()}
+        className={`time-attack-gauge time-attack-gauge--attack ${pulsing ? "time-attack-gauge--pulse" : ""} ${charging ? "time-attack-gauge--charging" : ""} ${draining ? "time-attack-gauge--draining" : ""} ${className}`.trim()}
       >
         <div className="time-attack-gauge__header">
           <span>攻撃ゲージ（10問）</span>
         </div>
         <div ref={ref} className="time-attack-gauge__track">
           <div
-            className="time-attack-gauge__fill time-attack-gauge__fill--attack"
+            className={`time-attack-gauge__fill time-attack-gauge__fill--attack ${draining ? "time-attack-gauge__fill--draining" : ""}`}
             style={{ width: `${fillPercent}%` }}
           />
         </div>

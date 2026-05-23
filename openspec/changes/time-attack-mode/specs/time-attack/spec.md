@@ -247,10 +247,20 @@ The session total score SHALL be shown together with the provided oni artwork (`
 
 ### Requirement: Mascot beam attack
 
-When a wave completes, the mascot character SHALL fire a beam attack from the header **toward the oni mascot** on screen. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
+When a wave completes, the attack sequence SHALL proceed in order: (1) the **10th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot fires a beam toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
+
+#### Scenario: Q10 result reflected before attack drain
+- **WHEN** a player completes the 10th question of a wave with a correct answer
+- **THEN** the attack gauge updates to include that question's score before the drain animation begins
+
+#### Scenario: Attack gauge drains while light flies to mascot
+- **WHEN** a 10-question wave completes
+- **THEN** the attack gauge animates to 0 and light orbs travel toward the teacher mascot concurrently
+- **AND** the mascot shows a charging glow while absorbing the light
+- **AND** the beam fires after the light reaches the mascot
 
 #### Scenario: Mascot fires beam at oni
-- **WHEN** a 10-question wave completes
+- **WHEN** the pre-beam charge sequence completes
 - **THEN** the mascot fires a beam from its position toward the current oni image
 - **AND** the beam uses the wave score as visual intensity
 

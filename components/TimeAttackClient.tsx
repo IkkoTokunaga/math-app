@@ -110,6 +110,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const pendingGaugeTargetRef = useRef<number | null>(null);
   const pendingTotalScoreRef = useRef<number | null>(null);
   const pendingAdvanceRef = useRef<PendingAdvance | null>(null);
+  const pendingQuestionStateRef = useRef<TimeAttackState | null>(null);
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -270,11 +271,20 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     }
   };
 
+  const applyPendingQuestionState = () => {
+    const pending = pendingQuestionStateRef.current;
+    if (pending) {
+      pendingQuestionStateRef.current = null;
+      setTimeAttackState(pending);
+    }
+  };
+
   const dismissCorrectPopup = (waveComplete: boolean) => {
     setFeedback(null);
     setFeedbackType(null);
 
     if (!waveComplete) {
+      applyPendingQuestionState();
       setAnswer("");
       questionStartedAtRef.current = Date.now();
       setTimerPaused(false);
@@ -331,7 +341,9 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           setGaugeLightFillRatio(
             maxScore > 0 ? result.timeAttackState.waveScoreAccumulated / maxScore : 0,
           );
-          setTimeAttackState(result.timeAttackState);
+          if (!waveComplete) {
+            pendingQuestionStateRef.current = result.timeAttackState;
+          }
         }
 
         if (waveComplete) {
@@ -360,8 +372,8 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
       setFeedback("不正解…");
       setFeedbackType("wrong");
       setAlertType("yellow");
-      if (result.timeAttackState) {
-        setTimeAttackState(result.timeAttackState);
+      if (result.timeAttackState && !("waveComplete" in result && result.waveComplete)) {
+        pendingQuestionStateRef.current = result.timeAttackState;
       }
 
       if ("waveComplete" in result && result.waveComplete) {
@@ -378,6 +390,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         setFeedback(null);
         setFeedbackType(null);
         setAlertType(null);
+        applyPendingQuestionState();
         setAnswer("");
         questionStartedAtRef.current = Date.now();
         setTimerPaused(false);

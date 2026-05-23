@@ -22,6 +22,7 @@ import {
   isQuestionTimedOut,
   MAX_MISTAKES,
 } from "@/lib/time-attack-scoring";
+import { TIME_ATTACK_COUNTDOWN_DISABLED } from "@/lib/time-attack-dev";
 
 function parseTimeAttackState(raw: DbTimeAttackState | null): TimeAttackState {
   if (!raw) {
@@ -258,7 +259,7 @@ export async function submitTimeAttackAnswerAction(
   const correctAnswer = getCorrectAnswer(question);
   const level = state.currentLevel;
 
-  if (isQuestionTimedOut(elapsedSeconds, state.timeLimitSeconds)) {
+  if (!TIME_ATTACK_COUNTDOWN_DISABLED && isQuestionTimedOut(elapsedSeconds, state.timeLimitSeconds)) {
     const failedState = await finalizeTimeAttackFailure(sessionId, state, "timeout");
     return {
       timedOut: true as const,

@@ -8,15 +8,18 @@ import {
   submitTimeAttackAnswerAction,
 } from "@/app/actions/time-attack";
 import { Keypad } from "@/components/Keypad";
-import { OniBossDisplay } from "@/components/OniBossDisplay";
+import { MascotBeam } from "@/components/MascotBeam";
 import { QuestionTimer } from "@/components/QuestionTimer";
 import { QuizMascot } from "@/components/QuizMascot";
-import { RunningScore, SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
+import { SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
+import { TimeAttackArena } from "@/components/TimeAttackArena";
+import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
 import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
 import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
-import { getBossLabel, type TimeAttackState } from "@/lib/time-attack";
+import type { TimeAttackState } from "@/lib/time-attack";
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
+import { TIME_ATTACK_COUNTDOWN_DISABLED } from "@/lib/time-attack-dev";
 import {
   formatQuestionExpression,
   getMaxAnswerDigits,
@@ -36,13 +39,19 @@ type TimeAttackClientProps = {
 
 const SUCCESS_FEEDBACK_MS = 1200;
 const WRONG_FEEDBACK_MS = 900;
-const BEAM_ANIMATION_MS = 1800;
+const BEAM_MS = 750;
+const DAMAGE_MS = 850;
+const DEFEAT_MSG_MS = 1100;
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps) {
+function motionMs(full: number, reduced: number): number {
+  return prefersReducedMotion() ? reduced : full;
+}
+
+export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const router = useRouter();
   const isClient = useIsClient();
   const sessionId = initialSession.sessionId;
@@ -50,6 +59,10 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
   const [timeAttackState, setTimeAttackState] = useState<TimeAttackState>(
     initialSession.timeAttackState,
   );
+  const [arenaState, setArenaState] = useState<TimeAttackState>(initialSession.timeAttackState);
+  const [displayHp, setDisplayHp] = useState(initialSession.timeAttackState.oniHpRemaining);
+  const [displayHpMax, setDisplayHpMax] = useState(initialSession.timeAttackState.oniHpMax);
+  const [hpHit, setHpHit] = useState(false);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackType, setFeedbackType] = useState<"success" | "wrong" | null>(null);
@@ -60,8 +73,9 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
   const [pendingPoints, setPendingPoints] = useState<number | null>(null);
   const [pendingFlyLabel, setPendingFlyLabel] = useState<string | null>(null);
   const [scoreAnimId, setScoreAnimId] = useState(0);
-  const [beamActive, setBeamActive] = useState(false);
-  const [beamScore, setBeamScore] = useState(0);
+  const [beamFiring, setBeamFiring] = useState(false);
+  const [previewWaveScore, setPreviewWaveScore] = useState<number | null>(null);
+  const [damageAmount, setDamageAmount] = useState(0);
   const [timerPaused, setTimerPaused] = useState(false);
   const [waveMessage, setWaveMessage] = useState<string | null>(null);
 
@@ -88,6 +102,12 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
     },
     [router],
   );
+
+  const syncBossDisplay = (state: TimeAttackState) => {
+    setArenaState(state);
+    setDisplayHp(state.oniHpRemaining);
+    setDisplayHpMax(state.oniHpMax);
+  };
 
   const handleTimeout = useCallback(async () => {
     if (!sessionId || submitLockRef.current || !timeAttackState) {
@@ -119,17 +139,26 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
       questions?: Question[];
     },
   ) => {
-    if (!result.waveComplete) {
+    if (!result.waveComplete || !result.timeAttackState) {
       return;
     }
 
-    setTimerPaused(true);
-    setBeamScore(result.waveScore ?? 0);
-    setBeamActive(true);
+    const waveScore = result.waveScore ?? 0;
+    const hpAfter = result.bossDefeated ? 0 : result.timeAttackState.oniHpRemaining;
 
-    const beamMs = prefersReducedMotion() ? 400 : BEAM_ANIMATION_MS;
-    await new Promise((resolve) => setTimeout(resolve, beamMs));
-    setBeamActive(false);
+    setTimerPaused(true);
+    setPreviewWaveScore(waveScore);
+    setDamageAmount(waveScore);
+    setBeamFiring(true);
+
+    await new Promise((resolve) => setTimeout(resolve, motionMs(BEAM_MS, 280)));
+    setBeamFiring(false);
+
+    setHpHit(true);
+    setDisplayHp(hpAfter);
+
+    await new Promise((resolve) => setTimeout(resolve, motionMs(DAMAGE_MS, 320)));
+    setHpHit(false);
 
     if (result.bossDefeated) {
       setWaveMessage(
@@ -137,24 +166,36 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
           ? `閻魔大王を倒した！クリア！ +${result.defeatBonus ?? 0}点`
           : `ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`,
       );
-      await new Promise((resolve) => setTimeout(resolve, prefersReducedMotion() ? 300 : 1200));
+      await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
+
+      if (result.sessionEnded) {
+        redirectToResult(id);
+        return;
+      }
+
+      syncBossDisplay(result.timeAttackState);
+    } else {
+      setArenaState(result.timeAttackState);
+      setDisplayHpMax(result.timeAttackState.oniHpMax);
     }
 
-    if (result.sessionEnded) {
-      redirectToResult(id);
-      return;
-    }
-
-    if (result.timeAttackState && result.questions) {
-      setTimeAttackState(result.timeAttackState);
+    setPreviewWaveScore(null);
+    setTimeAttackState(result.timeAttackState);
+    if (result.questions) {
       setQuestions(result.questions);
-      setRunningScore(result.timeAttackState.totalScore);
-      setAnswer("");
+    }
+    setRunningScore(result.timeAttackState.totalScore);
+    setAnswer("");
+    if (!result.bossDefeated) {
       setWaveMessage(null);
-      questionStartedAtRef.current = Date.now();
-      setTimerPaused(false);
-      submitLockRef.current = false;
-      setSubmitting(false);
+    }
+    questionStartedAtRef.current = Date.now();
+    setTimerPaused(false);
+    submitLockRef.current = false;
+    setSubmitting(false);
+
+    if (result.bossDefeated && !result.sessionEnded) {
+      setWaveMessage(null);
     }
   };
 
@@ -211,7 +252,7 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
             setFeedback(null);
             setFeedbackType(null);
             await advanceAfterWave(sessionId, result);
-          }, prefersReducedMotion() ? 200 : SUCCESS_FEEDBACK_MS);
+          }, motionMs(SUCCESS_FEEDBACK_MS, 200));
           return;
         }
 
@@ -224,7 +265,7 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
           setTimerPaused(false);
           submitLockRef.current = false;
           setSubmitting(false);
-        }, prefersReducedMotion() ? 200 : SUCCESS_FEEDBACK_MS);
+        }, motionMs(SUCCESS_FEEDBACK_MS, 200));
         return;
       }
 
@@ -241,7 +282,7 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
           setFeedbackType(null);
           setAlertType(null);
           await advanceAfterWave(sessionId, result);
-        }, prefersReducedMotion() ? 200 : WRONG_FEEDBACK_MS);
+        }, motionMs(WRONG_FEEDBACK_MS, 200));
         return;
       }
 
@@ -254,7 +295,7 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
         setTimerPaused(false);
         submitLockRef.current = false;
         setSubmitting(false);
-      }, prefersReducedMotion() ? 200 : WRONG_FEEDBACK_MS);
+      }, motionMs(WRONG_FEEDBACK_MS, 200));
     } catch (err) {
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
       submitLockRef.current = false;
@@ -286,54 +327,70 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
   const questionKey = `${sessionId}-${timeAttackState.globalQuestionIndex}`;
 
   return (
-    <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-4">
+    <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-3">
+      <MascotBeam active={beamFiring} intensity={previewWaveScore ?? damageAmount} />
+
       {alertType === "yellow" && (
         <div className="time-attack-alert time-attack-alert--yellow" aria-hidden="true" />
       )}
 
-      <OniBossDisplay state={timeAttackState} beamActive={beamActive} beamScore={beamScore} />
+      <div className="time-attack-top relative z-20">
+        <QuizMascot
+          className="time-attack-top__mascot"
+          comment={waveMessage}
+          onHomeClick={backToPlay}
+          beamActive={beamFiring}
+        />
+        <TimeAttackOniScore
+          layout="split"
+          score={runningScore}
+          pointsEarned={pendingPoints}
+          flyLabel={pendingFlyLabel}
+          flyDelayMs={SCORE_FLY_DELAY_MS}
+          flyDurationMs={SCORE_FLY_DURATION_MS}
+          animId={scoreAnimId}
+          getFlyFromElement={() => pointsEarnedRef.current}
+          onPointsApplied={() => setPendingPoints(null)}
+          hpHit={hpHit}
+          meta={
+            <p className="time-attack-top__meta">
+              問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}
+              <span className="time-attack-top__meta-sep" aria-hidden="true">
+                {" "}
+              </span>
+              ミス {timeAttackState.mistakeCount}/{MAX_MISTAKES}
+            </p>
+          }
+        />
+        <TimeAttackScoreBar
+          className="time-attack-top__attack"
+          state={timeAttackState}
+          previewWaveScore={previewWaveScore}
+        />
+        <TimeAttackArena
+          className="time-attack-arena--inline time-attack-top__hp"
+          state={arenaState}
+          displayHp={displayHp}
+          hpMax={displayHpMax}
+          hpHit={hpHit}
+        />
+      </div>
 
-      <header className="quiz-header relative flex min-h-[4.5rem] items-start">
-        <QuizMascot comment={waveMessage} onHomeClick={backToPlay} />
-        <div className="pointer-events-none absolute inset-x-0 top-0 px-14 text-center text-lg text-muted sm:px-16">
-          <p>
-            <span className="font-bold">{auth.loggedIn ? auth.playerName : ""}</span>
-          </p>
-          <p>
-            問題 {timeAttackState.waveQuestionIndex + 1} / {questions.length}　
-            {getBossLabel(timeAttackState)}
-          </p>
-          <p className="text-sm">
-            ミス {timeAttackState.mistakeCount}/{MAX_MISTAKES}
-          </p>
-        </div>
-        <div className="ml-auto shrink-0">
-          <RunningScore
-            score={runningScore}
-            pointsEarned={pendingPoints}
-            flyLabel={pendingFlyLabel}
-            flyDelayMs={SCORE_FLY_DELAY_MS}
-            flyDurationMs={SCORE_FLY_DURATION_MS}
-            animId={scoreAnimId}
-            getFlyFromElement={() => pointsEarnedRef.current}
-            onPointsApplied={() => setPendingPoints(null)}
+      <div className="relative z-20">
+        {!TIME_ATTACK_COUNTDOWN_DISABLED && (
+          <QuestionTimer
+            key={questionKey}
+            timeLimitSeconds={timeAttackState.timeLimitSeconds}
+            questionKey={questionKey}
+            onTimeout={() => void handleTimeout()}
+            paused={timerPaused || submitting}
           />
-        </div>
-      </header>
-
-      <QuestionTimer
-        key={questionKey}
-        timeLimitSeconds={timeAttackState.timeLimitSeconds}
-        questionKey={questionKey}
-        onTimeout={() => void handleTimeout()}
-        paused={timerPaused || submitting}
-      />
-
-      <TimeAttackScoreBar state={timeAttackState} />
+        )}
+      </div>
 
       {question && (
         <section
-          className={`card relative z-10 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
+          className={`card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
         >
           <div className="chalk-heading equation-display mb-4 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
             <span className="whitespace-nowrap">
@@ -365,13 +422,15 @@ export function TimeAttackClient({ auth, initialSession }: TimeAttackClientProps
         </div>
       )}
 
-      <Keypad
-        value={answer}
-        onChange={setAnswer}
-        onSubmit={() => void submitAnswer()}
-        disabled={submitting || timerPaused}
-        maxDigits={getMaxAnswerDigits(timeAttackState.currentLevel)}
-      />
+      <div className="relative z-20">
+        <Keypad
+          value={answer}
+          onChange={setAnswer}
+          onSubmit={() => void submitAnswer()}
+          disabled={submitting || timerPaused}
+          maxDigits={getMaxAnswerDigits(timeAttackState.currentLevel)}
+        />
+      </div>
 
       {error && <p className="feedback-error">{error}</p>}
     </div>

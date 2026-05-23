@@ -193,28 +193,52 @@ After defeating **Enma #10**, the time attack session SHALL end with status **cl
 
 ### Requirement: Wave score progress bar
 
-During an active wave, the system SHALL display a progress bar whose maximum is the **theoretical maximum score for the current 10-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave.
+During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 10-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. A separate **鬼 HP** gauge SHALL remain visible at all times. The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
 
 #### Scenario: Bar updates on correct answer
 - **WHEN** a player earns points during a wave
-- **THEN** the progress bar fill increases toward the wave maximum
+- **THEN** the attack gauge fill increases toward the wave maximum
+
+#### Scenario: HP gauge visible
+- **WHEN** a player is in time attack
+- **THEN** the oni HP gauge is always visible with current and max HP values
+
+#### Scenario: Gauges side by side
+- **WHEN** the quiz view is displayed
+- **THEN** the attack gauge and oni HP gauge appear in one horizontal row
+- **AND** the oni HP gauge is right-aligned within that row
 
 #### Scenario: Bar resets on new wave
 - **WHEN** a new wave begins
-- **THEN** the progress bar resets to 0 with the maximum recalculated for the current level and Enma parameters
+- **THEN** the attack gauge resets to 0 with the maximum recalculated for the current level and Enma parameters
 
-### Requirement: Boss visual and beam attack
+### Requirement: Oni score display
 
-The quiz view SHALL show a semi-transparent oni or Enma image in the background. When a wave completes, the system SHALL animate the wave score as a **beam attack** toward the boss. Oni color SHALL vary by level (levels 1–9). Level 10 SHALL use a dedicated Enma Daio appearance.
+The session total score SHALL be shown together with the provided oni artwork (`/oni.png`, transparent background) in the quiz header. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score and question progress in the center, and the oni image on the right. The player name and level label SHALL NOT appear in the header.
 
-#### Scenario: Beam on wave end
+#### Scenario: Header row layout
+- **WHEN** a player is in time attack
+- **THEN** the teacher mascot, total score with question/mistake counts, and oni image appear side by side in the header
+
+#### Scenario: No name or level in header
+- **WHEN** the quiz header is displayed
+- **THEN** the player name and level/boss label are not shown in the header area
+
+### Requirement: Mascot beam attack
+
+When a wave completes, the mascot character SHALL fire a beam attack from the header. On impact, the **鬼 HP** gauge SHALL decrease to reflect damage.
+
+#### Scenario: Mascot fires beam
 - **WHEN** a 10-question wave completes
-- **THEN** a beam attack animation plays using the wave score as visual intensity
-- **AND** boss HP decreases accordingly
+- **THEN** the mascot fires a beam using the wave score as visual intensity
 
-#### Scenario: Enma appearance
-- **WHEN** the player is in the level 10 Enma phase
-- **THEN** the Enma Daio visual is shown instead of the standard oni
+#### Scenario: HP decreases after beam
+- **WHEN** the beam finishes
+- **THEN** the HP gauge updates to the remaining boss HP
+
+#### Scenario: Boss defeat message
+- **WHEN** a boss is defeated
+- **THEN** the mascot shows a defeat or clear message and the next boss HP gauge is shown for the following wave
 
 ### Requirement: Boss HP bar
 

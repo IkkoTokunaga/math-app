@@ -148,7 +148,7 @@ Lv1–9 鬼: `timeLimitSeconds = 10`, `timeBonusMultiplier = 1`
 
 ### 10. 鬼のビジュアル
 
-**選択**: Lv1–9 は CSS filter/tint で色変化 + 1 ベース SVG/PNG。Lv10 閻魔は専用画像。背景 opacity 30–50% 程度。
+**選択**: Lv1–9 は `/oni.png` ベース + **CSS filter で Lv ごとに色変化**（青→緑→黄→橙→赤→桃→紫→藍→金）。Lv10 閻魔は **`/enma.png` 専用画像**（紫肌・閻魔装束・判官帽・木槌）。背景 opacity 30–50% 程度。
 
 ## Data Model Changes
 

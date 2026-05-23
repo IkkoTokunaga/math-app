@@ -6,6 +6,8 @@ import {
   SCORE_FLY_DELAY_MS,
   SCORE_FLY_DURATION_MS,
 } from "@/components/RunningScore";
+import type { Level } from "@/lib/questions";
+import { getBossImageClass, getBossImageSrc } from "@/lib/time-attack-boss-visual";
 
 const POP_DURATION_MS = 400;
 
@@ -21,6 +23,7 @@ type TimeAttackOniScoreProps = {
   oniPhase?: OniPhase;
   oniRef?: RefObject<HTMLDivElement | null>;
   bossKey?: string;
+  currentLevel?: Level;
   layout?: "combined" | "split";
   meta?: React.ReactNode;
   onEnterAnimationComplete?: () => void;
@@ -55,6 +58,7 @@ export function TimeAttackOniScore({
   oniPhase = "idle",
   oniRef,
   bossKey = "oni",
+  currentLevel = 1,
   layout = "combined",
   meta = null,
   onEnterAnimationComplete,
@@ -174,12 +178,13 @@ export function TimeAttackOniScore({
     </p>
   );
 
+  const bossImageClass = getBossImageClass(currentLevel);
   const oniBody = showOni ? (
     <img
       key={bossKey}
-      src="/oni.png"
+      src={getBossImageSrc(currentLevel)}
       alt=""
-      className="time-attack-oni-score__image"
+      className={`time-attack-oni-score__image ${bossImageClass}`.trim()}
     />
   ) : null;
 

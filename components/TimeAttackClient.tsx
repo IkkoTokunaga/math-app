@@ -593,6 +593,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           oniPhase={oniPhase}
           oniRef={oniRef}
           bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
+          currentLevel={arenaState.currentLevel}
           onEnterAnimationComplete={handleOniEnterAnimationComplete}
           meta={
             awaitingNextOni ? null : (

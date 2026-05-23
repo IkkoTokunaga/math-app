@@ -252,11 +252,19 @@ When a player answers correctly, the system SHALL NOT show earned points in the 
 
 ### Requirement: Oni score display
 
-The session total score SHALL be shown together with the provided oni artwork (`/oni.png`, transparent background) in the quiz header. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score and question progress in the center, and the oni image on the right. The player name and level label SHALL NOT appear in the header.
+The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–9 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 10 (Enma) SHALL use a dedicated `/enma.png` image depicting **Enma Daio** in traditional judge attire with **purple** as the primary color. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score and question progress in the center, and the boss image on the right. The player name and level label SHALL NOT appear in the header.
 
 #### Scenario: Header row layout
 - **WHEN** a player is in time attack
-- **THEN** the teacher mascot, total score with question/mistake counts, and oni image appear side by side in the header
+- **THEN** the teacher mascot, total score with question/mistake counts, and boss image appear side by side in the header
+
+#### Scenario: Oni color changes by level
+- **WHEN** the player faces an oni boss at level N (1–9)
+- **THEN** the header shows `/oni.png` with a level-specific color tint distinct from other levels
+
+#### Scenario: Enma uses dedicated artwork
+- **WHEN** the player faces Enma at level 10
+- **THEN** the header shows `/enma.png` (purple Enma in judge robes) instead of the tinted oni image
 
 #### Scenario: No name or level in header
 - **WHEN** the quiz header is displayed

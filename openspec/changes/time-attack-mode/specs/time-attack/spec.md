@@ -314,6 +314,10 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 - **WHEN** the quiz header is displayed
 - **THEN** the player name and level/boss label are not shown in the header area
 
+#### Scenario: Boss image in front of gauges on mobile
+- **WHEN** the boss image overlaps the attack or HP gauge row on a narrow viewport
+- **THEN** the boss image (including its feet) is rendered in front of the gauges
+
 ### Requirement: Mascot light orb attack
 
 When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot launches a **light orb** toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.

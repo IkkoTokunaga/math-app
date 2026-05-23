@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import type { OniPhase } from "@/components/MascotBeam";
+import type { OniPhase } from "@/components/MascotLightOrb";
 import {
   SCORE_FLY_DELAY_MS,
   SCORE_FLY_DURATION_MS,

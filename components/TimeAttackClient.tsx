@@ -9,7 +9,7 @@ import {
 } from "@/app/actions/time-attack";
 import { GaugeLightCharge } from "@/components/GaugeLightCharge";
 import { Keypad } from "@/components/Keypad";
-import { MascotBeam, type OniPhase } from "@/components/MascotBeam";
+import { MascotLightOrb, type OniPhase } from "@/components/MascotLightOrb";
 import { OniEvilOrb } from "@/components/OniEvilOrb";
 import { QuestionTimer } from "@/components/QuestionTimer";
 import { QuizMascot } from "@/components/QuizMascot";
@@ -44,7 +44,6 @@ const HEART_LOSS_PAUSE_MS = 220;
 const DARK_FADE_MS = 950;
 const GAUGE_DRAIN_MS = 580;
 const GAUGE_REFLECT_PAUSE_MS = 240;
-const BEAM_MS = 720;
 const ONI_SHAKE_MS = 520;
 const ONI_EXPLODE_MS = 680;
 const ONI_ENTER_MS = 500;
@@ -113,9 +112,9 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [gaugeCharging, setGaugeCharging] = useState(false);
   const [gaugeDraining, setGaugeDraining] = useState(false);
   const [mascotCharging, setMascotCharging] = useState(false);
-  const [beamFiring, setBeamFiring] = useState(false);
+  const [lightOrbAnimId, setLightOrbAnimId] = useState(0);
+  const [lightOrbFiring, setLightOrbFiring] = useState(false);
   const [previewWaveScore, setPreviewWaveScore] = useState<number | null>(null);
-  const [damageAmount, setDamageAmount] = useState(0);
   const [timerPaused, setTimerPaused] = useState(false);
   const [waveMessage, setWaveMessage] = useState<string | null>(null);
   const [oniPhase, setOniPhase] = useState<OniPhase>("idle");
@@ -141,6 +140,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mascotLightDoneRef = useRef<(() => void) | null>(null);
   const evilOrbDoneRef = useRef<(() => void) | null>(null);
+  const lightOrbDoneRef = useRef<(() => void) | null>(null);
   const pendingWrongResultRef = useRef<WrongAnswerResult | null>(null);
   const oniEnterDoneRef = useRef<(() => void) | null>(null);
 
@@ -252,7 +252,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
     setTimerPaused(true);
     showAttackPopup();
-    setDamageAmount(waveScore);
     pendingGaugeTargetRef.current = null;
 
     setGaugeDisplayScore(reflectedWaveScore);
@@ -278,9 +277,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     ]);
     setGaugeDraining(false);
 
-    setBeamFiring(true);
-    await new Promise((resolve) => setTimeout(resolve, motionMs(BEAM_MS, 280)));
-    setBeamFiring(false);
+    await playLightOrbAttack();
 
     setOniPhase("shaking");
     setHpHit(true);
@@ -378,6 +375,13 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
       setEvilOrbAnimId((current) => current + 1);
     });
 
+  const playLightOrbAttack = () =>
+    new Promise<void>((resolve) => {
+      lightOrbDoneRef.current = resolve;
+      setLightOrbFiring(true);
+      setLightOrbAnimId((current) => current + 1);
+    });
+
   const handleEvilOrbHit = () => {
     const result = pendingWrongResultRef.current;
     if (!result) {
@@ -394,6 +398,12 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const handleEvilOrbComplete = () => {
     evilOrbDoneRef.current?.();
     evilOrbDoneRef.current = null;
+  };
+
+  const handleLightOrbComplete = () => {
+    setLightOrbFiring(false);
+    lightOrbDoneRef.current?.();
+    lightOrbDoneRef.current = null;
   };
 
   const finishWrongAnswerSequence = async (result: WrongAnswerResult) => {
@@ -561,11 +571,11 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
   return (
     <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-3">
-      <MascotBeam
-        active={beamFiring}
+      <MascotLightOrb
+        animId={lightOrbAnimId}
         fromRef={mascotRef}
         toRef={oniRef}
-        intensity={previewWaveScore ?? damageAmount}
+        onComplete={handleLightOrbComplete}
       />
 
       {alertType === "yellow" && (
@@ -580,7 +590,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           onHomeClick={backToPlay}
           chargeActive={mascotCharging}
           hitActive={mascotHit}
-          beamActive={beamFiring}
+          lightOrbActive={lightOrbFiring}
         />
         <TimeAttackOniScore
           layout="split"

@@ -1968,7 +1968,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: gauge-light-ring 0.55s ease-out var(--cluster-delay, 1260ms) forwards;
 }
 
-.mascot-beam-layer {
+.mascot-light-orb-layer {
   position: fixed;
   inset: 0;
   z-index: 35;
@@ -1976,53 +1976,177 @@ button.keypad-btn-submit:active:not(:disabled) {
   overflow: visible;
 }
 
-.mascot-beam-aim {
+.mascot-light-orb-wrap,
+.oni-evil-orb-wrap {
   position: fixed;
-  transform-origin: 0 50%;
-  z-index: 36;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
-.mascot-beam--aimed {
+.oni-evil-orb-wrap {
+  animation: oni-evil-orb-fly calc(var(--evil-charge-duration, 300ms) + var(--evil-fly-duration, 720ms))
+    cubic-bezier(0.35, 0, 0.2, 1) forwards;
+}
+
+.mascot-light-orb-wrap {
+  animation: mascot-light-orb-fly var(--light-fly-duration, 720ms) cubic-bezier(0.35, 0, 0.2, 1) forwards;
+}
+
+.mascot-light-orb-body,
+.oni-evil-orb-body {
   position: relative;
+  width: 0;
+  height: 0;
+}
+
+.mascot-light-orb-body {
+  animation: light-orb-body-wobble 0.34s ease-in-out infinite alternate;
+}
+
+.oni-evil-orb-body {
+  animation: evil-orb-body-wobble 0.4s ease-in-out infinite alternate;
+}
+
+.mascot-light-orb__orbit,
+.oni-evil-orb__orbit {
+  position: absolute;
   left: 0;
   top: 0;
-  height: 0.95rem;
-  margin-top: -0.475rem;
-  transform-origin: left center;
-  transform: scaleX(0);
-  animation: mascot-beam-shoot 0.72s ease-out forwards;
-  opacity: calc(0.75 + var(--beam-power) * 0.2);
+  width: 0;
+  height: 0;
+  animation: orb-particle-orbit var(--orbit-duration, 0.7s) linear infinite;
 }
 
-.mascot-beam__core {
+.mascot-light-orb__orbit--reverse,
+.oni-evil-orb__orbit--reverse {
+  animation-direction: reverse;
+}
+
+.mascot-light-orb,
+.mascot-light-orb__trail,
+.mascot-light-orb__halo,
+.mascot-light-orb__streak,
+.oni-evil-orb,
+.oni-evil-orb__trail,
+.oni-evil-orb__mist,
+.oni-evil-orb__fumes,
+.oni-evil-orb__wisp {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.mascot-light-orb__orbit > .mascot-light-orb__sparkle,
+.mascot-light-orb__orbit > .mascot-light-orb__dot,
+.oni-evil-orb__orbit > .oni-evil-orb__poison,
+.oni-evil-orb__orbit > .oni-evil-orb__drip {
+  position: absolute;
+  left: var(--orbit-radius, 1.5rem);
+  top: 0;
+  transform: translate(-50%, -50%);
+}
+
+.mascot-light-orb {
+  width: 2.5rem;
+  height: 2.5rem;
+  transform: translate(-50%, -50%);
   border-radius: 999px;
-  background: linear-gradient(90deg, #fff 0%, #7df9ff 35%, #ffd699 100%);
+  background: radial-gradient(circle at 35% 30%, #fff 0%, #fff4a3 28%, #7df9ff 52%, #ffd699 82%);
   box-shadow:
-    0 0 18px rgb(125 249 255 / 0.95),
-    0 0 36px rgb(255 214 153 / 0.65);
+    0 0 18px rgb(255 255 255 / 0.95),
+    0 0 36px rgb(125 249 255 / 0.85),
+    0 0 56px rgb(255 214 153 / 0.65),
+    inset 0 0 16px rgb(255 255 255 / 0.45);
+  animation: light-orb-core-pulse 0.3s ease-in-out infinite alternate;
+  z-index: 4;
 }
 
-.mascot-beam__glow {
-  position: absolute;
-  inset: -0.45rem -0.25rem;
+.mascot-light-orb__halo {
+  width: 5.5rem;
+  height: 5.5rem;
+  transform: translate(-50%, -50%);
   border-radius: 999px;
-  background: rgb(125 249 255 / 0.25);
-  filter: blur(8px);
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.5) 0%, rgb(125 249 255 / 0.24) 38%, rgb(255 244 163 / 0.14) 58%, transparent 74%);
+  animation: light-orb-halo-pulse 0.38s ease-in-out infinite alternate;
+  z-index: 0;
 }
 
-.mascot-beam__spark {
+.mascot-light-orb__halo--outer {
+  width: 7rem;
+  height: 7rem;
+  opacity: 0.55;
+  animation:
+    light-orb-halo-pulse 0.52s ease-in-out infinite alternate-reverse,
+    light-orb-halo-spin 1.6s linear infinite;
+}
+
+.mascot-light-orb__halo::before,
+.mascot-light-orb__halo::after {
+  content: "";
   position: absolute;
-  top: -0.55rem;
-  font-size: 0.95rem;
-  color: #fff4a3;
-  animation: beam-spark 0.72s ease-out forwards;
+  inset: -18%;
+  border-radius: inherit;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  animation: light-orb-ring-spin 0.95s linear infinite;
 }
 
-.mascot-beam__spark--1 { left: 18%; }
-.mascot-beam__spark--2 { left: 48%; animation-delay: 0.08s; }
-.mascot-beam__spark--3 { left: 78%; animation-delay: 0.14s; }
+.mascot-light-orb__halo::after {
+  inset: -32%;
+  border-color: rgb(125 249 255 / 0.28);
+  animation-direction: reverse;
+  animation-duration: 1.25s;
+}
+
+.mascot-light-orb__sparkle {
+  font-size: 0.68rem;
+  line-height: 1;
+  color: #fff;
+  text-shadow:
+    0 0 6px rgb(255 255 255 / 1),
+    0 0 12px rgb(125 249 255 / 0.95),
+    0 0 18px rgb(255 244 163 / 0.85);
+  animation: light-orb-sparkle-twinkle 0.3s ease-in-out infinite alternate;
+  z-index: 3;
+}
+
+.mascot-light-orb__dot {
+  width: 0.26rem;
+  height: 0.26rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow:
+    0 0 6px rgb(255 255 255 / 1),
+    0 0 12px rgb(125 249 255 / 0.85);
+  animation: light-orb-dot-twinkle 0.26s ease-in-out infinite alternate;
+  z-index: 3;
+}
+
+.mascot-light-orb__streak {
+  width: 0.24rem;
+  height: 0.24rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.95);
+  box-shadow:
+    0 0 8px rgb(255 255 255 / 1),
+    0 0 16px rgb(125 249 255 / 0.85);
+  transform: translate(-50%, -50%) rotate(var(--fly-angle, 0deg)) translateX(calc(-1 * var(--streak-offset, 1rem)));
+  animation: light-orb-streak-pulse 0.36s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+.mascot-light-orb__trail {
+  width: 1.1rem;
+  height: 1.1rem;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.9) 0%, rgb(125 249 255 / 0.45) 55%, transparent 100%);
+  filter: blur(2px);
+  opacity: 0;
+  animation: mascot-light-orb-trail var(--light-fly-duration, 720ms) ease-out forwards;
+  z-index: 1;
+}
 
 .oni-evil-orb-layer {
   position: fixed;
@@ -2032,36 +2156,112 @@ button.keypad-btn-submit:active:not(:disabled) {
   overflow: visible;
 }
 
-.oni-evil-orb,
-.oni-evil-orb__trail {
-  position: fixed;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
 .oni-evil-orb {
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  transform: translate(-50%, -50%);
   border-radius: 999px;
   background: radial-gradient(circle at 35% 30%, #e9d5ff 0%, #9333ea 38%, #581c87 72%, #2e1065 100%);
   box-shadow:
-    0 0 10px rgb(147 51 234 / 0.95),
-    0 0 22px rgb(168 85 247 / 0.75),
-    0 0 36px rgb(88 28 135 / 0.55),
-    inset 0 0 10px rgb(255 255 255 / 0.25);
-  animation: oni-evil-orb-fly calc(var(--evil-charge-duration, 300ms) + var(--evil-fly-duration, 720ms))
-    cubic-bezier(0.35, 0, 0.2, 1) forwards;
+    0 0 16px rgb(132 204 22 / 0.55),
+    0 0 28px rgb(147 51 234 / 0.95),
+    0 0 44px rgb(168 85 247 / 0.75),
+    0 0 58px rgb(74 222 128 / 0.35),
+    inset 0 0 16px rgb(255 255 255 / 0.25);
+  animation: evil-orb-core-throb 0.34s ease-in-out infinite alternate;
+  z-index: 4;
+}
+
+.oni-evil-orb__mist {
+  width: 6rem;
+  height: 6rem;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgb(132 204 22 / 0.48) 0%, rgb(74 222 128 / 0.22) 38%, rgb(147 51 234 / 0.16) 62%, transparent 78%);
+  filter: blur(5px);
+  animation: evil-orb-mist-swirl 0.72s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.oni-evil-orb__mist--outer {
+  width: 7.5rem;
+  height: 7.5rem;
+  transform: translate(-50%, -50%);
+  opacity: 0.6;
+  animation:
+    evil-orb-mist-swirl 0.95s ease-in-out infinite alternate-reverse,
+    evil-orb-mist-spin 1.45s linear infinite;
+}
+
+.oni-evil-orb__fumes {
+  width: 4.8rem;
+  height: 4.8rem;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background:
+    conic-gradient(from 0deg, rgb(163 230 53 / 0.5), rgb(74 222 128 / 0.18), rgb(147 51 234 / 0.28), rgb(101 163 13 / 0.45));
+  filter: blur(6px);
+  opacity: 0.8;
+  animation: evil-orb-fumes-spin 1.1s linear infinite;
+  z-index: 0;
+}
+
+.oni-evil-orb__fumes--inner {
+  width: 3.4rem;
+  height: 3.4rem;
+  transform: translate(-50%, -50%);
+  opacity: 0.65;
+  animation: evil-orb-fumes-spin 0.85s linear infinite reverse;
+}
+
+.oni-evil-orb__wisp {
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(190 242 100 / 0.95) 0%, rgb(101 163 13 / 0.55) 55%, transparent 100%);
+  filter: blur(3px);
+  transform:
+    translate(-50%, -50%)
+    rotate(var(--fly-angle, 0deg))
+    translateX(calc(-1 * var(--wisp-offset, 1rem)))
+    translateY(var(--wisp-spread, 0rem));
+  animation: evil-orb-wisp-drift 0.4s ease-in-out infinite alternate;
+  z-index: 1;
+}
+
+.oni-evil-orb__poison {
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 28%, #ecfccb 0%, #a3e635 28%, #65a30d 62%, #3f6212 100%);
+  box-shadow:
+    0 0 8px rgb(132 204 22 / 0.95),
+    0 0 16px rgb(74 222 128 / 0.55);
+  animation: evil-orb-poison-bubble 0.46s ease-in-out infinite alternate;
+  z-index: 2;
+}
+
+.oni-evil-orb__drip {
+  width: 0.32rem;
+  height: 0.68rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(163 230 53 / 0.95) 0%, rgb(101 163 13 / 0.85) 55%, rgb(54 83 20 / 0.2) 100%);
+  filter: blur(0.4px);
+  transform: translate(-50%, -50%) rotate(var(--drip-tilt, 12deg));
+  animation: evil-orb-drip 0.54s ease-in-out infinite alternate;
+  z-index: 2;
 }
 
 .oni-evil-orb__trail {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  transform: translate(-50%, -50%);
   border-radius: 999px;
-  background: radial-gradient(circle, rgb(196 181 253 / 0.85) 0%, rgb(109 40 217 / 0.35) 55%, transparent 100%);
+  background: radial-gradient(circle, rgb(196 181 253 / 0.85) 0%, rgb(132 204 22 / 0.35) 42%, rgb(109 40 217 / 0.35) 55%, transparent 100%);
   filter: blur(2px);
   opacity: 0;
   animation: oni-evil-orb-trail calc(var(--evil-charge-duration, 300ms) + var(--evil-fly-duration, 720ms))
     ease-out forwards;
+  z-index: 1;
 }
 
 .time-attack-dark-overlay {
@@ -2199,10 +2399,247 @@ button.keypad-btn-submit:active:not(:disabled) {
   padding: 0.25rem;
 }
 
-@keyframes mascot-beam-shoot {
-  0% { transform: scaleX(0.05); opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { transform: scaleX(1); opacity: 0.95; }
+@keyframes mascot-light-orb-fly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  22% {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.85);
+  }
+}
+
+@keyframes mascot-light-orb-trail {
+  0%,
+  18% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+
+  28% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.6);
+  }
+}
+
+@keyframes orb-particle-orbit {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes light-orb-body-wobble {
+  0% {
+    transform: rotate(-5deg) scale(0.97);
+  }
+
+  100% {
+    transform: rotate(5deg) scale(1.04);
+  }
+}
+
+@keyframes evil-orb-body-wobble {
+  0% {
+    transform: rotate(6deg) scale(0.96);
+  }
+
+  100% {
+    transform: rotate(-6deg) scale(1.05);
+  }
+}
+
+@keyframes light-orb-core-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.94);
+    filter: brightness(1);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.08);
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes evil-orb-core-throb {
+  0% {
+    transform: translate(-50%, -50%) scale(0.93);
+    filter: brightness(0.95) saturate(1.1);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.07);
+    filter: brightness(1.15) saturate(1.35);
+  }
+}
+
+@keyframes light-orb-halo-spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes light-orb-streak-pulse {
+  0% {
+    opacity: 0.25;
+    transform: translate(-50%, -50%) rotate(var(--fly-angle, 0deg)) translateX(calc(-1 * var(--streak-offset, 1rem)));
+  }
+
+  100% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) rotate(var(--fly-angle, 0deg)) translateX(calc(-1 * var(--streak-offset, 1rem) - 0.55rem));
+  }
+}
+
+@keyframes evil-orb-wisp-drift {
+  0% {
+    opacity: 0.35;
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--fly-angle, 0deg))
+      translateX(calc(-1 * var(--wisp-offset, 1rem)))
+      translateY(var(--wisp-spread, 0rem));
+  }
+
+  100% {
+    opacity: 0.9;
+    transform:
+      translate(-50%, -50%)
+      rotate(var(--fly-angle, 0deg))
+      translateX(calc(-1 * var(--wisp-offset, 1rem) - 0.45rem))
+      translateY(calc(var(--wisp-spread, 0rem) + 0.22rem));
+  }
+}
+
+@keyframes evil-orb-mist-spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.96);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(-360deg) scale(1.04);
+  }
+}
+
+@keyframes light-orb-halo-pulse {
+  0% {
+    opacity: 0.65;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+@keyframes light-orb-ring-spin {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.45;
+  }
+
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.85;
+  }
+}
+
+@keyframes light-orb-sparkle-twinkle {
+  0% {
+    opacity: 0.4;
+    filter: brightness(0.85);
+  }
+
+  100% {
+    opacity: 1;
+    filter: brightness(1.45);
+  }
+}
+
+@keyframes light-orb-dot-twinkle {
+  0% {
+    opacity: 0.35;
+    box-shadow:
+      0 0 4px rgb(255 255 255 / 0.7),
+      0 0 8px rgb(125 249 255 / 0.55);
+  }
+
+  100% {
+    opacity: 1;
+    box-shadow:
+      0 0 8px rgb(255 255 255 / 1),
+      0 0 16px rgb(125 249 255 / 0.95),
+      0 0 22px rgb(255 244 163 / 0.75);
+  }
+}
+
+@keyframes evil-orb-mist-swirl {
+  0% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.94) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.08) rotate(8deg);
+  }
+}
+
+@keyframes evil-orb-fumes-spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(0.95);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg) scale(1.05);
+  }
+}
+
+@keyframes evil-orb-poison-bubble {
+  0% {
+    opacity: 0.55;
+    filter: brightness(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    filter: brightness(1.25);
+  }
+}
+
+@keyframes evil-orb-drip {
+  0% {
+    opacity: 0.45;
+    transform: translate(-50%, -50%) rotate(var(--drip-tilt, 12deg)) scaleY(0.75);
+  }
+
+  100% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) rotate(var(--drip-tilt, 12deg)) scaleY(1.2);
+  }
 }
 
 @keyframes mascot-fire-pulse {
@@ -2239,7 +2676,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 
   100% {
     opacity: 1;
-    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.72);
+    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.85);
   }
 }
 
@@ -2256,7 +2693,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(1.6);
+    transform: translate(-50%, -50%) scale(1.6);
   }
 }
 
@@ -2287,12 +2724,6 @@ button.keypad-btn-submit:active:not(:disabled) {
   100% {
     background: rgb(0 0 0 / 0.94);
   }
-}
-
-@keyframes beam-spark {
-  0% { opacity: 0; transform: translateY(0) scale(0.5); }
-  30% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-1.2rem) scale(1.2); }
 }
 
 @keyframes gauge-pulse {
@@ -2391,13 +2822,33 @@ button.keypad-btn-submit:active:not(:disabled) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mascot-beam--aimed,
-  .mascot-beam__spark,
+  .mascot-light-orb-wrap,
+  .mascot-light-orb-body,
+  .mascot-light-orb,
+  .mascot-light-orb__trail,
+  .mascot-light-orb__halo,
+  .mascot-light-orb__halo--outer,
+  .mascot-light-orb__halo::before,
+  .mascot-light-orb__halo::after,
+  .mascot-light-orb__orbit,
+  .mascot-light-orb__sparkle,
+  .mascot-light-orb__dot,
+  .mascot-light-orb__streak,
   .quiz-header-mascot--firing,
   .quiz-header-mascot--charging,
   .quiz-header-mascot--evil-hit,
+  .oni-evil-orb-wrap,
+  .oni-evil-orb-body,
   .oni-evil-orb,
   .oni-evil-orb__trail,
+  .oni-evil-orb__mist,
+  .oni-evil-orb__mist--outer,
+  .oni-evil-orb__fumes,
+  .oni-evil-orb__fumes--inner,
+  .oni-evil-orb__orbit,
+  .oni-evil-orb__poison,
+  .oni-evil-orb__drip,
+  .oni-evil-orb__wisp,
   .time-attack-dark-overlay,
   .time-attack-gauge--pulse,
   .time-attack-oni-score--hit,

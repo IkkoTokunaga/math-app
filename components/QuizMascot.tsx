@@ -5,8 +5,8 @@ import { forwardRef } from "react";
 type QuizMascotProps = {
   comment: string | null;
   onHomeClick: () => void;
-  /** タイムアタックのビーム演出用 */
-  beamActive?: boolean;
+  /** タイムアタックの光玉攻撃演出用 */
+  lightOrbActive?: boolean;
   /** 攻撃ゲージから光を集める演出 */
   chargeActive?: boolean;
   /** 邪気玉ヒット演出 */
@@ -19,7 +19,7 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
     {
       comment,
       onHomeClick,
-      beamActive = false,
+      lightOrbActive = false,
       chargeActive = false,
       hitActive = false,
       className = "",
@@ -41,7 +41,7 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
           ref={ref}
           type="button"
           onClick={onHomeClick}
-          className={`quiz-header-mascot rounded-md transition-opacity hover:opacity-85 active:opacity-70 ${chargeActive ? "quiz-header-mascot--charging" : ""} ${hitActive ? "quiz-header-mascot--evil-hit" : ""} ${beamActive ? "quiz-header-mascot--firing" : ""}`}
+          className={`quiz-header-mascot rounded-md transition-opacity hover:opacity-85 active:opacity-70 ${chargeActive ? "quiz-header-mascot--charging" : ""} ${hitActive ? "quiz-header-mascot--evil-hit" : ""} ${lightOrbActive ? "quiz-header-mascot--firing" : ""}`}
           aria-label="ホームにもどる"
         >
           <img

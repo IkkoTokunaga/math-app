@@ -59,7 +59,7 @@ When the mistake count reaches **3**, the time attack session SHALL end and navi
 
 #### Scenario: Evil orb on incorrect answer
 - **WHEN** a player submits an incorrect answer
-- **THEN** an incorrect-answer popup is shown while a purple evil orb flies from the oni toward the teacher mascot
+- **THEN** an incorrect-answer popup is shown while a purple evil orb surrounded by orbiting poison particles and a sickly green aura flies from the oni toward the teacher mascot
 - **AND** the popup dismisses when the orb hits the mascot and a heart is lost
 - **AND** the next question does not appear until the orb hit and heart-loss sequence completes
 
@@ -270,9 +270,9 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 - **WHEN** the quiz header is displayed
 - **THEN** the player name and level/boss label are not shown in the header area
 
-### Requirement: Mascot beam attack
+### Requirement: Mascot light orb attack
 
-When a wave completes, the attack sequence SHALL proceed in order: (1) the **10th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot fires a beam toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
+When a wave completes, the attack sequence SHALL proceed in order: (1) the **10th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot launches a **light orb** toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
 
 #### Scenario: Attack popup during wave finish
 - **WHEN** the 10th question of a wave is answered and the attack sequence begins
@@ -297,19 +297,18 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **10t
 - **WHEN** a 10-question wave completes
 - **THEN** the attack gauge animates to 0 and light orbs travel toward the teacher mascot concurrently
 - **AND** the mascot shows a charging glow while absorbing the light
-- **AND** the beam fires after the light reaches the mascot
+- **AND** the light orb launches after the light reaches the mascot
 
-#### Scenario: Mascot fires beam at oni
-- **WHEN** the pre-beam charge sequence completes
-- **THEN** the mascot fires a beam from its position toward the current oni image
-- **AND** the beam uses the wave score as visual intensity
+#### Scenario: Mascot launches light orb at oni
+- **WHEN** the pre-attack charge sequence completes
+- **THEN** the mascot launches a white light orb surrounded by orbiting sparkles and trailing light streaks from its position toward the current oni image
 
-#### Scenario: Oni shakes on beam hit
-- **WHEN** the beam reaches the oni
+#### Scenario: Oni shakes on light orb hit
+- **WHEN** the light orb reaches the oni
 - **THEN** the oni image shakes before HP updates are finalized
 
-#### Scenario: HP decreases after beam
-- **WHEN** the beam finishes and the shake completes
+#### Scenario: HP decreases after light orb
+- **WHEN** the light orb finishes and the shake completes
 - **THEN** the HP gauge updates to the remaining boss HP
 
 #### Scenario: Boss defeat explosion and respawn

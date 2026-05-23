@@ -7,7 +7,7 @@ import type { TimeAttackState } from "@/lib/time-attack";
 
 type TimeAttackScoreBarProps = {
   state: TimeAttackState;
-  /** ビーム演出中はウェーブ得点をフル表示 */
+  /** 光玉攻撃演出中はウェーブ得点をフル表示 */
   previewWaveScore?: number | null;
   /** 光の演出が届くまでの表示用スコア */
   displayScore?: number;

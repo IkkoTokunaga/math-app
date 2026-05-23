@@ -1,16 +1,11 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { questionLogs, sessions } from "@/lib/db/schema";
 import type { Question, TimeAttackState as DbTimeAttackState } from "@/lib/db/schema";
-import {
-  generateQuestions,
-  getCorrectAnswer,
-  QUESTIONS_PER_SESSION,
-  type Level,
-} from "@/lib/questions";
+import { generateQuestions, getCorrectAnswer, type Level } from "@/lib/questions";
 import {
   applyWaveDamage,
   createInitialTimeAttackState,
@@ -19,10 +14,9 @@ import {
 } from "@/lib/time-attack";
 import {
   calculateTimeAttackQuestionScore,
-  isQuestionTimedOut,
   MAX_MISTAKES,
+  WAVE_QUESTION_COUNT,
 } from "@/lib/time-attack-scoring";
-import { TIME_ATTACK_COUNTDOWN_DISABLED } from "@/lib/time-attack-dev";
 
 function parseTimeAttackState(raw: DbTimeAttackState | null): TimeAttackState {
   if (!raw) {
@@ -42,7 +36,7 @@ function parseTimeAttackState(raw: DbTimeAttackState | null): TimeAttackState {
     timeBonusMultiplier: raw.timeBonusMultiplier,
     bossesDefeated: raw.bossesDefeated,
     phase: raw.phase,
-    failReason: raw.failReason,
+    failReason: raw.failReason === "mistakes" ? "mistakes" : undefined,
   };
 }
 
@@ -50,15 +44,57 @@ function serializeTimeAttackState(state: TimeAttackState): DbTimeAttackState {
   return { ...state };
 }
 
+async function findInProgressTimeAttackSession(playerId: string) {
+  const [session] = await getDb()
+    .select()
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.playerId, playerId),
+        eq(sessions.mode, "time_attack"),
+        eq(sessions.status, "in_progress"),
+      ),
+    )
+    .orderBy(desc(sessions.playedAt))
+    .limit(1);
+
+  return session ?? null;
+}
+
+async function abandonInProgressTimeAttackSessions(playerId: string) {
+  const inProgress = await findInProgressTimeAttackSession(playerId);
+  if (!inProgress?.timeAttackState) {
+    return;
+  }
+
+  const state = parseTimeAttackState(inProgress.timeAttackState);
+  await getDb()
+    .update(sessions)
+    .set({
+      status: "completed",
+      timeAttackState: serializeTimeAttackState({
+        ...state,
+        phase: "failed",
+      }),
+      completedAt: new Date(),
+      stars: null,
+      correctAnswers: null,
+      accuracy: null,
+      baseScore: null,
+      bonusScore: null,
+      bestStreak: null,
+    })
+    .where(eq(sessions.id, inProgress.id));
+}
+
 async function finalizeTimeAttackFailure(
   sessionId: string,
   state: TimeAttackState,
-  failReason: "timeout" | "mistakes",
 ) {
   const failedState: TimeAttackState = {
     ...state,
     phase: "failed",
-    failReason,
+    failReason: "mistakes",
   };
 
   await getDb()
@@ -117,7 +153,7 @@ async function completeWave(
   if (resolution.kind === "continue") {
     const questions = generateQuestions(
       resolution.state.currentLevel,
-      QUESTIONS_PER_SESSION,
+      WAVE_QUESTION_COUNT,
     );
 
     await getDb()
@@ -125,6 +161,7 @@ async function completeWave(
       .set({
         level: resolution.state.currentLevel,
         questions,
+        totalQuestions: WAVE_QUESTION_COUNT,
         timeAttackState: serializeTimeAttackState(resolution.state),
         totalScore: resolution.state.totalScore,
       })
@@ -157,7 +194,7 @@ async function completeWave(
 
   const questions = generateQuestions(
     resolution.state.currentLevel,
-    QUESTIONS_PER_SESSION,
+    WAVE_QUESTION_COUNT,
   );
 
   await getDb()
@@ -165,6 +202,7 @@ async function completeWave(
     .set({
       level: resolution.state.currentLevel,
       questions,
+      totalQuestions: WAVE_QUESTION_COUNT,
       timeAttackState: serializeTimeAttackState(resolution.state),
       totalScore: resolution.state.totalScore,
     })
@@ -184,9 +222,67 @@ async function completeWave(
   };
 }
 
-export async function startTimeAttackSessionAction(playerId: string) {
+function buildSessionPayload(
+  sessionId: string,
+  questions: Question[],
+  state: TimeAttackState,
+) {
+  return {
+    sessionId,
+    questions,
+    timeAttackState: state,
+    bossLabel: getBossLabel(state),
+  };
+}
+
+export async function getTimeAttackResumeInfoAction(playerId: string) {
+  const session = await findInProgressTimeAttackSession(playerId);
+  if (!session?.timeAttackState) {
+    return null;
+  }
+
+  const state = parseTimeAttackState(session.timeAttackState);
+  if (state.phase !== "wave_active") {
+    return null;
+  }
+
+  return {
+    sessionId: session.id,
+    bossLabel: getBossLabel(state),
+    currentLevel: state.currentLevel,
+    enmaNumber: state.enmaNumber,
+  };
+}
+
+export async function resumeTimeAttackSessionAction(playerId: string) {
+  const session = await findInProgressTimeAttackSession(playerId);
+  if (!session?.timeAttackState) {
+    return null;
+  }
+
+  const state = parseTimeAttackState(session.timeAttackState);
+  if (state.phase !== "wave_active") {
+    return null;
+  }
+
+  return buildSessionPayload(session.id, session.questions as Question[], state);
+}
+
+export async function startTimeAttackSessionAction(playerId: string, forceNew = false) {
+  const existing = await findInProgressTimeAttackSession(playerId);
+  if (existing && !forceNew) {
+    return {
+      needsConfirm: true as const,
+      existingSessionId: existing.id,
+    };
+  }
+
+  if (forceNew) {
+    await abandonInProgressTimeAttackSessions(playerId);
+  }
+
   const initialState = createInitialTimeAttackState();
-  const questions = generateQuestions(initialState.currentLevel, QUESTIONS_PER_SESSION);
+  const questions = generateQuestions(initialState.currentLevel, WAVE_QUESTION_COUNT);
 
   const [session] = await getDb()
     .insert(sessions)
@@ -197,18 +293,13 @@ export async function startTimeAttackSessionAction(playerId: string) {
       status: "in_progress",
       questions,
       attemptCounts: {},
-      totalQuestions: QUESTIONS_PER_SESSION,
+      totalQuestions: WAVE_QUESTION_COUNT,
       timeAttackState: serializeTimeAttackState(initialState),
       totalScore: 0,
     })
     .returning();
 
-  return {
-    sessionId: session.id,
-    questions,
-    timeAttackState: initialState,
-    bossLabel: getBossLabel(initialState),
-  };
+  return buildSessionPayload(session.id, questions, initialState);
 }
 
 export async function submitTimeAttackAnswerAction(
@@ -259,15 +350,6 @@ export async function submitTimeAttackAnswerAction(
   const correctAnswer = getCorrectAnswer(question);
   const level = state.currentLevel;
 
-  if (!TIME_ATTACK_COUNTDOWN_DISABLED && isQuestionTimedOut(elapsedSeconds, state.timeLimitSeconds)) {
-    const failedState = await finalizeTimeAttackFailure(sessionId, state, "timeout");
-    return {
-      timedOut: true as const,
-      sessionEnded: true as const,
-      timeAttackState: failedState,
-    };
-  }
-
   if (answer !== correctAnswer) {
     await getDb().insert(questionLogs).values({
       sessionId,
@@ -287,11 +369,11 @@ export async function submitTimeAttackAnswerAction(
     const nextGlobalIndex = globalQuestionIndex + 1;
 
     if (mistakeCount >= MAX_MISTAKES) {
-      const failedState = await finalizeTimeAttackFailure(
-        sessionId,
-        { ...state, mistakeCount, globalQuestionIndex: nextGlobalIndex },
-        "mistakes",
-      );
+      const failedState = await finalizeTimeAttackFailure(sessionId, {
+        ...state,
+        mistakeCount,
+        globalQuestionIndex: nextGlobalIndex,
+      });
       return {
         correct: false as const,
         sessionEnded: true as const,
@@ -307,7 +389,7 @@ export async function submitTimeAttackAnswerAction(
       globalQuestionIndex: nextGlobalIndex,
     };
 
-    if (nextWaveIndex >= QUESTIONS_PER_SESSION) {
+    if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
       const waveResult = await completeWave(sessionId, updatedState, updatedState.waveScoreAccumulated);
       return {
         correct: false as const,
@@ -366,7 +448,7 @@ export async function submitTimeAttackAnswerAction(
     globalQuestionIndex: nextGlobalIndex,
   };
 
-  if (nextWaveIndex >= QUESTIONS_PER_SESSION) {
+  if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
     const waveResult = await completeWave(sessionId, updatedState, waveScoreAccumulated);
     return {
       correct: true as const,
@@ -393,25 +475,6 @@ export async function submitTimeAttackAnswerAction(
     sessionEnded: false as const,
     waveComplete: false as const,
     timeAttackState: updatedState,
-  };
-}
-
-export async function failTimeAttackTimeoutAction(sessionId: string) {
-  const [session] = await getDb()
-    .select()
-    .from(sessions)
-    .where(eq(sessions.id, sessionId))
-    .limit(1);
-
-  if (!session || session.status !== "in_progress" || session.mode !== "time_attack") {
-    throw new Error("セッションが見つかりません");
-  }
-
-  const state = parseTimeAttackState(session.timeAttackState ?? null);
-  const failedState = await finalizeTimeAttackFailure(sessionId, state, "timeout");
-  return {
-    sessionEnded: true as const,
-    timeAttackState: failedState,
   };
 }
 

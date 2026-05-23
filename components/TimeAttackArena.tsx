@@ -1,7 +1,7 @@
 "use client";
 
-import { getBossLabel } from "@/lib/time-attack";
-import type { TimeAttackState } from "@/lib/time-attack";
+import { getBossLabel, type TimeAttackState } from "@/lib/time-attack";
+import { getOniHpRatio } from "@/lib/time-attack-scoring";
 
 type TimeAttackArenaProps = {
   state: TimeAttackState;
@@ -18,7 +18,9 @@ export function TimeAttackArena({
   hpHit = false,
   className = "",
 }: TimeAttackArenaProps) {
-  const hpPercent = hpMax > 0 ? Math.max(0, Math.min(100, (displayHp / hpMax) * 100)) : 0;
+  const segmentCount = getOniHpRatio(state.currentLevel, state.enmaNumber);
+  const safeHpMax = Math.max(hpMax, displayHp, 1);
+  const hpRatio = Math.max(0, Math.min(1, displayHp / safeHpMax));
 
   return (
     <div className={`time-attack-arena ${className}`.trim()}>
@@ -28,11 +30,19 @@ export function TimeAttackArena({
           <div className="time-attack-gauge__header">
             <span>鬼 HP</span>
           </div>
-          <div className="time-attack-gauge__track">
+          <div className="time-attack-gauge__track time-attack-gauge__track--segmented">
             <div
-              className={`time-attack-gauge__fill time-attack-gauge__fill--hp ${hpHit ? "time-attack-gauge__fill--hit" : ""}`}
-              style={{ width: `${hpPercent}%` }}
+              className={`time-attack-gauge__fill time-attack-gauge__fill--hp ${displayHp > 0 ? "time-attack-gauge__fill--has-hp" : ""} ${hpHit ? "time-attack-gauge__fill--hit" : ""}`}
+              style={{ width: `${hpRatio * 100}%` }}
             />
+            {Array.from({ length: Math.max(0, segmentCount - 1) }, (_, index) => (
+              <span
+                key={index}
+                className="time-attack-gauge__segment-marker"
+                style={{ left: `${((index + 1) / segmentCount) * 100}%` }}
+                aria-hidden
+              />
+            ))}
           </div>
         </div>
       </div>

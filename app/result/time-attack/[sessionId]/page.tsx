@@ -15,12 +15,7 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
   }
 
   const isClear = result.cleared;
-  const failLabel =
-    result.failReason === "timeout"
-      ? "時間切れ"
-      : result.failReason === "mistakes"
-        ? "3回ミス"
-        : null;
+  const failLabel = result.failReason === "mistakes" ? "3回ミス" : null;
 
   return (
     <main className="page-shell">
@@ -42,7 +37,7 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Link href="/play/time-attack" className="big-btn big-btn-primary">
+          <Link href="/play/time-attack?new=1" className="big-btn big-btn-primary">
             もう一度
           </Link>
           <Link href="/play" className="big-btn big-btn-secondary">

@@ -4,9 +4,16 @@
 
 The system SHALL offer a **タイムアタック** mode separate from the standard 10-question quiz. Time attack SHALL be playable only by **authenticated (logged-in) members**. The entry point SHALL remain **visible** to guests but SHALL be **locked** (disabled) with a brief message that login is required.
 
+When a logged-in player has an in-progress time attack session (`time_attack_state.status = 'wave_active'`), the play screen SHALL offer **続きから** to resume that session before starting a new run.
+
 #### Scenario: Member starts time attack
-- **WHEN** a logged-in player selects タイムアタック from the play screen
+- **WHEN** a logged-in player selects タイムアタック from the play screen and has no in-progress session
 - **THEN** the system starts a new time attack session at level 1
+
+#### Scenario: Member resumes time attack
+- **WHEN** a logged-in player has an in-progress time attack session
+- **THEN** the play screen offers 続きから
+- **AND** selecting it restores the same boss, HP, wave index, and question batch
 
 #### Scenario: Guest sees locked time attack
 - **WHEN** a guest opens the play screen
@@ -19,22 +26,22 @@ The system SHALL offer a **タイムアタック** mode separate from the standa
 
 ### Requirement: Time attack session always starts at level 1
 
-Every new time attack session SHALL begin at **level 1**, regardless of the player's unlocked level in standard mode.
+Every **new** time attack session SHALL begin at **level 1**, regardless of the player's unlocked level in standard mode. Resuming an in-progress session SHALL continue from the saved level and boss state.
 
 #### Scenario: New time attack session
-- **WHEN** a logged-in player starts time attack
+- **WHEN** a logged-in player starts a new time attack session
 - **THEN** the first wave uses level 1 questions and level 1 boss parameters
 
-### Requirement: Ten-question waves with server generation and scoring
+### Requirement: Five-question waves with server generation and scoring
 
-Time attack SHALL proceed in **waves of exactly 10 questions**. At the start of each wave, the server SHALL generate 10 questions for the current level using the same generation rules as standard mode. After each answer, the server SHALL score the submission. After the 10th question of a wave, the server SHALL aggregate the wave score and apply it as damage to the boss HP.
+Time attack SHALL proceed in **waves of exactly 5 questions**. At the start of each wave, the server SHALL generate 5 questions for the current level using the same generation rules as standard mode. After each answer, the server SHALL score the submission. After the 5th question of a wave, the server SHALL aggregate the wave score and apply it as damage to the boss HP.
 
 #### Scenario: Wave start
 - **WHEN** a time attack wave begins
-- **THEN** the server generates 10 unique questions for the current level and stores them in the session
+- **THEN** the server generates 5 unique questions for the current level and stores them in the session
 
 #### Scenario: Wave completion scoring
-- **WHEN** the player completes the 10th question of a wave (correct or incorrect submission counted as a question slot)
+- **WHEN** the player completes the 5th question of a wave (correct or incorrect submission counted as a question slot)
 - **THEN** the server sums points earned in that wave
 - **AND** subtracts that sum from the boss remaining HP
 
@@ -48,10 +55,16 @@ During time attack, each question SHALL allow **one submission only**. On an inc
 - **AND** the mistake count increases by 1
 - **AND** the next question is shown without retry
 
-#### Scenario: Correct answer
-- **WHEN** a player submits the correct answer within the time limit
-- **THEN** points are awarded per time attack scoring rules
+#### Scenario: Correct answer within time limit
+- **WHEN** a player submits the correct answer while bonus time remains
+- **THEN** points are awarded per time attack scoring rules including time bonus
 - **AND** the next question is shown
+
+#### Scenario: Correct answer after time limit
+- **WHEN** a player submits the correct answer after bonus time has expired
+- **THEN** only base points are awarded (time bonus = 0)
+- **AND** the session continues
+- **AND** the next question is shown after submission
 
 ### Requirement: Session end on three mistakes
 
@@ -79,11 +92,13 @@ When the mistake count reaches **3**, the time attack session SHALL end and navi
 - **AND** the screen darkens
 - **AND** the result screen is shown
 
-### Requirement: Per-question time limit and immediate end on timeout
+### Requirement: Per-question time limit without session end on timeout
 
-Each question SHALL have a countdown time limit. If the limit elapses before a correct answer is submitted, the session SHALL end immediately and navigate to the result screen. The question SHALL award 0 points.
+Each question SHALL have a countdown time limit used for **time bonus calculation** and UI feedback. When the limit elapses, the session SHALL **NOT** end. The player MAY continue answering; a correct answer after timeout SHALL award **base points only** (time bonus = 0). Timeout SHALL NOT increment the mistake counter.
 
 The countdown SHALL be shown as a **circular gauge** in the **top-left corner of the question blackboard** (the equation card).
+
+When bonus time reaches 0, the timer gauge SHALL switch to a **gray** appearance and a short label **「ボーナスなし（基本点のみ）」** SHALL appear near the timer.
 
 For levels 1–9 (non-Enma bosses), the limit SHALL be **10 seconds**.
 
@@ -91,10 +106,11 @@ For Enma bosses at level 10, the limit SHALL follow the Enma stage table (see Re
 
 The first **1 second** after a question appears SHALL NOT advance the countdown (same grace as standard mode).
 
-#### Scenario: Timeout ends session
-- **WHEN** the per-question time limit expires without a correct answer
-- **THEN** the session ends immediately
-- **AND** the result screen is shown
+#### Scenario: Timeout does not end session
+- **WHEN** the per-question time limit expires
+- **THEN** the session continues
+- **AND** the timer shows gray with the base-points-only label
+- **AND** the player may still submit an answer
 
 #### Scenario: Grace period
 - **WHEN** a new question is displayed
@@ -111,14 +127,14 @@ The time attack quiz view SHALL show visual alert effects:
 
 | Condition | Effect |
 |-----------|--------|
-| Remaining time ≤ 5 seconds | Red alert |
+| Remaining bonus time ≤ 5 seconds | Red alert |
 | Incorrect submission | Yellow alert, then evil orb from oni to mascot |
 
-Red alert timing SHALL be **fixed at 5 seconds remaining**, even when the Enma stage uses a shorter total limit (e.g. 7 seconds).
+Red alert timing SHALL be **fixed at 5 seconds remaining**, even when the Enma stage uses a shorter total limit (e.g. 7 seconds). Red alert SHALL NOT apply after bonus time has expired.
 
 #### Scenario: Red alert at five seconds
-- **WHEN** the countdown reaches 5 seconds or less on any question
-- **THEN** a red alert effect is shown until the question ends
+- **WHEN** the countdown reaches 5 seconds or less while bonus time remains
+- **THEN** a red alert effect is shown until bonus time expires or the question ends
 
 #### Scenario: Yellow alert on mistake
 - **WHEN** a player submits an incorrect answer
@@ -133,11 +149,25 @@ Red alert timing SHALL be **fixed at 5 seconds remaining**, even when the Enma s
 Each boss SHALL have HP calculated as:
 
 ```
-waveMaxScore = maxPerQuestion × 10
-oniMaxHp     = floor(waveMaxScore × 0.85)
+waveMaxScore = maxPerQuestion × WAVE_QUESTION_COUNT
+oniMaxHp     = floor(waveMaxScore × getOniHpRatio(level, enmaNumber))
 ```
 
-Where `maxPerQuestion = level × 10 + level × timeLimitSeconds × timeBonusMultiplier`.
+Where:
+
+```
+WAVE_QUESTION_COUNT = 5
+maxPerQuestion = level × 10 + level × timeLimitSeconds × timeBonusMultiplier
+```
+
+Level-scaled HP ratio:
+
+| Boss | getOniHpRatio |
+|------|---------------|
+| Lv1–3 oni | 5 |
+| Lv4–7 oni | 3 |
+| Lv8–9 oni | 2 |
+| Enma (level 10) | 2 |
 
 When a wave ends, `remainingHp -= waveScore`. If remaining HP is **greater than 0**, the same boss continues and **HP carries over** to the next wave. If remaining HP is **≤ 0**, the boss is defeated.
 
@@ -150,9 +180,23 @@ When a wave ends, `remainingHp -= waveScore`. If remaining HP is **greater than 
 - **THEN** the boss is marked defeated
 - **AND** defeat processing runs (bonus, level advance, or clear)
 
+### Requirement: Segmented boss HP bar
+
+The boss HP bar SHALL be divided into **getOniHpRatio** equal segments for the current boss. Each segment SHALL represent approximately one full-wave damage chunk at theoretical maximum wave score. Removed HP SHALL appear as depleted segments so the player can see how many attack cycles remain before defeat.
+
+Numeric HP values SHALL NOT be shown on the HP gauge.
+
+#### Scenario: Segments match ratio
+- **WHEN** the player faces a level 2 oni (ratio ×5)
+- **THEN** the HP bar shows 5 segments
+
+#### Scenario: Segment depletes after wave damage
+- **WHEN** a wave deals damage without defeating the boss
+- **THEN** the HP bar updates with depleted segments reflecting remaining HP
+
 ### Requirement: Defeat bonus
 
-When a boss is defeated, the system SHALL add a defeat bonus equal to **50% of the wave score** (the points earned in that 10-question wave, floored):
+When a boss is defeated, the system SHALL add a defeat bonus equal to **50% of the wave score** (the points earned in that 5-question wave, floored):
 
 ```
 defeatBonus = floor(waveScore × 0.5)
@@ -217,7 +261,7 @@ After defeating **Enma #10**, the time attack session SHALL end with status **cl
 
 ### Requirement: Wave score progress bar
 
-During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 10-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. Numeric score values SHALL NOT be shown on the attack or HP gauges. A separate **鬼 HP** gauge SHALL remain visible at all times. The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
+During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 5-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. Numeric score values SHALL NOT be shown on the attack or HP gauges. A separate **鬼 HP** gauge (segmented) SHALL remain visible at all times. The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
 
 When a player answers correctly, the system SHALL NOT show earned points in the success popup. The success popup SHALL dismiss after approximately **1 second**, and the next question SHALL become available at that time (except when the wave is complete). The light and gauge charge animation SHALL continue independently in the background until it finishes. White sparkling light orbs SHALL gather from a wide area around the feedback, merge into one cluster at the center, and then travel together toward the attack gauge. The gauge fill SHALL increase when the cluster reaches the gauge.
 
@@ -239,7 +283,7 @@ When a player answers correctly, the system SHALL NOT show earned points in the 
 
 #### Scenario: HP gauge visible
 - **WHEN** a player is in time attack
-- **THEN** the oni HP gauge is always visible with current and max HP values
+- **THEN** the segmented oni HP gauge is always visible
 
 #### Scenario: Gauges side by side
 - **WHEN** the quiz view is displayed
@@ -272,29 +316,41 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 
 ### Requirement: Mascot light orb attack
 
-When a wave completes, the attack sequence SHALL proceed in order: (1) the **10th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot launches a **light orb** toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
+When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot launches a **light orb** toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
 
-#### Scenario: Attack popup during wave finish
-- **WHEN** the 10th question of a wave is answered and the attack sequence begins
-- **THEN** a **鬼へ攻撃！** popup is shown for the duration of the attack animation
-- **AND** the next wave question does not start until the attack sequence completes
+**Non-defeat waves SHALL NOT show an attack popup** (no 「鬼へ攻撃！」). **Boss defeat SHALL pause question progression** and show a **「鬼撃破！」** popup until dismissed, then proceed to the next boss entrance and next wave. **While question input is blocked and before the defeat popup appears**, a **full-screen loading overlay with a spinning indicator and 「読み込み中...」** SHALL be shown (same pattern as route loading). **Enma #10 defeat (game clear) SHALL use a longer defeat effect sequence** and display **「鬼、すべて撃破！」** instead of the standard defeat popup text, then navigate to the clear result screen.
 
-#### Scenario: Next question after non-defeat wave attack
+#### Scenario: No attack popup on non-defeat wave
 - **WHEN** a wave ends without defeating the boss
-- **THEN** the next question begins only after the attack animation finishes and the attack popup is dismissed
+- **THEN** the attack animation plays without an attack popup
+- **AND** the next wave question begins after the animation completes
+
+#### Scenario: Defeat popup on boss defeat
+- **WHEN** a boss is defeated by wave damage (except Enma #10 final clear)
+- **THEN** question input is blocked
+- **AND** a loading overlay with a spinner and **「読み込み中...」** is shown until the attack preamble completes
+- **AND** a **「鬼撃破！」** popup is shown
+- **AND** the popup remains until the defeat sequence (explosion, next boss entrance) completes
+
+#### Scenario: Final Enma defeat celebration
+- **WHEN** Enma #10 is defeated
+- **THEN** question input is blocked
+- **AND** a longer defeat effect sequence plays (extended explosion / celebration versus normal boss defeat)
+- **AND** a **「鬼、すべて撃破！」** popup is shown
+- **AND** the session navigates to the clear result screen after the sequence completes
 
 #### Scenario: Next wave after boss defeat
 - **WHEN** a boss is defeated by wave damage
 - **THEN** the question board and keypad are hidden until the next boss oni entrance animation completes
-- **AND** the next wave question begins only after the new oni is visible in idle state
+- **AND** the next wave question begins only after the new oni is visible in idle state and the defeat popup is dismissed
 - **AND** the defeat bonus mascot message is shown after the new wave question state is applied
 
-#### Scenario: Q10 result reflected before attack drain
-- **WHEN** a player completes the 10th question of a wave with a correct answer
+#### Scenario: Q5 result reflected before attack drain
+- **WHEN** a player completes the 5th question of a wave with a correct answer
 - **THEN** the attack gauge updates to include that question's score before the drain animation begins
 
 #### Scenario: Attack gauge drains while light flies to mascot
-- **WHEN** a 10-question wave completes
+- **WHEN** a 5-question wave completes
 - **THEN** the attack gauge animates to 0 and light orbs travel toward the teacher mascot concurrently
 - **AND** the mascot shows a charging glow while absorbing the light
 - **AND** the light orb launches after the light reaches the mascot
@@ -320,13 +376,22 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **10t
 - **WHEN** a boss is defeated
 - **THEN** the mascot shows a defeat or clear message and the next boss HP gauge is shown for the following wave
 
-### Requirement: Boss HP bar
+### Requirement: Time attack session resume
 
-The system SHALL display the boss remaining HP as a bar relative to the current boss maximum HP. When HP carries over between waves, the bar SHALL reflect the carried value.
+The system SHALL persist in-progress time attack sessions after each answer and wave completion. A logged-in player SHALL have at most **one** resumable in-progress time attack session. Leaving the page without failing or clearing SHALL NOT discard progress.
 
-#### Scenario: HP bar after partial damage
-- **WHEN** a wave ends with boss HP partially remaining
-- **THEN** the HP bar shows the remaining fraction until the next wave
+#### Scenario: Progress saved on answer
+- **WHEN** a player submits an answer during time attack
+- **THEN** the updated time_attack_state and question progress are saved to the database
+
+#### Scenario: Resume from play screen
+- **WHEN** a player with an in-progress session opens the play screen
+- **THEN** 続きから is available
+- **AND** resuming restores the same sessionId, boss, HP, and wave position
+
+#### Scenario: Cleared or failed sessions not resumable
+- **WHEN** a time attack session has status cleared or failed
+- **THEN** it cannot be resumed from 続きから
 
 ### Requirement: Time attack result screen
 
@@ -340,7 +405,7 @@ When a time attack session ends (failed, cleared, or abandoned mid-run), the sys
 Star rating from standard mode SHALL NOT be applied to time attack sessions.
 
 #### Scenario: Failed result
-- **WHEN** a session ends due to 3 mistakes or timeout
+- **WHEN** a session ends due to 3 mistakes
 - **THEN** the result screen shows game over with accumulated stats
 
 #### Scenario: Clear result

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  failTimeAttackTimeoutAction,
   submitTimeAttackAnswerAction,
 } from "@/app/actions/time-attack";
 import { GaugeLightCharge } from "@/components/GaugeLightCharge";
@@ -20,7 +19,6 @@ import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
 import { getWaveMaxScoreForState, type TimeAttackState } from "@/lib/time-attack";
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
-import { TIME_ATTACK_COUNTDOWN_DISABLED } from "@/lib/time-attack-dev";
 import {
   formatQuestionExpression,
   getMaxAnswerDigits,
@@ -46,9 +44,11 @@ const GAUGE_DRAIN_MS = 580;
 const GAUGE_REFLECT_PAUSE_MS = 240;
 const ONI_SHAKE_MS = 520;
 const ONI_EXPLODE_MS = 680;
+const ONI_FINAL_CLEAR_EXPLODE_MS = 1400;
 const ONI_ENTER_MS = 500;
 const ONI_SETTLE_MS = 200;
 const DEFEAT_MSG_MS = 1100;
+const FINAL_CLEAR_POPUP_MS = 2200;
 
 type WrongAnswerResult = {
   sessionEnded?: boolean;
@@ -98,7 +98,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [hpHit, setHpHit] = useState(false);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [feedbackType, setFeedbackType] = useState<"success" | "wrong" | "attack" | null>(null);
+  const [feedbackType, setFeedbackType] = useState<"success" | "wrong" | "defeat" | null>(null);
   const [alertType, setAlertType] = useState<"yellow" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +125,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   const [evilOrbAnimId, setEvilOrbAnimId] = useState(0);
   const [mascotHit, setMascotHit] = useState(false);
   const [screenDarkening, setScreenDarkening] = useState(false);
+  const [defeatLoading, setDefeatLoading] = useState(false);
 
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
@@ -174,14 +175,24 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     setDisplayHpMax(state.oniHpMax);
   };
 
-  const showAttackPopup = () => {
+  const showDefeatPopup = (message: string) => {
     if (correctPopupTimerRef.current != null) {
       clearTimeout(correctPopupTimerRef.current);
       correctPopupTimerRef.current = null;
     }
-    setFeedback("鬼へ攻撃！");
-    setFeedbackType("attack");
+    setDefeatLoading(false);
+    setFeedback(message);
+    setFeedbackType("defeat");
     setAlertType(null);
+  };
+
+  const markDefeatLoading = (result: {
+    waveComplete?: boolean;
+    bossDefeated?: boolean;
+  }) => {
+    if (result.waveComplete && result.bossDefeated) {
+      setDefeatLoading(true);
+    }
   };
 
   const clearFeedbackPopup = () => {
@@ -211,22 +222,22 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     setPreviewWaveScore(null);
   };
 
-  const handleTimeout = useCallback(async () => {
-    if (!sessionId || submitLockRef.current || !timeAttackState) {
+  const unlockQuestionInput = () => {
+    setAnswer("");
+    questionStartedAtRef.current = Date.now();
+    setTimerPaused(false);
+    submitLockRef.current = false;
+    setSubmitting(false);
+  };
+
+  const advanceAfterWavePopup = (result: PendingAdvance["result"]) => {
+    if (result.bossDefeated || !result.timeAttackState) {
       return;
     }
-    submitLockRef.current = true;
-    setSubmitting(true);
-    setTimerPaused(true);
-    try {
-      await failTimeAttackTimeoutAction(sessionId);
-      redirectToResult(sessionId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "時間切れ処理に失敗しました");
-      submitLockRef.current = false;
-      setSubmitting(false);
-    }
-  }, [sessionId, timeAttackState, redirectToResult]);
+    applyWaveAdvanceState(result.timeAttackState, result.questions);
+    syncBossDisplay(result.timeAttackState);
+    unlockQuestionInput();
+  };
 
   const beginWaveAttack = async (
     id: string,
@@ -249,9 +260,14 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     const hpAfter = result.bossDefeated ? 0 : result.timeAttackState.oniHpRemaining;
     const reflectedWaveScore =
       waveScore > 0 ? waveScore : result.timeAttackState.waveScoreAccumulated;
+    const isBossDefeat = Boolean(result.bossDefeated);
 
-    setTimerPaused(true);
-    showAttackPopup();
+    if (isBossDefeat) {
+      setDefeatLoading(true);
+      setTimerPaused(true);
+      clearFeedbackPopup();
+    }
+
     pendingGaugeTargetRef.current = null;
 
     setGaugeDisplayScore(reflectedWaveScore);
@@ -287,18 +303,20 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     setHpHit(false);
 
     if (result.bossDefeated) {
+      const isFinalClear = Boolean(result.cleared);
+      showDefeatPopup(isFinalClear ? "鬼、すべて撃破！" : "鬼撃破！");
+
       setOniPhase("exploding");
-      await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_EXPLODE_MS, 350)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, motionMs(isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS, isFinalClear ? 700 : 350)),
+      );
       setOniPhase("hidden");
 
       if (result.sessionEnded) {
-        clearFeedbackPopup();
-        setWaveMessage(
-          result.cleared
-            ? `閻魔大王を倒した！クリア！ +${result.defeatBonus ?? 0}点`
-            : `ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`,
+        await new Promise((resolve) =>
+          setTimeout(resolve, motionMs(isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS, isFinalClear ? 900 : 400)),
         );
-        await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
+        clearFeedbackPopup();
         redirectToResult(id);
         return;
       }
@@ -319,21 +337,17 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
       applyWaveAdvanceState(result.timeAttackState, result.questions);
 
+      clearFeedbackPopup();
       setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
       await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
       setWaveMessage(null);
-    } else {
-      setOniPhase("idle");
-      syncBossDisplay(result.timeAttackState);
-      applyWaveAdvanceState(result.timeAttackState, result.questions);
+
+      unlockQuestionInput();
+      return;
     }
 
-    clearFeedbackPopup();
-    setAnswer("");
-    questionStartedAtRef.current = Date.now();
-    setTimerPaused(false);
-    submitLockRef.current = false;
-    setSubmitting(false);
+    setOniPhase("idle");
+    syncBossDisplay(result.timeAttackState);
   };
 
   const handleGaugeReach = () => {
@@ -417,7 +431,9 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     }
 
     if (result.waveComplete) {
-      await beginWaveAttack(sessionId, result);
+      markDefeatLoading(result);
+      advanceAfterWavePopup(result);
+      void beginWaveAttack(sessionId, result);
       return;
     }
 
@@ -458,26 +474,25 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
     setFeedback(null);
     setFeedbackType(null);
 
-    if (!waveComplete) {
-      applyPendingQuestionState();
-      setAnswer("");
-      questionStartedAtRef.current = Date.now();
-      setTimerPaused(false);
-      submitLockRef.current = false;
-      setSubmitting(false);
+    if (waveComplete) {
+      const advance = pendingAdvanceRef.current;
+      if (advance) {
+        advanceAfterWavePopup(advance.result);
+      }
+      return;
     }
+
+    applyPendingQuestionState();
+    unlockQuestionInput();
   };
 
   const scheduleCorrectPopupDismiss = (waveComplete: boolean) => {
-    if (waveComplete) {
-      return;
-    }
     if (correctPopupTimerRef.current != null) {
       clearTimeout(correctPopupTimerRef.current);
     }
     correctPopupTimerRef.current = setTimeout(() => {
       correctPopupTimerRef.current = null;
-      dismissCorrectPopup(false);
+      dismissCorrectPopup(waveComplete);
     }, motionMs(CORRECT_POPUP_MS, 350));
   };
 
@@ -501,11 +516,6 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         elapsedSeconds,
       );
 
-      if ("timedOut" in result && result.timedOut) {
-        redirectToResult(sessionId);
-        return;
-      }
-
       if (result.correct) {
         const waveComplete = "waveComplete" in result && result.waveComplete;
 
@@ -526,6 +536,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
         if (waveComplete) {
           pendingAdvanceRef.current = { sessionId, result };
+          markDefeatLoading(result);
         } else {
           pendingAdvanceRef.current = null;
         }
@@ -662,21 +673,25 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
 
       {screenDarkening && <div className="time-attack-dark-overlay" aria-hidden="true" />}
 
+      {defeatLoading && (
+        <div className="time-attack-defeat-loading" role="status" aria-live="polite">
+          <span className="time-attack-defeat-loading__spinner" aria-hidden="true" />
+          <p className="time-attack-defeat-loading__label">読み込み中...</p>
+        </div>
+      )}
+
       {question && (
         <section
           className={`time-attack-board card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
         >
-          {!TIME_ATTACK_COUNTDOWN_DISABLED && (
-            <QuestionTimer
-              key={questionKey}
-              variant="ring"
-              className="question-timer--board"
-              timeLimitSeconds={timeAttackState.timeLimitSeconds}
-              questionKey={questionKey}
-              onTimeout={() => void handleTimeout()}
-              paused={timerPaused || submitting}
-            />
-          )}
+          <QuestionTimer
+            key={questionKey}
+            variant="ring"
+            className="question-timer--board"
+            timeLimitSeconds={timeAttackState.timeLimitSeconds}
+            questionKey={questionKey}
+            paused={timerPaused || submitting}
+          />
           <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
             <span className="whitespace-nowrap">
               {formatQuestionExpression(question)} =
@@ -697,7 +712,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
             className={`feedback-popup ${
               feedbackType === "success"
                 ? "feedback-popup-success"
-                : feedbackType === "attack"
+                : feedbackType === "defeat"
                   ? "feedback-popup-attack"
                   : "feedback-popup-retry"
             }`}
@@ -706,7 +721,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
               className={
                 feedbackType === "success"
                   ? "feedback-success"
-                  : feedbackType === "attack"
+                  : feedbackType === "defeat"
                     ? "feedback-attack"
                     : "feedback-retry"
               }

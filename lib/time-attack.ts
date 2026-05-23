@@ -2,7 +2,10 @@ import type { Level } from "@/lib/questions";
 import {
   calculateOniMaxHp,
   calculateWaveMaxScore,
+  WAVE_QUESTION_COUNT,
 } from "@/lib/time-attack-scoring";
+
+export { getOniHpRatio, WAVE_QUESTION_COUNT } from "@/lib/time-attack-scoring";
 
 export const MAX_ENMA_NUMBER = 10;
 
@@ -22,7 +25,7 @@ export type TimeAttackState = {
   timeBonusMultiplier: number;
   bossesDefeated: number;
   phase: TimeAttackPhase;
-  failReason?: "timeout" | "mistakes";
+  failReason?: "mistakes";
 };
 
 export type EnmaParams = {
@@ -50,12 +53,18 @@ export function getBossParams(level: Level, enmaNumber: number): EnmaParams {
 
 export function createInitialTimeAttackState(): TimeAttackState {
   const level = 1 as Level;
-  const params = getBossParams(level, 0);
-  const oniHpMax = calculateOniMaxHp(level, params.timeLimitSeconds, params.timeBonusMultiplier);
+  const enmaNumber = 0;
+  const params = getBossParams(level, enmaNumber);
+  const oniHpMax = calculateOniMaxHp(
+    level,
+    params.timeLimitSeconds,
+    params.timeBonusMultiplier,
+    enmaNumber,
+  );
 
   return {
     currentLevel: level,
-    enmaNumber: 0,
+    enmaNumber,
     oniHpRemaining: oniHpMax,
     oniHpMax,
     mistakeCount: 0,
@@ -129,6 +138,7 @@ export function applyWaveDamage(state: TimeAttackState, waveScore: number): Wave
       newLevel,
       params.timeLimitSeconds,
       params.timeBonusMultiplier,
+      enmaNumber,
     );
 
     return {
@@ -163,7 +173,12 @@ export function applyWaveDamage(state: TimeAttackState, waveScore: number): Wave
 
   const advancedEnma = state.enmaNumber + 1;
   const params = getEnmaParams(advancedEnma);
-  const oniHpMax = calculateOniMaxHp(10, params.timeLimitSeconds, params.timeBonusMultiplier);
+  const oniHpMax = calculateOniMaxHp(
+    10,
+    params.timeLimitSeconds,
+    params.timeBonusMultiplier,
+    advancedEnma,
+  );
 
   return {
     kind: "defeated",
@@ -186,5 +201,6 @@ export function getWaveMaxScoreForState(state: TimeAttackState): number {
     state.currentLevel,
     state.timeLimitSeconds,
     state.timeBonusMultiplier,
+    WAVE_QUESTION_COUNT,
   );
 }

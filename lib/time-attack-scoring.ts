@@ -1,10 +1,23 @@
 import { SCORE_TIME_GRACE_SECONDS } from "@/lib/scoring";
 import type { Level } from "@/lib/questions";
 
-export const ONI_HP_RATIO = 0.85;
+export const WAVE_QUESTION_COUNT = 5;
 export const DEFEAT_BONUS_RATIO = 0.5;
 export const MAX_MISTAKES = 3;
 export const RED_ALERT_REMAINING_SECONDS = 5;
+
+export function getOniHpRatio(level: Level, _enmaNumber: number): number {
+  if (level >= 10) {
+    return 2;
+  }
+  if (level <= 3) {
+    return 5;
+  }
+  if (level <= 7) {
+    return 3;
+  }
+  return 2;
+}
 
 export function getRemainingBonusSeconds(
   elapsedSeconds: number,
@@ -57,7 +70,7 @@ export function calculateWaveMaxScore(
   level: Level,
   timeLimitSeconds: number,
   timeBonusMultiplier: number,
-  questionCount = 10,
+  questionCount = WAVE_QUESTION_COUNT,
 ): number {
   return maxQuestionScoreForWave(level, timeLimitSeconds, timeBonusMultiplier) * questionCount;
 }
@@ -66,7 +79,8 @@ export function calculateOniMaxHp(
   level: Level,
   timeLimitSeconds: number,
   timeBonusMultiplier: number,
-  questionCount = 10,
+  enmaNumber = 0,
+  questionCount = WAVE_QUESTION_COUNT,
 ): number {
   const waveMax = calculateWaveMaxScore(
     level,
@@ -74,7 +88,7 @@ export function calculateOniMaxHp(
     timeBonusMultiplier,
     questionCount,
   );
-  return Math.floor(waveMax * ONI_HP_RATIO);
+  return Math.floor(waveMax * getOniHpRatio(level, enmaNumber));
 }
 
 export function calculateDefeatBonus(waveScore: number): number {

@@ -8,10 +8,12 @@ import type { AttemptCounts, Question } from "@/lib/db/schema";
 import { getUnlockedLevel } from "@/lib/levels";
 import {
   generateQuestions,
-  getCorrectAnswer,
   QUESTIONS_PER_SESSION,
   type Level,
 } from "@/lib/questions";
+import { generateSubtractionQuestions } from "@/lib/subtraction-questions";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION, getCorrectAnswerForOperation } from "@/lib/operations";
 import {
   aggregateSessionScores,
   buildGrowthMessage,
@@ -22,66 +24,80 @@ import {
   getStreakMilestoneBonusForAnswer,
 } from "@/lib/scoring";
 
-export async function getPlayerUnlockedLevelAction(playerId: string): Promise<Level> {
-  const completed = await getDb()
+function standardSessionFilter(operation: Operation) {
+  return and(
+    eq(sessions.operation, operation),
+    or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+  );
+}
+
+async function getCompletedStandardSessions(playerId: string, operation: Operation) {
+  return getDb()
     .select({
       level: sessions.level,
       stars: sessions.stars,
       totalScore: sessions.totalScore,
+      operation: sessions.operation,
     })
     .from(sessions)
     .where(
       and(
         eq(sessions.playerId, playerId),
         eq(sessions.status, "completed"),
-        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+        standardSessionFilter(operation),
       ),
     );
+}
+
+export async function getPlayerUnlockedLevelAction(
+  playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
+): Promise<Level> {
+  const completed = await getCompletedStandardSessions(playerId, operation);
 
   return getUnlockedLevel(
     completed.map((session) => ({
       level: session.level,
       stars: session.stars ?? 0,
       totalScore: session.totalScore,
+      operation: session.operation as Operation,
     })),
+    operation,
   );
 }
 
-export async function startSessionAction(playerId: string, level: Level) {
-  const completed = await getDb()
-    .select({
-      level: sessions.level,
-      stars: sessions.stars,
-      totalScore: sessions.totalScore,
-    })
-    .from(sessions)
-    .where(
-      and(
-        eq(sessions.playerId, playerId),
-        eq(sessions.status, "completed"),
-        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
-      ),
-    );
+export async function startSessionAction(
+  playerId: string,
+  level: Level,
+  operation: Operation = DEFAULT_OPERATION,
+) {
+  const completed = await getCompletedStandardSessions(playerId, operation);
 
   const unlockedLevel = getUnlockedLevel(
     completed.map((session) => ({
       level: session.level,
       stars: session.stars ?? 0,
       totalScore: session.totalScore,
+      operation: session.operation as Operation,
     })),
+    operation,
   );
 
   if (level > unlockedLevel) {
     throw new Error("このレベルはまだ解放されていません");
   }
 
-  const questions = generateQuestions(level, QUESTIONS_PER_SESSION);
+  const questions =
+    operation === "subtraction"
+      ? generateSubtractionQuestions(level, QUESTIONS_PER_SESSION)
+      : generateQuestions(level, QUESTIONS_PER_SESSION);
 
   const [session] = await getDb()
     .insert(sessions)
     .values({
       playerId,
       level,
+      operation,
       status: "in_progress",
       questions,
       attemptCounts: {},
@@ -132,7 +148,8 @@ export async function submitAnswerAction(
     throw new Error("問題が見つかりません");
   }
 
-  const correctAnswer = getCorrectAnswer(question);
+  const operation = (session.operation ?? DEFAULT_OPERATION) as Operation;
+  const correctAnswer = getCorrectAnswerForOperation(operation, question);
   const key = String(questionIndex);
   const attemptCounts: AttemptCounts = { ...(session.attemptCounts ?? {}) };
 
@@ -224,6 +241,7 @@ async function finalizeSession(sessionId: string) {
   }
 
   const level = session.level as Level;
+  const operation = (session.operation ?? DEFAULT_OPERATION) as Operation;
   const firstAttemptResults = logs.map((log) => log.isFirstAttemptCorrect);
   const correctAnswers = firstAttemptResults.filter(Boolean).length;
   const accuracy = Math.round((correctAnswers / QUESTIONS_PER_SESSION) * 100);
@@ -239,6 +257,7 @@ async function finalizeSession(sessionId: string) {
       and(
         eq(sessions.playerId, session.playerId),
         eq(sessions.level, session.level),
+        eq(sessions.operation, operation),
         eq(sessions.status, "completed"),
       ),
     )
@@ -290,6 +309,8 @@ export async function getSessionResultAction(sessionId: string) {
     return null;
   }
 
+  const operation = (session.operation ?? DEFAULT_OPERATION) as Operation;
+
   const previous = await getDb()
     .select({ correctAnswers: sessions.correctAnswers })
     .from(sessions)
@@ -297,6 +318,7 @@ export async function getSessionResultAction(sessionId: string) {
       and(
         eq(sessions.playerId, session.playerId),
         eq(sessions.level, session.level),
+        eq(sessions.operation, operation),
         eq(sessions.status, "completed"),
         ne(sessions.id, sessionId),
       ),
@@ -319,6 +341,7 @@ export async function getSessionResultAction(sessionId: string) {
 
   return {
     sessionId: session.id,
+    operation,
     level: session.level,
     correctAnswers: session.correctAnswers ?? 0,
     totalQuestions: session.totalQuestions,

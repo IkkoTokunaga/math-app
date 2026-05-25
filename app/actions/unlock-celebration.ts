@@ -2,6 +2,8 @@
 
 import { getAuthState } from "@/lib/auth/state";
 import type { Level } from "@/lib/questions";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION } from "@/lib/operations";
 import {
   getMemberCelebratedLevels,
   markMemberUnlockCelebrated,
@@ -16,15 +18,17 @@ async function assertOwnPlayer(playerId: string): Promise<void> {
 
 export async function getMemberCelebratedLevelsAction(
   playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
 ): Promise<Level[]> {
   await assertOwnPlayer(playerId);
-  return getMemberCelebratedLevels(playerId);
+  return getMemberCelebratedLevels(playerId, operation);
 }
 
 export async function markMemberUnlockCelebratedAction(
   playerId: string,
   level: Level,
+  operation: Operation = DEFAULT_OPERATION,
 ): Promise<void> {
   await assertOwnPlayer(playerId);
-  await markMemberUnlockCelebrated(playerId, level);
+  await markMemberUnlockCelebrated(playerId, level, operation);
 }

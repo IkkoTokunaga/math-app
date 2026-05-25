@@ -2,8 +2,11 @@ import { getDb } from "@/lib/db";
 import { players, questionLogs, sessions, users } from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
 import type { GuestStoreSnapshot } from "@/lib/guest/types";
+import type { Operation } from "@/lib/operations";
 import type { AttemptCounts, Question } from "@/lib/db/schema";
 import { importMemberCelebratedLevels } from "@/lib/unlock-celebration-db";
+
+export type CelebratedLevelsByOperation = Partial<Record<Operation, readonly number[]>>;
 
 function validateGuestSnapshot(snapshot: GuestStoreSnapshot): void {
   if (snapshot.version !== 1) {
@@ -16,7 +19,7 @@ export async function importGuestData(
   password: string,
   childName: string,
   snapshot: GuestStoreSnapshot,
-  celebratedLevels: readonly number[] = [],
+  celebratedLevels: CelebratedLevelsByOperation = {},
 ): Promise<{ userId: string; playerId: string }> {
   validateGuestSnapshot(snapshot);
 
@@ -52,6 +55,7 @@ export async function importGuestData(
         .values({
           playerId: player.id,
           level: completed.level,
+          operation: completed.operation ?? "addition",
           status: "completed",
           questions: completed.questionLogs.map((log) => ({
             operandA: log.operandA,
@@ -91,7 +95,14 @@ export async function importGuestData(
       }
     }
 
-    await importMemberCelebratedLevels(player.id, celebratedLevels, tx);
+    for (const operation of ["addition", "subtraction"] as Operation[]) {
+      await importMemberCelebratedLevels(
+        player.id,
+        celebratedLevels[operation] ?? [],
+        operation,
+        tx,
+      );
+    }
 
     return { userId: user.id, playerId: player.id };
   });

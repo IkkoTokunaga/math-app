@@ -19,6 +19,8 @@ export type AttemptCounts = Record<string, number>;
 
 export type SessionMode = "standard" | "time_attack";
 
+export type SessionOperation = "addition" | "subtraction";
+
 export type TimeAttackPhase = "wave_active" | "cleared" | "failed";
 
 export type TimeAttackState = {
@@ -72,6 +74,7 @@ export const sessions = pgTable("sessions", {
     .references(() => players.id)
     .notNull(),
   level: smallint("level").notNull(),
+  operation: varchar("operation", { length: 20 }).notNull().default("addition"),
   mode: varchar("mode", { length: 20 }).notNull().default("standard"),
   status: varchar("status", { length: 20 }).notNull().default("in_progress"),
   questions: jsonb("questions").$type<Question[]>().notNull(),
@@ -100,11 +103,13 @@ export const playerUnlockCelebrations = pgTable(
       .references(() => players.id, { onDelete: "cascade" })
       .notNull(),
     level: smallint("level").notNull(),
+    operation: varchar("operation", { length: 20 }).notNull().default("addition"),
     celebratedAt: timestamp("celebrated_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("player_unlock_celebrations_player_level").on(
+    uniqueIndex("player_unlock_celebrations_player_operation_level").on(
       table.playerId,
+      table.operation,
       table.level,
     ),
   ],

@@ -1,5 +1,8 @@
 import { getSessionScoreDetails } from "@/lib/scoring";
-import { formatQuestionExpression, type Level } from "@/lib/questions";
+import { type Level } from "@/lib/questions";
+import { formatExpression } from "@/lib/operations";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION } from "@/lib/operations";
 
 type QuestionLog = {
   questionIndex: number;
@@ -13,9 +16,14 @@ type QuestionLog = {
 type SessionScoreBreakdownProps = {
   level: Level;
   questionLogs: QuestionLog[];
+  operation?: Operation;
 };
 
-export function SessionScoreBreakdown({ level, questionLogs }: SessionScoreBreakdownProps) {
+export function SessionScoreBreakdown({
+  level,
+  questionLogs,
+  operation = DEFAULT_OPERATION,
+}: SessionScoreBreakdownProps) {
   const { baseScore, timeBonus, streakBonus, totalScore } = getSessionScoreDetails(
     level,
     questionLogs,
@@ -57,7 +65,7 @@ export function SessionScoreBreakdown({ level, questionLogs }: SessionScoreBreak
           >
             <span>
               {log.questionIndex + 1}問目{" "}
-              {formatQuestionExpression({
+              {formatExpression(operation, {
                 operandA: log.operandA,
                 operandB: log.operandB,
                 operandC: log.operandC ?? undefined,

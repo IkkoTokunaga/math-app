@@ -22,7 +22,10 @@ export default async function ResultPage({ params }: ResultPageProps) {
   return (
     <main className="page-shell">
       <section className="card mx-auto max-w-xl text-center">
-        <p className="text-lg text-muted">Lv{result.level}</p>
+        <p className="text-lg text-muted">
+          Lv{result.level}
+          {result.operation === "subtraction" ? "（引き算）" : ""}
+        </p>
         <h1 className="chalk-heading mt-2 text-4xl font-bold">おつかれさま！</h1>
 
         <div className="my-8 grid gap-4">
@@ -39,6 +42,7 @@ export default async function ResultPage({ params }: ResultPageProps) {
           <SessionScoreBreakdown
             level={result.level as Level}
             questionLogs={result.questionLogs}
+            operation={result.operation}
           />
           <p className="text-success text-lg">{result.growthMessage}</p>
         </div>

@@ -7,6 +7,7 @@ import { setGuestCelebratedLevels } from "@/lib/guest-unlock-celebration";
 function makePerfectSession(level: Level): GuestCompletedSession {
   return {
     localId: crypto.randomUUID(),
+    operation: "addition",
     level,
     playedAt: new Date().toISOString(),
     correctAnswers: 10,

@@ -8,7 +8,7 @@ import { getAuthState } from "@/lib/auth/state";
 import { getDb } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import type { GuestStoreSnapshot } from "@/lib/guest/types";
-import { importGuestData } from "@/lib/import-guest";
+import { importGuestData, type CelebratedLevelsByOperation } from "@/lib/import-guest";
 
 export async function getAuthStateAction() {
   return getAuthState();
@@ -40,7 +40,7 @@ export async function registerAndImportGuestAction(
   password: string,
   childName: string,
   snapshot: GuestStoreSnapshot,
-  celebratedLevels: readonly number[] = [],
+  celebratedLevels: CelebratedLevelsByOperation = {},
 ) {
   const trimmedEmail = email.trim().toLowerCase();
   const [existing] = await getDb()

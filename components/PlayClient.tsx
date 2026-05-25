@@ -28,10 +28,16 @@ import { useIsClient } from "@/lib/use-is-client";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
 import { MAX_LEVEL } from "@/lib/levels";
 import {
-  formatQuestionExpression,
   getMaxAnswerDigits,
   type Level,
 } from "@/lib/questions";
+import {
+  formatExpression,
+  parseOperation,
+  type Operation,
+} from "@/lib/operations";
+import { DEFAULT_OPERATION } from "@/lib/operations";
+import { getSubtractionMaxAnswerDigits } from "@/lib/subtraction-questions";
 import {
   SCORE_TIME_GRACE_SECONDS,
   STAR_COUNT,
@@ -188,6 +194,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
   const memberCelebratedRef = useRef<Level[]>([]);
   const [celebratingLevel, setCelebratingLevel] = useState<Level | null>(null);
   const [devUnlockApplied, setDevUnlockApplied] = useState(false);
+  const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
   const levelCellRefs = useRef<Map<Level, HTMLDivElement>>(new Map());
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
@@ -311,7 +318,27 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
 
   useQuizPanelFit(quizPanelRef, inQuiz);
 
-  const guestUnlocked = isClient ? getGuestUnlockedLevel() : 1;
+  const operation: Operation =
+    selectedOperation ??
+    (isClient
+      ? parseOperation(new URLSearchParams(window.location.search).get("operation"))
+      : DEFAULT_OPERATION);
+
+  const selectOperation = (next: Operation) => {
+    setSelectedOperation(next);
+    if (typeof window === "undefined") {
+      return;
+    }
+    const url = new URL(window.location.href);
+    if (next === "subtraction") {
+      url.searchParams.set("operation", "subtraction");
+    } else {
+      url.searchParams.delete("operation");
+    }
+    window.history.replaceState({}, "", url.pathname + url.search);
+  };
+
+  const guestUnlocked = isClient ? getGuestUnlockedLevel(operation) : 1;
   const effectiveUnlocked = auth.loggedIn ? unlockedLevel : guestUnlocked;
   const inLevelSelect = !sessionId && !localId;
 
@@ -335,21 +362,21 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
 
   useEffect(() => {
     if (auth.loggedIn) {
-      getPlayerUnlockedLevelAction(auth.playerId)
+      getPlayerUnlockedLevelAction(auth.playerId, operation)
         .then(setUnlockedLevel)
         .catch(() => setUnlockedLevel(1));
     }
-  }, [auth]);
+  }, [auth, operation]);
 
   useEffect(() => {
     if (!isClient || !inLevelSelect || !auth.loggedIn) {
       return;
     }
 
-    getPlayerUnlockedLevelAction(auth.playerId)
+    getPlayerUnlockedLevelAction(auth.playerId, operation)
       .then(setUnlockedLevel)
       .catch(() => setUnlockedLevel(1));
-  }, [isClient, inLevelSelect, auth]);
+  }, [isClient, inLevelSelect, auth, operation]);
 
   useEffect(() => {
     if (!isClient || !inLevelSelect) {
@@ -364,7 +391,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
     let cancelled = false;
     setMemberCelebrationsReady(false);
 
-    getMemberCelebratedLevelsAction(auth.playerId)
+    getMemberCelebratedLevelsAction(auth.playerId, operation)
       .then((levels) => {
         if (!cancelled) {
           memberCelebratedRef.current = levels;
@@ -381,7 +408,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
     return () => {
       cancelled = true;
     };
-  }, [isClient, inLevelSelect, auth]);
+  }, [isClient, inLevelSelect, auth, operation]);
 
   useEffect(() => {
     if (!isClient || !inLevelSelect) {
@@ -400,7 +427,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
     const run = async () => {
       const pending = auth.loggedIn
         ? getPendingUnlockCelebration(memberCelebratedRef.current, effectiveUnlocked)
-        : getPendingGuestUnlockCelebration(effectiveUnlocked);
+        : getPendingGuestUnlockCelebration(effectiveUnlocked, operation);
 
       if (pending == null) {
         if (!cancelled) {
@@ -411,7 +438,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
 
       const recordCelebrated = async () => {
         if (auth.loggedIn) {
-          await markMemberUnlockCelebratedAction(auth.playerId, pending);
+          await markMemberUnlockCelebratedAction(auth.playerId, pending, operation);
           if (cancelled) {
             return;
           }
@@ -419,7 +446,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
           next.add(pending);
           memberCelebratedRef.current = Array.from(next).sort((a, b) => a - b) as Level[];
         } else {
-          markGuestUnlockCelebrated(pending);
+          markGuestUnlockCelebrated(pending, operation);
         }
       };
 
@@ -459,7 +486,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
       window.clearTimeout(animTimer);
       window.clearTimeout(endTimer);
     };
-  }, [isClient, inLevelSelect, effectiveUnlocked, auth, memberCelebrationsReady]);
+  }, [isClient, inLevelSelect, effectiveUnlocked, auth, memberCelebrationsReady, operation]);
 
   useEffect(() => {
     if (celebratingLevel == null) {
@@ -483,13 +510,13 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
     setSubmitting(true);
     try {
       if (isMember) {
-        const result = await startSessionAction(auth.playerId, selectedLevel);
+        const result = await startSessionAction(auth.playerId, selectedLevel, operation);
         setLevel(selectedLevel);
         setSessionId(result.sessionId);
         setLocalId(null);
         setQuestions(result.questions);
       } else {
-        const result = startGuestSession(selectedLevel);
+        const result = startGuestSession(selectedLevel, operation);
         setLevel(selectedLevel);
         setLocalId(result.localId);
         setSessionId(null);
@@ -680,6 +707,8 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
   }
 
   if (!sessionId && !localId) {
+    const pageTitle = operation === "subtraction" ? "ひきざん" : "たしざん";
+
     return (
       <>
         <header className="mb-8 text-center">
@@ -692,62 +721,82 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
               className="h-20 w-auto shrink-0 sm:h-24"
               aria-hidden
             />
-            <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">たしざん</h1>
+            <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">{pageTitle}</h1>
           </div>
           <p className="mt-2 text-lg text-muted">モードを選んでね</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => selectOperation("addition")}
+              className={`big-btn flex-1 ${operation === "addition" ? "big-btn-primary" : "big-btn-secondary"}`}
+            >
+              足し算
+            </button>
+            <button
+              type="button"
+              onClick={() => selectOperation("subtraction")}
+              className={`big-btn flex-1 ${operation === "subtraction" ? "big-btn-primary" : "big-btn-secondary"}`}
+            >
+              引き算
+            </button>
+          </div>
           <p className="text-center text-xl font-bold">{displayName}</p>
-          <Link href="/progress" className="big-btn big-btn-secondary text-center">
+          <Link href={`/progress?operation=${operation}`} className="big-btn big-btn-secondary text-center">
             これまでの記録
           </Link>
-          <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
-          <button
-            type="button"
-            onClick={() => {
-              const el = document.getElementById("standard-mode-section");
-              el?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="big-btn big-btn-primary"
-          >
-            通常モード（10問チャレンジ）
-          </button>
-          {auth.loggedIn ? (
-            timeAttackResume ? (
-              <div className="grid gap-3">
-                <Link href="/play/time-attack" className="big-btn big-btn-primary text-center">
-                  続きから（{timeAttackResume.bossLabel}）
-                </Link>
-                <Link
-                  href="/play/time-attack?new=1"
-                  className="big-btn big-btn-secondary text-center"
-                  onClick={(event) => {
-                    if (
-                      !window.confirm(
-                        "進行中のタイムアタックをやめて、新しく始めますか？",
-                      )
-                    ) {
-                      event.preventDefault();
-                    }
-                  }}
-                >
-                  タイムアタックを新しく始める
-                </Link>
-              </div>
-            ) : (
-              <Link href="/play/time-attack?new=1" className="big-btn big-btn-secondary text-center">
-                タイムアタック（鬼退治）
-              </Link>
-            )
-          ) : (
-            <div className="mode-select-locked">
-              <button type="button" disabled className="big-btn w-full opacity-50">
-                🔒 タイムアタック（鬼退治）
+          {operation === "addition" && (
+            <>
+              <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("standard-mode-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="big-btn big-btn-primary"
+              >
+                通常モード（10問チャレンジ）
               </button>
-              <p className="mt-2 text-center text-sm text-muted">
-                タイムアタックはログインすると遊べます
-              </p>
-            </div>
+              {auth.loggedIn ? (
+                timeAttackResume ? (
+                  <div className="grid gap-3">
+                    <Link href="/play/time-attack" className="big-btn big-btn-primary text-center">
+                      続きから（{timeAttackResume.bossLabel}）
+                    </Link>
+                    <Link
+                      href="/play/time-attack?new=1"
+                      className="big-btn big-btn-secondary text-center"
+                      onClick={(event) => {
+                        if (
+                          !window.confirm(
+                            "進行中のタイムアタックをやめて、新しく始めますか？",
+                          )
+                        ) {
+                          event.preventDefault();
+                        }
+                      }}
+                    >
+                      タイムアタックを新しく始める
+                    </Link>
+                  </div>
+                ) : (
+                  <Link href="/play/time-attack?new=1" className="big-btn big-btn-secondary text-center">
+                    タイムアタック（鬼退治）
+                  </Link>
+                )
+              ) : (
+                <div className="mode-select-locked">
+                  <button type="button" disabled className="big-btn w-full opacity-50">
+                    🔒 タイムアタック（鬼退治）
+                  </button>
+                  <p className="mt-2 text-center text-sm text-muted">
+                    タイムアタックはログインすると遊べます
+                  </p>
+                </div>
+              )}
+            </>
           )}
           <div id="standard-mode-section" className="mt-4">
             <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
@@ -862,7 +911,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
       >
         <div className="chalk-heading equation-display mb-6 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
           <span className="whitespace-nowrap">
-            {formatQuestionExpression(question)} =
+            {formatExpression(operation, question)} =
           </span>
           <span className="answer-slot ml-2 shrink-0">
             {answer || "?"}
@@ -923,7 +972,13 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
         onChange={handleAnswerChange}
         onSubmit={submitAnswer}
         disabled={submitting}
-        maxDigits={level != null ? getMaxAnswerDigits(level) : 3}
+        maxDigits={
+          level != null
+            ? operation === "subtraction"
+              ? getSubtractionMaxAnswerDigits(level)
+              : getMaxAnswerDigits(level)
+            : 3
+        }
       />
 
       {error && <p className="feedback-error">{error}</p>}

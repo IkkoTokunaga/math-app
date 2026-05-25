@@ -2,9 +2,21 @@ import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { questionLogs, sessions } from "./db/schema";
 import { getUnlockProgress, getUnlockedLevel } from "./levels";
-import { formatQuestionExpression } from "./questions";
+import { formatExpression } from "./operations";
+import type { Operation } from "./operations";
+import { DEFAULT_OPERATION } from "./operations";
 
-export async function getProgressData(playerId: string) {
+function standardSessionFilter(operation: Operation) {
+  return and(
+    eq(sessions.operation, operation),
+    or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+  );
+}
+
+export async function getProgressData(
+  playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
+) {
   const completedSessions = await getDb()
     .select({
       id: sessions.id,
@@ -15,13 +27,14 @@ export async function getProgressData(playerId: string) {
       totalQuestions: sessions.totalQuestions,
       totalScore: sessions.totalScore,
       playedAt: sessions.playedAt,
+      operation: sessions.operation,
     })
     .from(sessions)
     .where(
       and(
         eq(sessions.playerId, playerId),
         eq(sessions.status, "completed"),
-        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+        standardSessionFilter(operation),
       ),
     )
     .orderBy(desc(sessions.playedAt));
@@ -42,17 +55,30 @@ export async function getProgressData(playerId: string) {
         )
       : null;
 
+  const allOperationSessions = await getDb()
+    .select({ playedAt: sessions.playedAt })
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.playerId, playerId),
+        eq(sessions.status, "completed"),
+        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+      ),
+    )
+    .orderBy(desc(sessions.playedAt));
+
   const learningStreak = calculateLearningStreak(
-    completedSessions.map((session) => session.playedAt),
+    allOperationSessions.map((session) => session.playedAt),
   );
 
   const levelSessions = completedSessions.map((session) => ({
     level: session.level,
     stars: session.stars ?? 0,
     totalScore: session.totalScore,
+    operation: session.operation as Operation,
   }));
-  const unlockedLevel = getUnlockedLevel(levelSessions);
-  const unlockProgress = getUnlockProgress(levelSessions, unlockedLevel);
+  const unlockedLevel = getUnlockedLevel(levelSessions, operation);
+  const unlockProgress = getUnlockProgress(levelSessions, unlockedLevel, operation);
 
   const weakSpots = await getDb()
     .select({
@@ -67,7 +93,7 @@ export async function getProgressData(playerId: string) {
       and(
         eq(sessions.playerId, playerId),
         eq(questionLogs.isFirstAttemptCorrect, false),
-        or(eq(sessions.mode, "standard"), isNull(sessions.mode)),
+        standardSessionFilter(operation),
       ),
     )
     .groupBy(questionLogs.operandA, questionLogs.operandB, questionLogs.operandC)
@@ -75,13 +101,14 @@ export async function getProgressData(playerId: string) {
     .limit(3);
 
   return {
+    operation,
     recentSessions,
     weeklyAverage,
     learningStreak,
     unlockedLevel,
     unlockProgress,
     weakSpots: weakSpots.map((spot) => ({
-      label: formatQuestionExpression({
+      label: formatExpression(operation, {
         operandA: spot.operandA,
         operandB: spot.operandB,
         operandC: spot.operandC ?? undefined,

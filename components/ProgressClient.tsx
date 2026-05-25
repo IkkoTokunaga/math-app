@@ -7,9 +7,12 @@ import type { AuthState } from "@/lib/auth/state";
 import { computeGuestProgress } from "@/lib/guest-progress";
 import { readGuestStore } from "@/lib/guest-storage";
 import { QUESTIONS_PER_SESSION } from "@/lib/questions";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION, parseOperation } from "@/lib/operations";
 import { renderStars, STAR_COUNT } from "@/lib/scoring";
 
 type ProgressData = {
+  operation: Operation;
   recentSessions: Array<{
     id: string;
     level: number;
@@ -36,17 +39,63 @@ type ProgressClientProps = {
   auth: AuthState;
 };
 
+function OperationTabs({
+  operation,
+  onChange,
+}: {
+  operation: Operation;
+  onChange: (operation: Operation) => void;
+}) {
+  return (
+    <div className="flex gap-2">
+      <button
+        type="button"
+        onClick={() => onChange("addition")}
+        className={`big-btn flex-1 ${operation === "addition" ? "big-btn-primary" : "big-btn-secondary"}`}
+      >
+        足し算
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("subtraction")}
+        className={`big-btn flex-1 ${operation === "subtraction" ? "big-btn-primary" : "big-btn-secondary"}`}
+      >
+        引き算
+      </button>
+    </div>
+  );
+}
+
 export function ProgressClient({ auth }: ProgressClientProps) {
+  const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
   const [memberData, setMemberData] = useState<ProgressData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isClient = useIsClient();
+
+  const operation: Operation =
+    selectedOperation ??
+    (isClient
+      ? parseOperation(new URLSearchParams(window.location.search).get("operation"))
+      : DEFAULT_OPERATION);
+
+  const selectOperation = (next: Operation) => {
+    setSelectedOperation(next);
+    const url = new URL(window.location.href);
+    if (next === "subtraction") {
+      url.searchParams.set("operation", "subtraction");
+    } else {
+      url.searchParams.delete("operation");
+    }
+    window.history.replaceState({}, "", url.pathname + url.search);
+  };
 
   useEffect(() => {
     if (!auth.loggedIn) {
       return;
     }
 
-    fetch(`/api/progress?playerId=${auth.playerId}`)
+    let cancelled = false;
+    fetch(`/api/progress?playerId=${auth.playerId}&operation=${operation}`)
       .then(async (response) => {
         if (!response.ok) {
           throw new Error("failed");
@@ -55,11 +104,11 @@ export function ProgressClient({ auth }: ProgressClientProps) {
       })
       .then(setMemberData)
       .catch(() => setError("記録の読み込みに失敗しました"));
-  }, [auth]);
+  }, [auth, operation]);
 
   const guestStore = isClient && !auth.loggedIn ? readGuestStore() : null;
   const guestData = guestStore
-    ? computeGuestProgress(guestStore.completedSessions)
+    ? computeGuestProgress(guestStore.completedSessions, operation)
     : null;
 
   const displayData = auth.loggedIn ? memberData : guestData;
@@ -87,6 +136,8 @@ export function ProgressClient({ auth }: ProgressClientProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <OperationTabs operation={operation} onChange={selectOperation} />
+
       {guestNotice && (
         <p className="text-center text-sm text-dim">
           きろくは この 端末に だけ 保存されています
@@ -186,7 +237,10 @@ export function ProgressClient({ auth }: ProgressClientProps) {
         </p>
       )}
 
-      <Link href="/play" className="big-btn big-btn-primary text-center">
+      <Link
+        href={operation === "subtraction" ? "/play?operation=subtraction" : "/play"}
+        className="big-btn big-btn-primary text-center"
+      >
         れんしゅうへ
       </Link>
     </div>

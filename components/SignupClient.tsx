@@ -36,7 +36,10 @@ export function SignupClient() {
           throw new Error("名前を入力してください");
         }
         const snapshot = exportGuestSnapshot();
-        const celebratedLevels = readGuestCelebratedLevels();
+        const celebratedLevels = {
+          addition: readGuestCelebratedLevels("addition"),
+          subtraction: readGuestCelebratedLevels("subtraction"),
+        };
         await registerAndImportGuestAction(
           email,
           password,

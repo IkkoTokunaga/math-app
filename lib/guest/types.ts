@@ -1,4 +1,5 @@
 import type { Question } from "@/lib/db/schema";
+import type { Operation } from "@/lib/operations";
 import type { Level } from "@/lib/questions";
 
 export type GuestQuestionLog = {
@@ -15,6 +16,7 @@ export type GuestQuestionLog = {
 
 export type GuestCompletedSession = {
   localId: string;
+  operation: Operation;
   level: Level;
   playedAt: string;
   correctAnswers: number;
@@ -30,6 +32,7 @@ export type GuestCompletedSession = {
 
 export type GuestInProgressSession = {
   localId: string;
+  operation: Operation;
   level: Level;
   questions: Question[];
   attemptCounts: Record<string, number>;

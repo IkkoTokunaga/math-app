@@ -7,12 +7,14 @@ import type {
   GuestInProgressSession,
   GuestQuestionLog,
 } from "@/lib/guest/types";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION, getCorrectAnswerForOperation } from "@/lib/operations";
 import {
   generateQuestions,
-  getCorrectAnswer,
   QUESTIONS_PER_SESSION,
   type Level,
 } from "@/lib/questions";
+import { generateSubtractionQuestions } from "@/lib/subtraction-questions";
 import {
   calculateQuestionScore,
   getStreakMilestoneBonusForAnswer,
@@ -23,28 +25,36 @@ function newLocalId(): string {
   return crypto.randomUUID();
 }
 
-export function getGuestUnlockedLevel(): Level {
-  const store = readGuestStore();
-  return getUnlockedLevel(
-    store.completedSessions.map((session) => ({
+function mapGuestCompletedSessions(
+  sessions: GuestCompletedSession[],
+  operation: Operation,
+) {
+  return sessions
+    .filter((session) => (session.operation ?? DEFAULT_OPERATION) === operation)
+    .map((session) => ({
       level: session.level,
       stars: session.stars,
       totalScore: session.totalScore,
-    })),
-  );
+      operation: session.operation ?? DEFAULT_OPERATION,
+    }));
 }
 
-export function startGuestSession(level: Level): {
+export function getGuestUnlockedLevel(operation: Operation = DEFAULT_OPERATION): Level {
+  const store = readGuestStore();
+  return getUnlockedLevel(mapGuestCompletedSessions(store.completedSessions, operation), operation);
+}
+
+export function startGuestSession(
+  level: Level,
+  operation: Operation = DEFAULT_OPERATION,
+): {
   localId: string;
   questions: GuestInProgressSession["questions"];
 } {
   const store = readGuestStore();
   const unlocked = getUnlockedLevel(
-    store.completedSessions.map((session) => ({
-      level: session.level,
-      stars: session.stars,
-      totalScore: session.totalScore,
-    })),
+    mapGuestCompletedSessions(store.completedSessions, operation),
+    operation,
   );
 
   if (level > unlocked) {
@@ -52,9 +62,13 @@ export function startGuestSession(level: Level): {
   }
 
   const localId = newLocalId();
-  const questions = generateQuestions(level, QUESTIONS_PER_SESSION);
+  const questions =
+    operation === "subtraction"
+      ? generateSubtractionQuestions(level, QUESTIONS_PER_SESSION)
+      : generateQuestions(level, QUESTIONS_PER_SESSION);
   store.inProgress = {
     localId,
+    operation,
     level,
     questions,
     attemptCounts: {},
@@ -101,6 +115,7 @@ export function submitGuestAnswer(
     throw new Error("セッションが見つかりません");
   }
 
+  const operation = session.operation ?? DEFAULT_OPERATION;
   const question = session.questions[questionIndex];
   if (!question) {
     throw new Error("問題が見つかりません");
@@ -110,7 +125,7 @@ export function submitGuestAnswer(
     throw new Error("この問題はすでに回答済みです");
   }
 
-  const correctAnswer = getCorrectAnswer(question);
+  const correctAnswer = getCorrectAnswerForOperation(operation, question);
   const key = String(questionIndex);
 
   if (answer !== correctAnswer) {
@@ -158,7 +173,9 @@ export function submitGuestAnswer(
   }
 
   const sameLevelCompleted = store.completedSessions.filter(
-    (s) => s.level === session.level,
+    (s) =>
+      s.level === session.level &&
+      (s.operation ?? DEFAULT_OPERATION) === operation,
   );
   const previousCorrect =
     sameLevelCompleted.length > 0
@@ -170,6 +187,7 @@ export function submitGuestAnswer(
 
   const completed: GuestCompletedSession = {
     localId,
+    operation,
     level: session.level,
     playedAt,
     questionLogs: session.questionLogs,

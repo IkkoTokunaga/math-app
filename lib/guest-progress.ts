@@ -1,6 +1,8 @@
 import { getUnlockProgress, getUnlockedLevel } from "@/lib/levels";
 import type { GuestCompletedSession } from "@/lib/guest/types";
-import { formatQuestionExpression } from "@/lib/questions";
+import { formatExpression } from "@/lib/operations";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION } from "@/lib/operations";
 
 function getWeekStart(date: Date): Date {
   const result = new Date(date);
@@ -35,8 +37,14 @@ function calculateLearningStreak(dates: Date[]): number {
   return streak;
 }
 
-export function computeGuestProgress(completedSessions: GuestCompletedSession[]) {
-  const sorted = [...completedSessions].sort(
+export function computeGuestProgress(
+  completedSessions: GuestCompletedSession[],
+  operation: Operation = DEFAULT_OPERATION,
+) {
+  const scoped = completedSessions.filter(
+    (session) => (session.operation ?? DEFAULT_OPERATION) === operation,
+  );
+  const sorted = [...scoped].sort(
     (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
   );
 
@@ -64,23 +72,24 @@ export function computeGuestProgress(completedSessions: GuestCompletedSession[])
       : null;
 
   const learningStreak = calculateLearningStreak(
-    sorted.map((session) => new Date(session.playedAt)),
+    completedSessions.map((session) => new Date(session.playedAt)),
   );
 
   const levelSessions = sorted.map((session) => ({
     level: session.level,
     stars: session.stars,
     totalScore: session.totalScore,
+    operation: session.operation ?? DEFAULT_OPERATION,
   }));
 
-  const unlockedLevel = getUnlockedLevel(levelSessions);
-  const unlockProgress = getUnlockProgress(levelSessions, unlockedLevel);
+  const unlockedLevel = getUnlockedLevel(levelSessions, operation);
+  const unlockProgress = getUnlockProgress(levelSessions, unlockedLevel, operation);
 
   const missMap = new Map<string, number>();
   for (const session of sorted) {
     for (const log of session.questionLogs) {
       if (!log.isFirstAttemptCorrect) {
-        const label = formatQuestionExpression({
+        const label = formatExpression(operation, {
           operandA: log.operandA,
           operandB: log.operandB,
           operandC: log.operandC,
@@ -96,6 +105,7 @@ export function computeGuestProgress(completedSessions: GuestCompletedSession[])
     .map(([label, missCount]) => ({ label, missCount }));
 
   return {
+    operation,
     recentSessions,
     weeklyAverage,
     learningStreak,

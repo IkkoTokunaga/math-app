@@ -27,3 +27,7 @@ export function getCorrectAnswerForOperation(
     ? getSubtractionCorrectAnswer(question)
     : question.operandA + question.operandB + (question.operandC ?? 0);
 }
+
+export function getMascotSrc(operation: Operation = DEFAULT_OPERATION): string {
+  return operation === "subtraction" ? "/mascot-subtraction.png" : "/mascot.png";
+}

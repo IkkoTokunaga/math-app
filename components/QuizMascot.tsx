@@ -1,10 +1,13 @@
 "use client";
 
 import { forwardRef } from "react";
+import type { Operation } from "@/lib/operations";
+import { DEFAULT_OPERATION, getMascotSrc } from "@/lib/operations";
 
 type QuizMascotProps = {
   comment: string | null;
   onHomeClick: () => void;
+  operation?: Operation;
   /** タイムアタックの光玉攻撃演出用 */
   lightOrbActive?: boolean;
   /** 攻撃ゲージから光を集める演出 */
@@ -19,6 +22,7 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
     {
       comment,
       onHomeClick,
+      operation = DEFAULT_OPERATION,
       lightOrbActive = false,
       chargeActive = false,
       hitActive = false,
@@ -45,7 +49,7 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
           aria-label="ホームにもどる"
         >
           <img
-            src="/mascot.png"
+            src={getMascotSrc(operation)}
             alt=""
             width={155}
             height={312}

@@ -110,6 +110,22 @@ The subtraction level selection screen SHALL show `Lv1` through `Lv10` in a sing
 - **AND** has never played subtraction
 - **THEN** only subtraction level 1 is available
 
+### Requirement: Mascot appearance for subtraction
+
+When the subtraction operation is selected or during a subtraction quiz, the mascot SHALL display with **light blue (水色) clothing** instead of the default red suit used for addition.
+
+#### Scenario: Subtraction level select mascot
+- **WHEN** a player selects 引き算 on the play screen
+- **THEN** the mascot image shows light blue clothing
+
+#### Scenario: Subtraction quiz mascot
+- **WHEN** a player is answering questions in a subtraction session
+- **THEN** the quiz header mascot shows light blue clothing
+
+#### Scenario: Addition mascot unchanged
+- **WHEN** a player selects 足し算 or plays an addition session
+- **THEN** the mascot shows the default red clothing
+
 ### Requirement: First-time level unlock celebration
 
 Subtraction level unlock celebration SHALL follow the same animation, reduced-motion, guest localStorage, and member database rules as addition, scoped per `operation`.

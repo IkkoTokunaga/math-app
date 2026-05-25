@@ -33,6 +33,7 @@ import {
 } from "@/lib/questions";
 import {
   formatExpression,
+  getMascotSrc,
   parseOperation,
   type Operation,
 } from "@/lib/operations";
@@ -714,7 +715,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
         <header className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 sm:gap-4">
             <img
-              src="/mascot.png"
+              src={getMascotSrc(operation)}
               alt=""
               width={155}
               height={312}
@@ -873,7 +874,7 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
       className="mx-auto flex w-full max-w-xl flex-col gap-6"
     >
       <header className="quiz-header relative flex min-h-[4.5rem] items-start">
-        <QuizMascot comment={mascotComment} onHomeClick={backToLevels} />
+        <QuizMascot comment={mascotComment} onHomeClick={backToLevels} operation={operation} />
         <div className="pointer-events-none absolute inset-x-0 top-0 px-14 text-center text-lg text-muted sm:px-16">
           <p>
             <span className="font-bold">{displayName}</span>

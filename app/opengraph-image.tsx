@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { loadNotoSansJpBoldFonts } from "@/lib/og-font";
 import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
@@ -9,8 +11,16 @@ export const size = {
 };
 export const contentType = "image/png";
 
+async function loadMascotDataUrl(): Promise<string> {
+  const data = await readFile(join(process.cwd(), "public/mascot.png"));
+  return `data:image/png;base64,${data.toString("base64")}`;
+}
+
 export default async function OpenGraphImage() {
-  const fonts = await loadNotoSansJpBoldFonts();
+  const [fonts, mascotDataUrl] = await Promise.all([
+    loadNotoSansJpBoldFonts(),
+    loadMascotDataUrl(),
+  ]);
 
   return new ImageResponse(
     (
@@ -29,11 +39,11 @@ export default async function OpenGraphImage() {
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
-            width: "960px",
-            padding: "48px 64px",
+            justifyContent: "space-between",
+            width: "1040px",
+            padding: "40px 48px 40px 64px",
             borderRadius: "8px",
             border: "8px solid #a67c52",
             background: "linear-gradient(165deg, #345848 0%, #2a4538 45%, #1f3a2e 100%)",
@@ -42,42 +52,61 @@ export default async function OpenGraphImage() {
         >
           <div
             style={{
-              fontSize: 72,
-              fontWeight: 700,
-              color: "#f0ebe0",
-              lineHeight: 1.1,
-            }}
-          >
-            {SITE_NAME}
-          </div>
-          <div
-            style={{
-              marginTop: 24,
-              fontSize: 34,
-              color: "#b8b0a0",
-              lineHeight: 1.5,
-              textAlign: "center",
-            }}
-          >
-            {SITE_DESCRIPTION}
-          </div>
-          <div
-            style={{
-              marginTop: 48,
               display: "flex",
-              alignItems: "center",
-              gap: 24,
-              fontSize: 72,
-              fontWeight: 700,
-              color: "#f0ebe0",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              flex: 1,
             }}
           >
-            <span>3</span>
-            <span style={{ color: "#b8b0a0" }}>+</span>
-            <span>5</span>
-            <span style={{ color: "#b8b0a0" }}>=</span>
-            <span style={{ color: "#fff4a3" }}>?</span>
+            <div
+              style={{
+                fontSize: 72,
+                fontWeight: 700,
+                color: "#f0ebe0",
+                lineHeight: 1.1,
+              }}
+            >
+              {SITE_NAME}
+            </div>
+            <div
+              style={{
+                marginTop: 24,
+                fontSize: 30,
+                color: "#b8b0a0",
+                lineHeight: 1.5,
+              }}
+            >
+              {SITE_DESCRIPTION}
+            </div>
+            <div
+              style={{
+                marginTop: 40,
+                display: "flex",
+                alignItems: "center",
+                gap: 24,
+                fontSize: 72,
+                fontWeight: 700,
+                color: "#f0ebe0",
+              }}
+            >
+              <span>3</span>
+              <span style={{ color: "#b8b0a0" }}>+</span>
+              <span>5</span>
+              <span style={{ color: "#b8b0a0" }}>=</span>
+              <span style={{ color: "#fff4a3" }}>?</span>
+            </div>
           </div>
+          <img
+            src={mascotDataUrl}
+            alt=""
+            width={200}
+            height={402}
+            style={{
+              objectFit: "contain",
+              marginLeft: 32,
+            }}
+          />
         </div>
       </div>
     ),

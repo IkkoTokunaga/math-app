@@ -1,6 +1,6 @@
-export const SITE_NAME = "たしざん れんしゅう";
+export const SITE_NAME = "けいさん 練習";
 export const SITE_DESCRIPTION =
-  "小学生向け足し算練習アプリ。レベル別の問題で、楽しくたしざんの力をつけよう。";
+  "小学生向け計算練習アプリ。レベル別の問題で、楽しく計算の力をつけよう。";
 export const PRODUCTION_SITE_URL = "https://math.ikk-dev.jp";
 
 export function getSiteUrl(): URL {

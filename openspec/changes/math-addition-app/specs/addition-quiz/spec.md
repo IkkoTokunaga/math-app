@@ -121,6 +121,22 @@ During a quiz, the header SHALL show the mascot image at the top left, player na
 - **WHEN** a player is answering questions during a quiz
 - **THEN** no 「やめる」 button is visible
 
+### Requirement: Button sound effects
+
+The system SHALL play short sound effects on selected button presses. Primary action buttons (including level selection, mode selection, 「答える」, and backspace) SHALL use the confirm button sound (`/sounds/button.mp3`). Tenkey digit keys (`0`–`9`) and tapping the mascot to return home SHALL NOT play a button sound.
+
+#### Scenario: Tenkey digit is silent
+- **WHEN** a player taps a tenkey digit button or types a digit key during a quiz
+- **THEN** the system does not play a button sound
+
+#### Scenario: Non-tenkey button sound
+- **WHEN** a player taps a non-tenkey action button such as 「答える」, backspace, or a level button
+- **THEN** the system plays the confirm button sound
+
+#### Scenario: Mascot home is silent
+- **WHEN** a player taps the mascot to return home during a quiz
+- **THEN** the system does not play a button sound
+
 ### Requirement: Mascot speech bubble on answer
 
 When a player submits a correct answer during a quiz, the mascot SHALL show a random positive praise comment in a speech bubble to the right of the mascot (e.g. 「すごい！」). On an incorrect answer, the mascot SHALL NOT show a speech bubble. The bubble SHALL clear when feedback ends.

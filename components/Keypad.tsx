@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { playButtonSound } from "@/lib/button-sounds";
 
 type KeypadProps = {
   value: string;
@@ -54,6 +55,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
 
       if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
+        playButtonSound();
         onChange(value.slice(0, -1));
         return;
       }
@@ -61,6 +63,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       if (event.key === "Enter") {
         event.preventDefault();
         if (value.length > 0) {
+          playButtonSound();
           onSubmit();
         }
       }

@@ -123,14 +123,14 @@ During a quiz, the header SHALL show the mascot image at the top left, player na
 
 ### Requirement: Button sound effects
 
-The system SHALL play short sound effects on selected button presses. Primary action buttons (including level selection, mode selection, 「答える」, and backspace) SHALL use the confirm button sound (`/sounds/button.mp3`). Tenkey digit keys (`0`–`9`) and tapping the mascot to return home SHALL NOT play a button sound.
+The system SHALL play short sound effects on selected button presses. Primary action buttons outside the keypad (including level selection and mode selection) SHALL use the confirm button sound (`/sounds/button.mp3`). All keypad buttons (digits, backspace, and 「答える」) and tapping the mascot to return home SHALL NOT play a button sound.
 
-#### Scenario: Tenkey digit is silent
-- **WHEN** a player taps a tenkey digit button or types a digit key during a quiz
+#### Scenario: Keypad is silent
+- **WHEN** a player taps any keypad button or uses keypad keyboard shortcuts during a quiz
 - **THEN** the system does not play a button sound
 
-#### Scenario: Non-tenkey button sound
-- **WHEN** a player taps a non-tenkey action button such as 「答える」, backspace, or a level button
+#### Scenario: Non-keypad button sound
+- **WHEN** a player taps a primary action button outside the keypad such as a level or mode button
 - **THEN** the system plays the confirm button sound
 
 #### Scenario: Mascot home is silent

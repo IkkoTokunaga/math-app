@@ -40,15 +40,6 @@ export function primeButtonSounds() {
   getAudio(BUTTON_SOUND_SRC).load();
 }
 
-export function isTenkeyDigitButton(element: Element): boolean {
-  if (!element.classList.contains("keypad-btn")) {
-    return false;
-  }
-
-  const text = element.textContent?.trim() ?? "";
-  return /^\d$/.test(text);
-}
-
 export function shouldPlayButtonSound(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) {
     return false;
@@ -63,13 +54,12 @@ export function shouldPlayButtonSound(target: EventTarget | null): boolean {
     return false;
   }
 
-  if (isTenkeyDigitButton(interactive)) {
+  if (
+    interactive.classList.contains("keypad-btn") ||
+    interactive.classList.contains("keypad-btn-submit")
+  ) {
     return false;
   }
 
-  return (
-    interactive.classList.contains("big-btn") ||
-    interactive.classList.contains("keypad-btn-submit") ||
-    (interactive.classList.contains("keypad-btn") && !isTenkeyDigitButton(interactive))
-  );
+  return interactive.classList.contains("big-btn");
 }

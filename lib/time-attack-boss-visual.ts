@@ -1,8 +1,10 @@
 import type { Level } from "@/lib/questions";
 
+type OniLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+
 const ONI_SHADOW = "drop-shadow(0 4px 12px rgb(0 0 0 / 0.35))";
 
-const ONI_LEVEL_FILTERS: Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, string> = {
+const ONI_LEVEL_FILTERS: Record<OniLevel, string> = {
   1: `${ONI_SHADOW} sepia(0.85) hue-rotate(190deg) saturate(2.8) brightness(1.06)`,
   2: `${ONI_SHADOW} sepia(0.85) hue-rotate(100deg) saturate(2.9) brightness(1.05)`,
   3: `${ONI_SHADOW} sepia(0.9) hue-rotate(35deg) saturate(3) brightness(1.08)`,
@@ -25,7 +27,7 @@ export function getBossImageFilter(level: Level): string {
   if (level >= 9) {
     return `${ONI_SHADOW} sepia(0.35) hue-rotate(255deg) saturate(2.2) brightness(1.02) drop-shadow(0 0 10px rgb(147 51 234 / 0.45))`;
   }
-  return ONI_LEVEL_FILTERS[level];
+  return ONI_LEVEL_FILTERS[level as OniLevel];
 }
 
 export type BossImageStyle = {

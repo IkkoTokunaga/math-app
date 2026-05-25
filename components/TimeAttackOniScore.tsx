@@ -7,7 +7,7 @@ import {
   SCORE_FLY_DURATION_MS,
 } from "@/components/RunningScore";
 import type { Level } from "@/lib/questions";
-import { getBossImageClass, getBossImageSrc } from "@/lib/time-attack-boss-visual";
+import { getBossImageSrc, getBossImageStyle } from "@/lib/time-attack-boss-visual";
 
 const POP_DURATION_MS = 400;
 
@@ -178,13 +178,14 @@ export function TimeAttackOniScore({
     </p>
   );
 
-  const bossImageClass = getBossImageClass(currentLevel);
+  const bossImageStyle = getBossImageStyle(currentLevel);
   const oniBody = showOni ? (
     <img
       key={bossKey}
       src={getBossImageSrc(currentLevel)}
       alt=""
-      className={`time-attack-oni-score__image ${bossImageClass}`.trim()}
+      className="time-attack-oni-score__image"
+      style={bossImageStyle}
     />
   ) : null;
 

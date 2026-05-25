@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --import tsx --test lib/time-attack.test.ts lib/time-attack-questions.test.ts lib/subtraction-time-attack-questions.test.ts lib/subtraction-questions.test.ts lib/levels.test.ts",
+    "test": "node --import tsx --test lib/time-attack.test.ts lib/time-attack-questions.test.ts lib/time-attack-boss-visual.test.ts lib/subtraction-time-attack-questions.test.ts lib/subtraction-questions.test.ts lib/levels.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push"

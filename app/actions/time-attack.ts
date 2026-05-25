@@ -4,9 +4,19 @@ import { and, desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { questionLogs, sessions } from "@/lib/db/schema";
-import type { Question, TimeAttackState as DbTimeAttackState } from "@/lib/db/schema";
+import type {
+  Question,
+  TimeAttackState as DbTimeAttackState,
+} from "@/lib/db/schema";
+import {
+  DEFAULT_OPERATION,
+  getCorrectAnswerForOperation,
+  parseOperation,
+  type Operation,
+} from "@/lib/operations";
+import { generateSubtractionTimeAttackQuestions } from "@/lib/subtraction-time-attack-questions";
 import { generateTimeAttackQuestions } from "@/lib/time-attack-questions";
-import { getCorrectAnswer, type Level } from "@/lib/questions";
+import type { Level } from "@/lib/questions";
 import {
   createDevTimeAttackState,
   type DevTimeAttackStart,
@@ -49,13 +59,27 @@ function serializeTimeAttackState(state: TimeAttackState): DbTimeAttackState {
   return { ...state };
 }
 
-async function findInProgressTimeAttackSession(playerId: string) {
+function generateTimeAttackQuestionsForOperation(
+  operation: Operation,
+  level: Level,
+  count: number,
+): Question[] {
+  return operation === "subtraction"
+    ? generateSubtractionTimeAttackQuestions(level, count)
+    : generateTimeAttackQuestions(level, count);
+}
+
+async function findInProgressTimeAttackSession(
+  playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
+) {
   const [session] = await getDb()
     .select()
     .from(sessions)
     .where(
       and(
         eq(sessions.playerId, playerId),
+        eq(sessions.operation, operation),
         eq(sessions.mode, "time_attack"),
         eq(sessions.status, "in_progress"),
       ),
@@ -66,13 +90,17 @@ async function findInProgressTimeAttackSession(playerId: string) {
   return session ?? null;
 }
 
-async function abandonInProgressTimeAttackSessions(playerId: string) {
+async function abandonInProgressTimeAttackSessions(
+  playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
+) {
   const inProgressSessions = await getDb()
     .select()
     .from(sessions)
     .where(
       and(
         eq(sessions.playerId, playerId),
+        eq(sessions.operation, operation),
         eq(sessions.mode, "time_attack"),
         eq(sessions.status, "in_progress"),
       ),
@@ -164,11 +192,13 @@ async function completeWave(
   sessionId: string,
   state: TimeAttackState,
   waveScore: number,
+  operation: Operation,
 ) {
   const resolution = applyWaveDamage(state, waveScore);
 
   if (resolution.kind === "continue") {
-    const questions = generateTimeAttackQuestions(
+    const questions = generateTimeAttackQuestionsForOperation(
+      operation,
       resolution.state.currentLevel,
       WAVE_QUESTION_COUNT,
     );
@@ -209,7 +239,8 @@ async function completeWave(
     };
   }
 
-  const questions = generateTimeAttackQuestions(
+  const questions = generateTimeAttackQuestionsForOperation(
+    operation,
     resolution.state.currentLevel,
     WAVE_QUESTION_COUNT,
   );
@@ -252,8 +283,11 @@ function buildSessionPayload(
   };
 }
 
-export async function getTimeAttackResumeInfoAction(playerId: string) {
-  const session = await findInProgressTimeAttackSession(playerId);
+export async function getTimeAttackResumeInfoAction(
+  playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
+) {
+  const session = await findInProgressTimeAttackSession(playerId, operation);
   if (!session?.timeAttackState) {
     return null;
   }
@@ -271,8 +305,11 @@ export async function getTimeAttackResumeInfoAction(playerId: string) {
   };
 }
 
-export async function resumeTimeAttackSessionAction(playerId: string) {
-  const session = await findInProgressTimeAttackSession(playerId);
+export async function resumeTimeAttackSessionAction(
+  playerId: string,
+  operation: Operation = DEFAULT_OPERATION,
+) {
+  const session = await findInProgressTimeAttackSession(playerId, operation);
   if (!session?.timeAttackState) {
     return null;
   }
@@ -289,11 +326,12 @@ export async function startTimeAttackSessionAction(
   playerId: string,
   forceNew = false,
   devStart: DevTimeAttackStart | null = null,
+  operation: Operation = DEFAULT_OPERATION,
 ) {
   const devStartActive =
     devStart !== null && process.env.NODE_ENV === "development";
 
-  const existing = await findInProgressTimeAttackSession(playerId);
+  const existing = await findInProgressTimeAttackSession(playerId, operation);
   if (existing && !forceNew && !devStartActive) {
     return {
       needsConfirm: true as const,
@@ -302,19 +340,24 @@ export async function startTimeAttackSessionAction(
   }
 
   if (forceNew || devStartActive) {
-    await abandonInProgressTimeAttackSessions(playerId);
+    await abandonInProgressTimeAttackSessions(playerId, operation);
   }
 
   const initialState = devStartActive
     ? createDevTimeAttackState(devStart)
     : createInitialTimeAttackState();
-  const questions = generateTimeAttackQuestions(initialState.currentLevel, WAVE_QUESTION_COUNT);
+  const questions = generateTimeAttackQuestionsForOperation(
+    operation,
+    initialState.currentLevel,
+    WAVE_QUESTION_COUNT,
+  );
 
   const [session] = await getDb()
     .insert(sessions)
     .values({
       playerId,
       level: initialState.currentLevel,
+      operation,
       mode: "time_attack",
       status: "in_progress",
       questions,
@@ -373,7 +416,8 @@ export async function submitTimeAttackAnswerAction(
     throw new Error("問題が見つかりません");
   }
 
-  const correctAnswer = getCorrectAnswer(question);
+  const operation = parseOperation(session.operation);
+  const correctAnswer = getCorrectAnswerForOperation(operation, question);
   const level = state.currentLevel;
 
   if (answer !== correctAnswer) {
@@ -416,7 +460,12 @@ export async function submitTimeAttackAnswerAction(
     };
 
     if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
-      const waveResult = await completeWave(sessionId, updatedState, updatedState.waveScoreAccumulated);
+      const waveResult = await completeWave(
+        sessionId,
+        updatedState,
+        updatedState.waveScoreAccumulated,
+        operation,
+      );
       return {
         correct: false as const,
         mistakeCount,
@@ -475,7 +524,12 @@ export async function submitTimeAttackAnswerAction(
   };
 
   if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
-    const waveResult = await completeWave(sessionId, updatedState, waveScoreAccumulated);
+    const waveResult = await completeWave(
+      sessionId,
+      updatedState,
+      waveScoreAccumulated,
+      operation,
+    );
     return {
       correct: true as const,
       basePoints,
@@ -524,6 +578,7 @@ export async function getTimeAttackResultAction(sessionId: string) {
 
   return {
     sessionId: session.id,
+    operation: parseOperation(session.operation),
     totalScore: session.totalScore ?? state.totalScore,
     phase: state.phase,
     failReason: state.failReason,

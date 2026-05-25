@@ -19,8 +19,11 @@ import type { Question } from "@/lib/db/schema";
 import { getWaveMaxScoreForState, type TimeAttackState } from "@/lib/time-attack";
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
 import {
-  formatQuestionExpression,
-} from "@/lib/questions";
+  formatExpression,
+  DEFAULT_OPERATION,
+  type Operation,
+} from "@/lib/operations";
+import { getSubtractionTimeAttackMaxAnswerDigits } from "@/lib/subtraction-time-attack-questions";
 import { getTimeAttackMaxAnswerDigits } from "@/lib/time-attack-questions";
 import { useIsClient } from "@/lib/use-is-client";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
@@ -34,7 +37,14 @@ type InitialSession = {
 type TimeAttackClientProps = {
   auth: AuthState;
   initialSession: InitialSession;
+  operation?: Operation;
 };
+
+function getMaxAnswerDigits(operation: Operation, level: TimeAttackState["currentLevel"]): number {
+  return operation === "subtraction"
+    ? getSubtractionTimeAttackMaxAnswerDigits(level)
+    : getTimeAttackMaxAnswerDigits(level);
+}
 
 const CORRECT_POPUP_MS = 1000;
 const HEART_LOSS_PAUSE_MS = 220;
@@ -83,7 +93,10 @@ function motionMs(full: number, reduced: number): number {
   return prefersReducedMotion() ? reduced : full;
 }
 
-export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
+export function TimeAttackClient({
+  initialSession,
+  operation = DEFAULT_OPERATION,
+}: TimeAttackClientProps) {
   const router = useRouter();
   const isClient = useIsClient();
   const sessionId = initialSession.sessionId;
@@ -556,7 +569,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
   };
 
   const backToPlay = () => {
-    router.push("/play");
+    router.push(operation === "subtraction" ? "/play?operation=subtraction" : "/play");
   };
 
   if (!isClient) {
@@ -597,6 +610,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
           className="time-attack-top__mascot"
           comment={waveMessage}
           onHomeClick={backToPlay}
+          operation={operation}
           chargeActive={mascotCharging}
           hitActive={mascotHit}
           lightOrbActive={lightOrbFiring}
@@ -677,7 +691,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
         >
           <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
             <span className="whitespace-nowrap">
-              {formatQuestionExpression(question)} =
+              {formatExpression(operation, question)} =
             </span>
             <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
           </div>
@@ -722,7 +736,7 @@ export function TimeAttackClient({ initialSession }: TimeAttackClientProps) {
             onChange={setAnswer}
             onSubmit={() => void submitAnswer()}
             disabled={submitting || timerPaused}
-            maxDigits={getTimeAttackMaxAnswerDigits(timeAttackState.currentLevel)}
+            maxDigits={getMaxAnswerDigits(operation, timeAttackState.currentLevel)}
           />
         </div>
       )}

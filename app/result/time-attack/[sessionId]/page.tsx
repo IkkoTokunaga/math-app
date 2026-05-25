@@ -16,11 +16,20 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
 
   const isClear = result.cleared;
   const failLabel = result.failReason === "mistakes" ? "3回ミス" : null;
+  const operationLabel = result.operation === "subtraction" ? "引き算" : "足し算";
+  const retryHref =
+    result.operation === "subtraction"
+      ? "/play/time-attack?operation=subtraction&new=1"
+      : "/play/time-attack?new=1";
+  const playHref =
+    result.operation === "subtraction" ? "/play?operation=subtraction" : "/play";
 
   return (
     <main className="page-shell">
       <section className="card mx-auto max-w-xl text-center">
-        <p className="text-lg text-muted">タイムアタック</p>
+        <p className="text-lg text-muted">
+          タイムアタック（{operationLabel}）
+        </p>
         <h1 className="chalk-heading mt-2 text-4xl font-bold">
           {isClear ? "クリア！" : "おつかれさま！"}
         </h1>
@@ -37,10 +46,10 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Link href="/play/time-attack?new=1" className="big-btn big-btn-primary">
+          <Link href={retryHref} className="big-btn big-btn-primary">
             もう一度
           </Link>
-          <Link href="/play" className="big-btn big-btn-secondary">
+          <Link href={playHref} className="big-btn big-btn-secondary">
             モード選択
           </Link>
         </div>

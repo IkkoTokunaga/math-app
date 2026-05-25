@@ -16,7 +16,7 @@
 
 **Non-Goals:**
 
-- 引き算タイムアタック
+- 引き算タイムアタック → **`subtraction-time-attack-mode` change で別途追加予定**
 - 負の答え、小数、分数
 - 演算横断の統合レベル
 

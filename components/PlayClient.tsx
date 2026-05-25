@@ -85,14 +85,17 @@ type ScoreAward = {
   flyClassName?: string;
 };
 
+type TimeAttackResumeInfo = {
+  sessionId: string;
+  bossLabel: string;
+  currentLevel: number;
+  enmaNumber: number;
+};
+
 type PlayClientProps = {
   auth: AuthState;
-  timeAttackResume?: {
-    sessionId: string;
-    bossLabel: string;
-    currentLevel: number;
-    enmaNumber: number;
-  } | null;
+  additionTimeAttackResume?: TimeAttackResumeInfo | null;
+  subtractionTimeAttackResume?: TimeAttackResumeInfo | null;
 };
 
 function prefersReducedMotion(): boolean {
@@ -166,7 +169,11 @@ const SUCCESS_FEEDBACK_MS = 1500;
 const COMPLETION_FEEDBACK_MS = 1800;
 const RETRY_FEEDBACK_MS = 1500;
 
-export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
+export function PlayClient({
+  auth,
+  additionTimeAttackResume = null,
+  subtractionTimeAttackResume = null,
+}: PlayClientProps) {
   const router = useRouter();
   const isMember = auth.loggedIn;
   const isClient = useIsClient();
@@ -761,10 +768,10 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
                 通常モード（10問チャレンジ）
               </button>
               {auth.loggedIn ? (
-                timeAttackResume ? (
+                additionTimeAttackResume ? (
                   <div className="grid gap-3">
                     <Link href="/play/time-attack" className="big-btn big-btn-primary text-center">
-                      続きから（{timeAttackResume.bossLabel}）
+                      続きから（{additionTimeAttackResume.bossLabel}）
                     </Link>
                     <Link
                       href="/play/time-attack?new=1"
@@ -784,6 +791,64 @@ export function PlayClient({ auth, timeAttackResume = null }: PlayClientProps) {
                   </div>
                 ) : (
                   <Link href="/play/time-attack?new=1" className="big-btn big-btn-secondary text-center">
+                    タイムアタック（鬼退治）
+                  </Link>
+                )
+              ) : (
+                <div className="mode-select-locked">
+                  <button type="button" disabled className="big-btn w-full opacity-50">
+                    🔒 タイムアタック（鬼退治）
+                  </button>
+                  <p className="mt-2 text-center text-sm text-muted">
+                    タイムアタックはログインすると遊べます
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+          {operation === "subtraction" && (
+            <>
+              <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("standard-mode-section");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="big-btn big-btn-primary"
+              >
+                通常モード（10問チャレンジ）
+              </button>
+              {auth.loggedIn ? (
+                subtractionTimeAttackResume ? (
+                  <div className="grid gap-3">
+                    <Link
+                      href="/play/time-attack?operation=subtraction"
+                      className="big-btn big-btn-primary text-center"
+                    >
+                      続きから（{subtractionTimeAttackResume.bossLabel}）
+                    </Link>
+                    <Link
+                      href="/play/time-attack?operation=subtraction&new=1"
+                      className="big-btn big-btn-secondary text-center"
+                      onClick={(event) => {
+                        if (
+                          !window.confirm(
+                            "進行中のタイムアタックをやめて、新しく始めますか？",
+                          )
+                        ) {
+                          event.preventDefault();
+                        }
+                      }}
+                    >
+                      タイムアタックを新しく始める
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href="/play/time-attack?operation=subtraction&new=1"
+                    className="big-btn big-btn-secondary text-center"
+                  >
                     タイムアタック（鬼退治）
                   </Link>
                 )

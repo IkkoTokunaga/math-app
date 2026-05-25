@@ -1458,7 +1458,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 
 .time-attack-top {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) min(42%, 11.5rem);
+  grid-template-columns: 4.5rem minmax(0, 1fr) min(44%, 13.5rem);
   grid-template-rows: auto auto;
   column-gap: 0.65rem;
   row-gap: 0.5rem;
@@ -1499,7 +1499,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   z-index: 6;
   pointer-events: none;
   line-height: 0;
-  margin-bottom: -1.35rem;
+  margin-bottom: -1.5rem;
   position: relative;
 }
 
@@ -1584,7 +1584,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   --oni-shadow: drop-shadow(0 4px 12px rgb(0 0 0 / 0.35));
   --oni-tint: var(--oni-shadow);
   width: auto;
-  height: clamp(6.25rem, 21vw, 8.25rem);
+  height: clamp(7.5rem, 25vw, 9.75rem);
   max-width: 100%;
   background: transparent;
   object-fit: contain;
@@ -2933,7 +2933,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 
 @media (max-width: 420px) {
   .time-attack-top {
-    grid-template-columns: 3.75rem minmax(0, 1fr) min(40%, 9.5rem);
+    grid-template-columns: 3.75rem minmax(0, 1fr) min(42%, 11.25rem);
     column-gap: 0.45rem;
   }
 
@@ -2942,7 +2942,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   }
 
   .time-attack-oni-score__image {
-    height: clamp(5.25rem, 19vw, 6.75rem);
+    height: clamp(6.25rem, 22vw, 8rem);
   }
 }
 

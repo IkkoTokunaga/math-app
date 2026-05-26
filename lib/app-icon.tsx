@@ -14,8 +14,9 @@ function AppIconElement({
   size: number;
   mascotDataUrl: string;
 }) {
-  const imageWidth = Math.round(size * 2.8);
-  const imageHeight = Math.round(size * 5.6);
+  // 顔をやや大きく見せつつ、頭全体（髪含む）が収まる倍率
+  const imageWidth = Math.round(size * 1.35);
+  const imageHeight = Math.round(size * 2.7);
 
   return (
     <div
@@ -36,7 +37,6 @@ function AppIconElement({
         height={imageHeight}
         style={{
           objectFit: "contain",
-          marginTop: Math.round(size * 0.04),
         }}
       />
     </div>

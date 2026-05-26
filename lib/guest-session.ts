@@ -44,6 +44,11 @@ export function getGuestUnlockedLevel(operation: Operation = DEFAULT_OPERATION):
   return getUnlockedLevel(mapGuestCompletedSessions(store.completedSessions, operation), operation);
 }
 
+export function isGuestStandardSessionActive(localId: string): boolean {
+  const session = readGuestStore().inProgress;
+  return session?.localId === localId;
+}
+
 export function startGuestSession(
   level: Level,
   operation: Operation = DEFAULT_OPERATION,

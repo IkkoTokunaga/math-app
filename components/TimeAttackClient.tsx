@@ -21,6 +21,7 @@ import { TimeAttackArena } from "@/components/TimeAttackArena";
 import { SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
 import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
+import { SessionRecoveryLoading } from "@/components/SessionRecoveryLoading";
 import type { HeartRecoveryAnim } from "@/components/TimeAttackLives";
 import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
@@ -44,6 +45,8 @@ import {
 import { getSubtractionTimeAttackMaxAnswerDigits } from "@/lib/subtraction-time-attack-questions";
 import { getTimeAttackMaxAnswerDigits } from "@/lib/time-attack-questions";
 import { useIsClient } from "@/lib/use-is-client";
+import { useMobileStaleSessionRecovery } from "@/lib/use-mobile-stale-session-recovery";
+import { isMobileViewport } from "@/lib/bgm-volume";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
 import {
   endTimeAttackBgmSession,
@@ -246,6 +249,16 @@ function TimeAttackClientInner({
   const router = useRouter();
   const isClient = useIsClient();
   const sessionId = initialSession.sessionId;
+  const playHomeHref =
+    operation === "subtraction" ? "/play?operation=subtraction" : "/play";
+  const { recoveringHome, handleSessionError, redirectHome } = useMobileStaleSessionRecovery({
+    sessionId,
+    homeHref: playHomeHref,
+    isGuest,
+    mode: "time_attack",
+    operation,
+    onBeforeRedirect: () => endTimeAttackBgmSession(sessionId),
+  });
   const [questions, setQuestions] = useState(initialSession.questions);
   const [timeAttackState, setTimeAttackState] = useState<TimeAttackState>(
     initialSession.timeAttackState,
@@ -480,11 +493,14 @@ function TimeAttackClientInner({
           redirectToResult(sessionId);
         }
       } catch (err) {
+        if (handleSessionError(err)) {
+          return;
+        }
         timeMagicPenaltyLockRef.current = false;
         setError(err instanceof Error ? err.message : "時間の魔法の処理に失敗しました");
       }
     },
-    [redirectToResult, sessionId, isGuest],
+    [redirectToResult, sessionId, isGuest, handleSessionError],
   );
 
   // 問題が進んだときだけペナルティゲージをリセット（登場イントロ状態は unlock で片付ける）
@@ -570,6 +586,23 @@ function TimeAttackClientInner({
   ]);
 
   useTimeAttackBgm(sessionId, arenaState);
+
+  useEffect(() => {
+    if (!defeatLoading || !isMobileViewport()) {
+      return;
+    }
+
+    const onVisibilityChange = () => {
+      if (!document.hidden && defeatLoading) {
+        redirectHome();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [defeatLoading, redirectHome]);
 
   const syncBossDisplay = (state: TimeAttackState) => {
     setArenaState(state);
@@ -1192,6 +1225,9 @@ function TimeAttackClientInner({
       await handleWrongAnswer(result);
       return;
     } catch (err) {
+      if (handleSessionError(err)) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
       submitLockRef.current = false;
       setSubmitting(false);
@@ -1324,6 +1360,8 @@ function TimeAttackClientInner({
           <p className="time-attack-defeat-loading__label">読み込み中...</p>
         </div>
       )}
+
+      {recoveringHome && <SessionRecoveryLoading />}
 
       {showQuestionBoard && activeQuestion && (
         <section

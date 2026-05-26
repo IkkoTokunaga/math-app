@@ -58,6 +58,18 @@ function isResumableTimeAttackState(state: TimeAttackState): boolean {
   return state.phase === "wave_active" && state.mistakeCount < MAX_MISTAKES;
 }
 
+export function isGuestTimeAttackSessionActive(
+  localId: string,
+  operation: Operation = DEFAULT_OPERATION,
+): boolean {
+  const session = getInProgress(operation);
+  if (!session || session.localId !== localId) {
+    return false;
+  }
+
+  return isResumableTimeAttackState(session.timeAttackState);
+}
+
 export function getGuestTimeAttackResumeInfo(
   operation: Operation = DEFAULT_OPERATION,
 ): { localId: string; bossLabel: string } | null {

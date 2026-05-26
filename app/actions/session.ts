@@ -362,3 +362,20 @@ export async function getSessionResultAction(sessionId: string) {
 export async function redirectToResultAction(sessionId: string) {
   redirect(`/result/${sessionId}`);
 }
+
+export async function validatePlaySessionAction(
+  sessionId: string,
+): Promise<{ valid: boolean }> {
+  const [session] = await getDb()
+    .select({ status: sessions.status, mode: sessions.mode })
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.status !== "in_progress") {
+    return { valid: false };
+  }
+
+  const mode = session.mode ?? "standard";
+  return { valid: mode === "standard" };
+}

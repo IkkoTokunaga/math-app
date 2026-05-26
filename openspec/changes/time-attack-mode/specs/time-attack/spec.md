@@ -506,6 +506,19 @@ The system SHALL persist in-progress time attack sessions after each answer and 
 - **THEN** the system redirects to the play screen
 - **AND** does NOT create a new in-progress session automatically
 
+### Requirement: Mobile stale session recovery
+
+On mobile viewports (`pointer: coarse` and `max-width: 768px`), during an active time attack session, when the play session is no longer valid after the player returns from background (or after a bfcache restore), when answer submission fails because the session is missing, or when the player returns while the boss-defeat **「読み込み中...」** overlay is still shown after backgrounding, the system SHALL show the full-screen loading overlay with a spinner and **「読み込み中...」**, then navigate to the home screen (`/play`, preserving the selected operation query when applicable).
+
+#### Scenario: Return from background with expired time attack session
+- **WHEN** a player on mobile backgrounds time attack and returns after the session is no longer resumable
+- **THEN** a loading overlay with **「読み込み中...」** is shown
+- **AND** the player is returned to the home screen
+
+#### Scenario: Stuck defeat loading after background
+- **WHEN** a player on mobile backgrounds the app during the boss-defeat loading overlay and returns while it is still visible
+- **THEN** the system shows the loading overlay and returns the player to the home screen instead of leaving the screen frozen
+
 ### Requirement: Time attack result screen
 
 When a time attack session ends (failed, cleared, or abandoned mid-run), the system SHALL show a dedicated result screen with at minimum:

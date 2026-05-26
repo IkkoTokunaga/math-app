@@ -213,6 +213,20 @@ On viewports that match touch-primary mobile devices (`pointer: coarse` and `max
 - **WHEN** a player listens on a smartphone-sized touch viewport
 - **THEN** home, quiz, clear screen, and time attack background music play at reduced volume and button/quiz/time attack sound effects keep their existing volume
 
+### Requirement: Mobile stale session recovery
+
+On mobile viewports (`pointer: coarse` and `max-width: 768px`), during an active **standard** quiz session, when the play session is no longer valid after the player returns from background (or after a bfcache restore), or when answer submission fails because the session is missing, the system SHALL show the full-screen loading overlay with a spinner and **「読み込み中...」**, then navigate to the home screen (`/play`, preserving the selected operation query when applicable).
+
+#### Scenario: Return from background with expired session
+- **WHEN** a player on mobile backgrounds the app during a standard quiz and returns after the session is no longer in progress
+- **THEN** a loading overlay with **「読み込み中...」** is shown
+- **AND** the player is returned to the home screen
+
+#### Scenario: Submit after session lost on mobile
+- **WHEN** a player on mobile submits an answer but the server reports the session is missing
+- **THEN** the same loading overlay is shown
+- **AND** the player is returned to the home screen instead of staying on a broken quiz screen
+
 ### Requirement: Home screen BGM
 
 The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3` after the initial loading gate completes. If the browser blocks audible autoplay, the system SHALL start muted playback when possible and unmute after the player's first interaction. Background music SHALL stop when the player starts a standard quiz or opens time attack.

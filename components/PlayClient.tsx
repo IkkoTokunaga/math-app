@@ -19,6 +19,7 @@ import {
 } from "@/components/LiveScoreProgressBar";
 import { RunningScore, SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import { SoundToggleButton } from "@/components/SoundToggleButton";
+import { SessionRecoveryLoading } from "@/components/SessionRecoveryLoading";
 import type { AuthState } from "@/lib/auth/state";
 import { getGuestLabel } from "@/lib/guest-storage";
 import {
@@ -28,6 +29,7 @@ import {
 } from "@/lib/guest-session";
 import { getGuestTimeAttackResumeInfo } from "@/lib/guest-time-attack";
 import { useIsClient } from "@/lib/use-is-client";
+import { useMobileStaleSessionRecovery } from "@/lib/use-mobile-stale-session-recovery";
 import { useHomeBgm } from "@/lib/use-home-bgm";
 import { useQuizBgm } from "@/lib/use-quiz-bgm";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
@@ -342,6 +344,17 @@ export function PlayClient({
     (isClient
       ? parseOperation(new URLSearchParams(window.location.search).get("operation"))
       : DEFAULT_OPERATION);
+
+  const activeSessionId = isMember ? sessionId : localId;
+  const playHomeHref =
+    operation === "subtraction" ? "/play?operation=subtraction" : "/play";
+  const { recoveringHome, handleSessionError } = useMobileStaleSessionRecovery({
+    sessionId: inQuiz ? activeSessionId : null,
+    homeHref: playHomeHref,
+    isGuest: !isMember,
+    mode: "standard",
+    operation,
+  });
 
   const selectOperation = (next: Operation) => {
     setSelectedOperation(next);
@@ -703,6 +716,9 @@ export function PlayClient({
         setSubmitting(false);
       }, feedbackDurationMs(awards, SUCCESS_FEEDBACK_MS));
     } catch (err) {
+      if (handleSessionError(err)) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "回答の送信に失敗しました");
     } finally {
       if (releaseSubmitLock) {
@@ -1038,6 +1054,7 @@ export function PlayClient({
       />
 
       {error && <p className="feedback-error">{error}</p>}
+      {recoveringHome && <SessionRecoveryLoading />}
     </div>
   );
 }

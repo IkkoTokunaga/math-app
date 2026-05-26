@@ -666,3 +666,35 @@ export async function getTimeAttackResultAction(sessionId: string) {
 export async function redirectToTimeAttackResultAction(sessionId: string) {
   redirect(`/result/time-attack/${sessionId}`);
 }
+
+export async function validateTimeAttackSessionAction(
+  sessionId: string,
+): Promise<{ valid: boolean }> {
+  const [session] = await getDb()
+    .select({
+      status: sessions.status,
+      mode: sessions.mode,
+      timeAttackState: sessions.timeAttackState,
+    })
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .limit(1);
+
+  if (
+    !session ||
+    session.status !== "in_progress" ||
+    session.mode !== "time_attack" ||
+    !session.timeAttackState
+  ) {
+    return { valid: false };
+  }
+
+  try {
+    const state = parseTimeAttackState(session.timeAttackState);
+    return {
+      valid: state.phase === "wave_active" && state.mistakeCount < MAX_MISTAKES,
+    };
+  } catch {
+    return { valid: false };
+  }
+}

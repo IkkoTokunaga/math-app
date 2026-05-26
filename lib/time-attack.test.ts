@@ -6,6 +6,7 @@ import {
   createInitialTimeAttackState,
   ENMA_STAGE_DOUBLE_HP,
   ENMA_STAGE_NORMAL,
+  getBossHpLabel,
   getBossParams,
 } from "./time-attack";
 import {
@@ -131,6 +132,16 @@ describe("time-attack state", () => {
       timeLimitSeconds: 7,
       timeBonusMultiplier: 10,
     });
+  });
+});
+
+describe("time-attack boss labels", () => {
+  it("formats combined HP gauge labels", () => {
+    const oni = createInitialTimeAttackState();
+    assert.equal(getBossHpLabel(oni), "鬼 Lv1 HP");
+
+    const enma = createDevTimeAttackState({ level: 9, enmaNumber: ENMA_STAGE_NORMAL });
+    assert.equal(getBossHpLabel(enma), "閻魔大王 HP");
   });
 });
 

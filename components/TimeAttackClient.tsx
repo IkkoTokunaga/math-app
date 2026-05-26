@@ -646,6 +646,7 @@ export function TimeAttackClient({
           oniRef={oniRef}
           bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
           currentLevel={arenaState.currentLevel}
+          operation={operation}
           onEnterAnimationComplete={handleOniEnterAnimationComplete}
         />
         <TimeAttackScoreBar

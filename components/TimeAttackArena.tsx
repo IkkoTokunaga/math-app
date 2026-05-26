@@ -1,6 +1,6 @@
 "use client";
 
-import { getBossLabel, type TimeAttackState } from "@/lib/time-attack";
+import { getBossHpLabel, type TimeAttackState } from "@/lib/time-attack";
 import { getOniHpRatio } from "@/lib/time-attack-scoring";
 
 type TimeAttackArenaProps = {
@@ -25,10 +25,9 @@ export function TimeAttackArena({
   return (
     <div className={`time-attack-arena ${className}`.trim()}>
       <div className="time-attack-arena__hud">
-        <p className="time-attack-arena__boss-name">{getBossLabel(state)}</p>
         <div className="time-attack-gauge time-attack-gauge--hp">
           <div className="time-attack-gauge__header">
-            <span>鬼 HP</span>
+            <span>{getBossHpLabel(state)}</span>
           </div>
           <div className="time-attack-gauge__track time-attack-gauge__track--segmented">
             <div

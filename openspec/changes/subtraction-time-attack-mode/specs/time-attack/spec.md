@@ -71,6 +71,22 @@ Answer input SHALL accept at most **3 digits** at all subtraction time attack le
 - **WHEN** a subtraction time attack question is shown
 - **THEN** the equation uses `-` (e.g. `45 - 12 = ?`)
 
+### Requirement: Subtraction time attack oni boss art
+
+During subtraction time attack at levels 1–8, the boss SHALL use `/oni-subtraction.png` with level-specific inline CSS filters. Addition time attack SHALL continue to use the original `/oni.png` with level-specific CSS class tints unchanged. Levels 9–10 閻魔 SHALL use shared `/enma.png` for both operations.
+
+#### Scenario: Subtraction oni sprite
+- **WHEN** the player faces an oni boss during subtraction time attack at level N (1–8)
+- **THEN** the header shows `/oni-subtraction.png` with a level-specific color tint
+
+#### Scenario: Addition oni unchanged
+- **WHEN** the player faces an oni boss during addition time attack at level N (1–8)
+- **THEN** the header shows the original `/oni.png` with the existing CSS class tint
+
+#### Scenario: Shared Enma art
+- **WHEN** the player faces 閻魔 at level 9 or 10 in either operation
+- **THEN** the header shows `/enma.png` with the same Enma tint rules as addition time attack
+
 ### Requirement: Subtraction time attack mascot
 
 During subtraction time attack, the teacher mascot SHALL wear **light blue (水色) clothing** using the subtraction mascot asset.

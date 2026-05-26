@@ -7,7 +7,8 @@ import {
   SCORE_FLY_DURATION_MS,
 } from "@/components/RunningScore";
 import type { Level } from "@/lib/questions";
-import { getBossImageSrc, getBossImageStyle } from "@/lib/time-attack-boss-visual";
+import { DEFAULT_OPERATION, type Operation } from "@/lib/operations";
+import { getBossImagePresentation } from "@/lib/time-attack-boss-visual";
 
 const POP_DURATION_MS = 400;
 
@@ -24,6 +25,7 @@ type TimeAttackOniScoreProps = {
   oniRef?: RefObject<HTMLDivElement | null>;
   bossKey?: string;
   currentLevel?: Level;
+  operation?: Operation;
   layout?: "combined" | "split";
   meta?: React.ReactNode;
   onEnterAnimationComplete?: () => void;
@@ -59,6 +61,7 @@ export function TimeAttackOniScore({
   oniRef,
   bossKey = "oni",
   currentLevel = 1,
+  operation = DEFAULT_OPERATION,
   layout = "combined",
   meta = null,
   onEnterAnimationComplete,
@@ -178,21 +181,21 @@ export function TimeAttackOniScore({
     </p>
   );
 
-  const bossImageStyle = getBossImageStyle(currentLevel);
+  const bossImage = getBossImagePresentation(currentLevel, operation);
   const oniBody = showOni ? (
     <img
       key={bossKey}
-      src={getBossImageSrc(currentLevel)}
+      src={bossImage.src}
       alt=""
-      className="time-attack-oni-score__image"
-      style={bossImageStyle}
+      className={bossImage.className}
+      style={bossImage.style}
     />
   ) : null;
 
   const oniWrap = (
     <div
       ref={oniRef}
-      className={`time-attack-top__oni time-attack-oni-score ${phaseClass}`.trim()}
+      className={`time-attack-top__oni time-attack-oni-score ${operation === "subtraction" ? "time-attack-oni-score--subtraction-op" : ""} ${phaseClass}`.trim()}
     >
       {oniBody}
       {oniPhase === "exploding" && (

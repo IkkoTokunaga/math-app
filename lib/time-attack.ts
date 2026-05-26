@@ -87,6 +87,14 @@ export function getBossLabel(state: TimeAttackState): string {
   return `おに Lv${state.currentLevel}`;
 }
 
+/** タイムアタック HP ゲージ見出し（ボス名 + HP を1行） */
+export function getBossHpLabel(state: TimeAttackState): string {
+  if (isEnmaBoss(state.currentLevel)) {
+    return "閻魔大王 HP";
+  }
+  return `鬼 Lv${state.currentLevel} HP`;
+}
+
 export type WaveResolution =
   | {
       kind: "continue";

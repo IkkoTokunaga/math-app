@@ -52,7 +52,7 @@ export function formatQuestionExpression(question: Question): string {
 }
 
 export function getMaxAnswerDigits(level: Level): number {
-  return level === 10 ? 4 : 3;
+  return level >= 10 ? 4 : 3;
 }
 
 function generateLevel1(): Question {
@@ -138,6 +138,7 @@ const generators: Record<Level, () => Question> = {
   8: () => generateThreeDigitPair(false),
   9: () => generateThreeDigitPair(true),
   10: generateLevel10,
+  11: generateLevel10,
 };
 
 export function generateQuestions(

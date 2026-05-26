@@ -182,6 +182,7 @@ const generators: Record<Level, () => Question> = {
   8: () => generateThreeDigitPair(false),
   9: () => generateThreeDigitPair(true),
   10: generateLevel10,
+  11: generateLevel10,
 };
 
 export function generateSubtractionQuestions(

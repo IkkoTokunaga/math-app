@@ -7,7 +7,7 @@ import {
   TimeAttackBgmQueue,
   TIME_ATTACK_BGM_TRACKS,
   TIME_ATTACK_ENMA_LV10_BGM,
-} from "./time-attack-bgm.ts";
+} from "./time-attack-bgm";
 
 describe("time-attack-bgm queue", () => {
   it("plays every track once before repeating", () => {

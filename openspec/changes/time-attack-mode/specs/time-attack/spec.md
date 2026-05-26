@@ -252,7 +252,7 @@ defeatBonus = floor(waveScore × 0.5)
 
 ### Requirement: Level progression through oni and Enma bosses
 
-Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** (purple `/enma.png`). Level 10 SHALL use **閻魔大王** with **red skin** and a **large black aura** on `/enma.png`, and double the HP ratio of level 9. Both Enma stages SHALL display the label **閻魔大王** only (no 「体力倍」 suffix). Defeating the boss at level N SHALL advance the player to level N+1 with a fresh boss HP pool.
+Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** on **`/enma.png`** (transparent background, no CSS color filter). Level 10 SHALL use **閻魔大王** on **`/enma-lv10.png`** (transparent background, no CSS color filter), and double the HP ratio of level 9. Both Enma stages SHALL display the label **閻魔大王** only (no 「体力倍」 suffix). Defeating the boss at level N SHALL advance the player to level N+1 with a fresh boss HP pool.
 
 #### Scenario: Level 1 oni defeated
 - **WHEN** the level 1 oni is defeated
@@ -264,7 +264,7 @@ Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** (p
 
 #### Scenario: Level 9 Enma defeated
 - **WHEN** 閻魔大王 at level 9 is defeated
-- **THEN** the next wave starts at level 10 against 閻魔大王 (red skin, black aura)
+- **THEN** the next wave starts at level 10 against 閻魔大王 on `/enma-lv10.png`
 
 ### Requirement: Clear on level 10 Enma defeat
 
@@ -315,7 +315,7 @@ When a non-defeat wave completes, the wave attack sequence (gauge drain overlay 
 
 ### Requirement: Oni score display
 
-The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–8 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 9 閻魔 SHALL use `/enma.png` with a **purple** tint. Level 10 閻魔 SHALL use `/enma.png` with **red skin** and a **large black aura**. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score in the center, and the boss image on the right. Question progress (e.g. `問題 N / 5`) SHALL NOT appear in the header. The player name and level label SHALL NOT appear in the header.
+The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–8 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 9 閻魔 SHALL use **`/enma.png`** as-is. Level 10 閻魔 SHALL use **`/enma-lv10.png`** as-is. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score in the center, and the boss image on the right. Question progress (e.g. `問題 N / 5`) SHALL NOT appear in the header. The player name and level label SHALL NOT appear in the header.
 
 #### Scenario: Header row layout
 - **WHEN** a player is in time attack
@@ -327,11 +327,11 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 
 #### Scenario: Enma uses dedicated artwork
 - **WHEN** the player faces 閻魔 at level 9
-- **THEN** the header shows `/enma.png` with a purple tint
+- **THEN** the header shows `/enma.png` without CSS color filters
 
 #### Scenario: Final Enma at level 10
 - **WHEN** the player faces 閻魔 at level 10
-- **THEN** the header shows `/enma.png` with red skin and a large black aura distinct from level 9
+- **THEN** the header shows `/enma-lv10.png` without CSS color filters
 
 #### Scenario: No name or level in header
 - **WHEN** the quiz header is displayed
@@ -492,7 +492,7 @@ Time attack SHALL reuse the standard quiz input experience: inline `?` answer di
 
 ### Requirement: Time attack boss BGM rotation
 
-During an active time attack session, the system SHALL play looping background music. Background music for each boss SHALL begin **1 second** after the boss becomes active (session entry, resume, or next boss enter). When the boss identity changes after a boss defeat (`currentLevel` and/or `enmaNumber` advances), the system SHALL switch to a different track chosen randomly from the configured boss BGM pool. Within the same session, a track SHALL NOT repeat until every other track in the pool has already played once. Resuming the same in-progress session SHALL continue the same non-repeating queue. Background music SHALL stop when the session ends or the player leaves time attack.
+During an active time attack session, the system SHALL play looping background music. Background music for each boss SHALL begin **1 second** after the boss becomes active (session entry, resume, or next boss enter). When the boss identity changes after a boss defeat (`currentLevel` and/or `enmaNumber` advances), the system SHALL switch to a different track chosen randomly from the configured boss BGM pool, **except level 10 閻魔 (`10-2`) which SHALL always use `/sounds/bgm/enma-lv10.mp3`**. Within the same session, a track SHALL NOT repeat until every other track in the pool has already played once. Resuming the same in-progress session SHALL continue the same non-repeating queue. Background music SHALL stop when the session ends or the player leaves time attack.
 
 #### Scenario: BGM starts on session entry
 - **WHEN** a player enters an active time attack session
@@ -501,6 +501,10 @@ During an active time attack session, the system SHALL play looping background m
 #### Scenario: BGM changes on boss defeat
 - **WHEN** a player defeats a boss and the next boss enters
 - **THEN** the background music switches to a different unused track from the pool after a 1 second delay
+
+#### Scenario: Level 10 Enma dedicated BGM
+- **WHEN** the player faces level 10 閻魔 (`10-2`)
+- **THEN** the background music is `/sounds/bgm/enma-lv10.mp3`
 
 #### Scenario: No duplicate track within one cycle
 - **WHEN** multiple boss changes occur within the same session before the track pool is exhausted

@@ -7,7 +7,7 @@ import {
 
 export { getOniHpRatio, WAVE_QUESTION_COUNT } from "@/lib/time-attack-scoring";
 
-/** Lv9 = 紫の閻魔、Lv10 = 赤肌・黒オーラの閻魔（HP倍率×4） */
+/** Lv9 = 閻魔、Lv10 = 閻魔（HP倍率×4） */
 export const ENMA_STAGE_NORMAL = 1;
 export const ENMA_STAGE_DOUBLE_HP = 2;
 

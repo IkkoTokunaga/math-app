@@ -21,6 +21,8 @@ export const TIME_ATTACK_BGM_TRACKS = [
   "/sounds/bgm/thanatos_kyouki.mp3",
 ] as const;
 
+export const TIME_ATTACK_ENMA_LV10_BGM = "/sounds/bgm/enma-lv10.mp3";
+
 export const TIME_ATTACK_BGM_START_DELAY_MS = 1000;
 const SESSION_STORAGE_PREFIX = "ta-bgm-state:";
 
@@ -35,6 +37,22 @@ export function getTimeAttackBossKey(state: {
   enmaNumber: number;
 }): string {
   return `${state.currentLevel}-${state.enmaNumber}`;
+}
+
+export function isEnmaLv10BossKey(bossKey: string): boolean {
+  return bossKey === "10-2";
+}
+
+export function getTimeAttackBgmTrackForBoss(
+  bossKey: string,
+  queue: TimeAttackBgmQueue,
+  currentTrack?: string | null,
+): string {
+  if (isEnmaLv10BossKey(bossKey)) {
+    return TIME_ATTACK_ENMA_LV10_BGM;
+  }
+
+  return queue.next(currentTrack);
 }
 
 export function shuffleTracks(tracks: readonly string[]): string[] {
@@ -89,7 +107,10 @@ function sessionStorageKey(sessionId: string): string {
 }
 
 function isAllowedTrack(track: string): boolean {
-  return TIME_ATTACK_BGM_TRACKS.includes(track as (typeof TIME_ATTACK_BGM_TRACKS)[number]);
+  return (
+    track === TIME_ATTACK_ENMA_LV10_BGM ||
+    TIME_ATTACK_BGM_TRACKS.includes(track as (typeof TIME_ATTACK_BGM_TRACKS)[number])
+  );
 }
 
 export function loadTimeAttackBgmState(
@@ -189,6 +210,7 @@ export function primeTimeAttackBgm(): void {
   for (const src of TIME_ATTACK_BGM_TRACKS) {
     getPreloadAudio(src).load();
   }
+  getPreloadAudio(TIME_ATTACK_ENMA_LV10_BGM).load();
 }
 
 export function unlockTimeAttackBgm(): void {

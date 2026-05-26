@@ -14,9 +14,11 @@ describe("time-attack-boss-visual", () => {
     assert.equal(getBossImageSrc(8, "subtraction"), "/oni-subtraction.png");
   });
 
-  it("uses enma.png for both operations at levels 9-10", () => {
+  it("uses enma.png at level 9 and enma-lv10.png at level 10 for both operations", () => {
     assert.equal(getBossImageSrc(9, "addition"), "/enma.png");
-    assert.equal(getBossImageSrc(10, "subtraction"), "/enma.png");
+    assert.equal(getBossImageSrc(9, "subtraction"), "/enma.png");
+    assert.equal(getBossImageSrc(10, "addition"), "/enma-lv10.png");
+    assert.equal(getBossImageSrc(10, "subtraction"), "/enma-lv10.png");
   });
 
   it("returns CSS classes for addition oni and inline filters for subtraction", () => {
@@ -39,8 +41,21 @@ describe("time-attack-boss-visual", () => {
     assert.equal(new Set(filters).size, 8);
   });
 
-  it("returns distinct filters for enma stages in subtraction", () => {
-    assert.notEqual(getBossImageFilter(9), getBossImageFilter(10));
-    assert.notEqual(getBossImageFilter(8), getBossImageFilter(9));
+  it("uses the same CSS enma tint for subtraction and addition at levels 9-10", () => {
+    const addition9 = getBossImagePresentation(9, "addition");
+    const subtraction9 = getBossImagePresentation(9, "subtraction");
+    assert.match(addition9.className, /--enma/);
+    assert.match(subtraction9.className, /--enma/);
+    assert.equal(subtraction9.style, undefined);
+
+    const addition10 = getBossImagePresentation(10, "addition");
+    const subtraction10 = getBossImagePresentation(10, "subtraction");
+    assert.match(addition10.className, /--enma-black/);
+    assert.match(subtraction10.className, /--enma-black/);
+    assert.equal(subtraction10.style, undefined);
+  });
+
+  it("returns distinct filters per subtraction oni level only for levels 1-8", () => {
+    assert.notEqual(getBossImageFilter(8), getBossImageFilter(1));
   });
 });

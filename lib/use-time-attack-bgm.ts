@@ -6,6 +6,7 @@ import {
   clearTimeAttackBgmState,
   getCurrentTimeAttackBgmTrack,
   getTimeAttackBossKey,
+  getTimeAttackBgmTrackForBoss,
   isTimeAttackBgmPlaying,
   loadTimeAttackBgmState,
   playTimeAttackBgm,
@@ -101,7 +102,7 @@ export function useTimeAttackBgm(
 
     const track = isResumeSameBoss
       ? saved.currentTrack!
-      : queue.next(getCurrentTimeAttackBgmTrack());
+      : getTimeAttackBgmTrackForBoss(bossKey, queue, getCurrentTimeAttackBgmTrack());
 
     persistBgmState(sessionId, queue, bossKey);
 

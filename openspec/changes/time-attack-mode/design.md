@@ -246,7 +246,7 @@ Lv10 黒い閻魔: `timeLimitSeconds = 7`, `timeBonusMultiplier = 10`
 
 ### 12. 鬼のビジュアル
 
-**選択**: Lv1–8 は `/oni.png` ベース + **CSS filter で Lv ごとに色変化**。Lv9 閻魔は **`/enma.png` + 紫 tint**。Lv10 閻魔は **`/enma.png` + 赤い肌 + 大きな黒オーラ**。背景 opacity 30–50% 程度。
+**選択**: Lv1–8 は `/oni.png` ベース + **CSS filter で Lv ごとに色変化**。Lv9 閻魔は **`/enma.png`（フィルターなし）**。Lv10 閻魔は **`/enma-lv10.png`（フィルターなし）**。
 
 ## Data Model Changes
 

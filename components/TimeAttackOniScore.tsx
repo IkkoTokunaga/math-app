@@ -10,6 +10,7 @@ import { useAnimatedScore } from "@/lib/use-animated-score";
 import type { Level } from "@/lib/questions";
 import { DEFAULT_OPERATION, type Operation } from "@/lib/operations";
 import { getBossImagePresentation } from "@/lib/time-attack-boss-visual";
+import { isEnmaBoss } from "@/lib/time-attack";
 
 const POP_DURATION_MS = 400;
 
@@ -186,6 +187,7 @@ export function TimeAttackOniScore({
   );
 
   const bossImage = getBossImagePresentation(currentLevel, operation);
+  const enmaOp = isEnmaBoss(currentLevel);
   const oniBody = showOni ? (
     <img
       key={bossKey}
@@ -199,7 +201,7 @@ export function TimeAttackOniScore({
   const oniWrap = (
     <div
       ref={oniRef}
-      className={`time-attack-top__oni time-attack-oni-score ${operation === "subtraction" ? "time-attack-oni-score--subtraction-op" : ""} ${phaseClass}`.trim()}
+      className={`time-attack-top__oni time-attack-oni-score ${operation === "subtraction" ? "time-attack-oni-score--subtraction-op" : ""} ${enmaOp ? "time-attack-oni-score--enma-op" : ""} ${phaseClass}`.trim()}
     >
       {oniBody}
       {oniPhase === "exploding" && (

@@ -16,11 +16,14 @@ const SUBTRACTION_ONI_LEVEL_FILTERS: Record<OniLevel, string> = {
   8: `${ONI_SHADOW} sepia(0.95) hue-rotate(205deg) saturate(2.4) brightness(0.88)`,
 };
 
-/** Lv1–8 鬼は演算別 PNG + フィルター。Lv9–10 閻魔は enma.png（共用） */
+/** Lv1–8 鬼は演算別 PNG。Lv9 閻魔は enma.png、Lv10 閻魔は enma-lv10.png */
 export function getBossImageSrc(
   level: Level,
   operation: Operation = DEFAULT_OPERATION,
 ): string {
+  if (level >= 10) {
+    return "/enma-lv10.png";
+  }
   if (level >= 9) {
     return "/enma.png";
   }
@@ -39,12 +42,6 @@ export function getBossImageClass(level: Level): string {
 }
 
 function getSubtractionBossImageFilter(level: Level): string {
-  if (level >= 10) {
-    return `${ONI_SHADOW} sepia(0.55) hue-rotate(308deg) saturate(2.4) brightness(0.96) contrast(1.12) drop-shadow(0 0 16px rgb(0 0 0 / 0.9)) drop-shadow(0 0 32px rgb(0 0 0 / 0.75)) drop-shadow(0 0 52px rgb(0 0 0 / 0.55)) drop-shadow(0 0 76px rgb(0 0 0 / 0.38))`;
-  }
-  if (level >= 9) {
-    return `${ONI_SHADOW} sepia(0.35) hue-rotate(255deg) saturate(2.2) brightness(1.02) drop-shadow(0 0 10px rgb(147 51 234 / 0.45))`;
-  }
   return SUBTRACTION_ONI_LEVEL_FILTERS[level as OniLevel];
 }
 
@@ -59,12 +56,12 @@ export type BossImagePresentation = {
   style?: BossImageStyle;
 };
 
-/** 撃破演出のアニメーション keyframes が参照する CSS 変数（引き算 TA の inline filter 用） */
+/** 撃破演出のアニメーション keyframes が参照する CSS 変数（引き算 TA Lv1–8 の inline filter 用） */
 export function getBossImageStyle(
   level: Level,
   operation: Operation = DEFAULT_OPERATION,
 ): BossImageStyle | undefined {
-  if (operation !== "subtraction") {
+  if (operation !== "subtraction" || level >= 9) {
     return undefined;
   }
   const filter = getSubtractionBossImageFilter(level);
@@ -82,7 +79,8 @@ export function getBossImagePresentation(
     operation === "subtraction"
       ? "time-attack-oni-score__image--subtraction"
       : "time-attack-oni-score__image--addition";
-  const levelClass = operation === "subtraction" ? "" : getBossImageClass(level);
+  const useCssLevelTint = operation === "addition" || level >= 9;
+  const levelClass = useCssLevelTint ? getBossImageClass(level) : "";
   const className = ["time-attack-oni-score__image", variantClass, levelClass]
     .filter(Boolean)
     .join(" ");

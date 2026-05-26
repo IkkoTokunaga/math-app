@@ -19,7 +19,7 @@
 
 - 通常モード Lv 解放への影響
 - 3項引き算・減数 0
-- 引き算 TA 専用鬼 `/oni-subtraction.png`（Lv1–8）。閻魔 `/enma.png` は足し算 TA と共用
+- 引き算 TA 専用鬼 `/oni-subtraction.png`（Lv1–8）。Lv9 閻魔 `/enma.png`、Lv10 閻魔 `/enma-lv10.png` は足し算 TA と共用
 
 ## Playtest Targets
 

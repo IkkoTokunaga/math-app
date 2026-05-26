@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  getTimeAttackBgmTrackForBoss,
+  isEnmaLv10BossKey,
   shuffleTracks,
   TimeAttackBgmQueue,
   TIME_ATTACK_BGM_TRACKS,
+  TIME_ATTACK_ENMA_LV10_BGM,
 } from "./time-attack-bgm.ts";
 
 describe("time-attack-bgm queue", () => {
@@ -45,5 +48,17 @@ describe("time-attack-bgm queue", () => {
     const third = queue.next("c");
     assert.notEqual(third, "c");
     assert.equal(new Set(["a", "b", "c"]).has(third), true);
+  });
+
+  it("uses dedicated BGM for level 10 Enma", () => {
+    assert.equal(isEnmaLv10BossKey("10-2"), true);
+    assert.equal(isEnmaLv10BossKey("10-1"), false);
+    assert.equal(isEnmaLv10BossKey("9-1"), false);
+
+    const queue = new TimeAttackBgmQueue(TIME_ATTACK_BGM_TRACKS);
+    assert.equal(
+      getTimeAttackBgmTrackForBoss("10-2", queue, null),
+      TIME_ATTACK_ENMA_LV10_BGM,
+    );
   });
 });

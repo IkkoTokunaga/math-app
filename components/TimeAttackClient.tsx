@@ -34,6 +34,7 @@ import {
 } from "@/lib/use-time-attack-bgm";
 import {
   playTimeAttackBeamSound,
+  playTimeAttackGaugeChargeSound,
   playTimeAttackOniAttackSound,
   playTimeAttackOniRoarSound,
 } from "@/lib/time-attack-sounds";
@@ -309,6 +310,7 @@ export function TimeAttackClient({
     setGaugeDraining(true);
     setMascotCharging(true);
     setGaugeDisplayScore(0);
+    playTimeAttackGaugeChargeSound();
 
     const mascotLightPromise = new Promise<void>((resolve) => {
       mascotLightDoneRef.current = resolve;

@@ -469,6 +469,14 @@ During an active time attack session, the system SHALL play looping background m
 - **WHEN** a time attack session ends or the player leaves time attack
 - **THEN** background music stops
 
+### Requirement: Gauge-to-mascot charge sound
+
+When the attack gauge drains and white light orbs travel from the gauge toward the teacher mascot during a wave attack sequence, the system SHALL play the gauge charge sound effect (`/sounds/time-attack-gauge-charge.mp3`).
+
+#### Scenario: Gauge charge sound on wave attack
+- **WHEN** the gauge-to-mascot light animation begins after a completed wave
+- **THEN** the system plays the gauge charge sound effect
+
 ### Requirement: Mascot beam attack sound
 
 When the mascot fires the light-orb beam attack toward the boss after a wave's gauge attack sequence, the system SHALL play the beam attack sound effect (`/sounds/time-attack-beam.mp3`).

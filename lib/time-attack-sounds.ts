@@ -4,6 +4,7 @@ import { isSoundEnabled } from "@/lib/sound-settings";
 import { SFX_VOLUME } from "@/lib/bgm-volume";
 
 export const TIME_ATTACK_BEAM_SOUND_SRC = "/sounds/time-attack-beam.mp3";
+export const TIME_ATTACK_GAUGE_CHARGE_SOUND_SRC = "/sounds/time-attack-gauge-charge.mp3";
 export const TIME_ATTACK_ONI_ATTACK_SOUND_SRC = "/sounds/time-attack-oni-attack.mp3";
 export const ONI_ROAR_SOUND_SRCS = [
   "/sounds/oni-roar-1.mp3",
@@ -16,6 +17,7 @@ export const ONI_ROAR_SOUND_SRCS = [
 
 const TIME_ATTACK_SOUND_SRCS = [
   TIME_ATTACK_BEAM_SOUND_SRC,
+  TIME_ATTACK_GAUGE_CHARGE_SOUND_SRC,
   TIME_ATTACK_ONI_ATTACK_SOUND_SRC,
   ...ONI_ROAR_SOUND_SRCS,
 ] as const;
@@ -66,6 +68,10 @@ export function primeTimeAttackSounds(): void {
 
 export function playTimeAttackBeamSound(): void {
   playTimeAttackSound(TIME_ATTACK_BEAM_SOUND_SRC);
+}
+
+export function playTimeAttackGaugeChargeSound(): void {
+  playTimeAttackSound(TIME_ATTACK_GAUGE_CHARGE_SOUND_SRC);
 }
 
 export function playTimeAttackOniAttackSound(): void {

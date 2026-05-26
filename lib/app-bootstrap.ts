@@ -1,7 +1,7 @@
 "use client";
 
 import { primeButtonSounds } from "@/lib/button-sounds";
-import { primeKeypadSounds } from "@/lib/keypad-sounds";
+import { primeKeypadSounds, waitForKeypadSoundsReady } from "@/lib/keypad-sounds";
 import { primeHomeBgm, waitForHomeBgmReady } from "@/lib/home-bgm";
 import { primeQuizBgm, waitForQuizBgmReady } from "@/lib/quiz-bgm";
 import { primeQuizSounds } from "@/lib/quiz-sounds";
@@ -47,7 +47,11 @@ export function bootstrapApp(): Promise<void> {
     primeHomeBgm();
     primeQuizBgm();
 
-    await Promise.all([waitForHomeBgmReady(), waitForQuizBgmReady()]);
+    await Promise.all([
+      waitForHomeBgmReady(),
+      waitForQuizBgmReady(),
+      waitForKeypadSoundsReady(),
+    ]);
 
     ready = true;
     notifyReady();

@@ -4,6 +4,7 @@ import "@fontsource/klee-one/600.css";
 import { AppLoadingGate } from "@/components/AppLoadingGate";
 import { BgmVisibilityLayer } from "@/components/BgmVisibilityLayer";
 import { ButtonSoundLayer } from "@/components/ButtonSoundLayer";
+import { KeypadSoundLayer } from "@/components/KeypadSoundLayer";
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
 
@@ -53,6 +54,7 @@ export default function RootLayout({
       <body>
         <AppLoadingGate>
           <BgmVisibilityLayer />
+          <KeypadSoundLayer />
           <ButtonSoundLayer />
           {children}
         </AppLoadingGate>

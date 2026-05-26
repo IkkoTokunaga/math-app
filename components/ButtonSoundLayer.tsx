@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { unlockAudioPlayback } from "@/lib/audio-unlock";
+import { prepareAudioForInteraction, unlockAudioPlayback } from "@/lib/audio-unlock";
 import {
   didPointerTapMove,
   playButtonSoundForTarget,
@@ -39,6 +39,7 @@ export function ButtonSoundLayer() {
       tapStartX = event.clientX;
       tapStartY = event.clientY;
       tapTarget = event.target;
+      prepareAudioForInteraction();
 
       void unlockAudioPlayback().then(() => {
         unlockHomeBgm();

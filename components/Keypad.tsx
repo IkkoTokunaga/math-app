@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { playKeypadDigitSound } from "@/lib/keypad-sounds";
+import { useEffect, useRef } from "react";
+import { playKeypadDigitSound, resumeKeypadAudioContext } from "@/lib/keypad-sounds";
 
 type KeypadProps = {
   value: string;
@@ -25,13 +25,9 @@ function BackspaceIcon() {
 }
 
 export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: KeypadProps) {
-  const appendDigit = (digit: string) => {
-    if (disabled || value.length >= maxDigits) {
-      return;
-    }
-    playKeypadDigitSound();
-    onChange(value + digit);
-  };
+  const keypadRef = useRef<HTMLDivElement>(null);
+  const stateRef = useRef({ disabled, value, maxDigits, onChange });
+  stateRef.current = { disabled, value, maxDigits, onChange };
 
   const backspace = () => {
     if (disabled) {
@@ -41,6 +37,48 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
   };
 
   useEffect(() => {
+    resumeKeypadAudioContext();
+  }, []);
+
+  useEffect(() => {
+    const keypad = keypadRef.current;
+    if (keypad == null) {
+      return;
+    }
+
+    const handleDigitPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      const button = (event.target as Element).closest("button.keypad-btn");
+      if (!(button instanceof HTMLButtonElement) || button.disabled) {
+        return;
+      }
+
+      const digit = button.textContent?.trim();
+      if (digit == null || !/^[0-9]$/.test(digit)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const { disabled: isDisabled, value: currentValue, maxDigits: limit, onChange: applyChange } =
+        stateRef.current;
+      if (isDisabled || currentValue.length >= limit) {
+        return;
+      }
+
+      applyChange(currentValue + digit);
+    };
+
+    keypad.addEventListener("pointerdown", handleDigitPointerDown, { capture: true });
+    return () => {
+      keypad.removeEventListener("pointerdown", handleDigitPointerDown, { capture: true });
+    };
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (disabled) {
         return;
@@ -48,8 +86,9 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
 
       if (/^[0-9]$/.test(event.key)) {
         event.preventDefault();
+        resumeKeypadAudioContext();
+        playKeypadDigitSound();
         if (value.length < maxDigits) {
-          playKeypadDigitSound();
           onChange(value + event.key);
         }
         return;
@@ -77,13 +116,12 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
   const digits = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
 
   return (
-    <div className="mx-auto grid w-full max-w-sm grid-cols-3 gap-3">
+    <div ref={keypadRef} className="mx-auto grid w-full max-w-sm grid-cols-3 gap-3">
       {digits.map((digit) => (
         <button
           key={digit}
           type="button"
           disabled={disabled}
-          onClick={() => appendDigit(digit)}
           className="keypad-btn"
         >
           {digit}
@@ -102,7 +140,6 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       <button
         type="button"
         disabled={disabled}
-        onClick={() => appendDigit("0")}
         className="keypad-btn"
       >
         0

@@ -123,11 +123,15 @@ During a quiz, the header SHALL show the mascot image at the top left, player na
 
 ### Requirement: Button sound effects
 
-The system SHALL play short sound effects on selected button presses. Primary action buttons outside the keypad (including mode selection) SHALL use the confirm button sound (`/sounds/button.mp3`). Level selection buttons (Lv1–Lv10) that start a standard quiz session SHALL use the level start sound (`/sounds/level-start.mp3`). Buttons that start a new time attack session (「タイムアタック（鬼退治）」, 「タイムアタックを新しく始める」, and time attack result 「もう一度」) SHALL use the time attack start sound (`/sounds/time-attack-start.mp3`). The resume button (「続きから」) SHALL use the time attack resume sound (`/sounds/time-attack-resume.mp3`). All keypad buttons (digits, backspace, and 「答える」) and tapping the mascot to return home SHALL NOT play a button sound.
+The system SHALL play short sound effects on selected button presses. Primary action buttons outside the keypad (including mode selection) SHALL use the confirm button sound (`/sounds/button.mp3`). Level selection buttons (Lv1–Lv10) that start a standard quiz session SHALL use the level start sound (`/sounds/level-start.mp3`). Buttons that start a new time attack session (「タイムアタック（鬼退治）」, 「タイムアタックを新しく始める」, and time attack result 「もう一度」) SHALL use the time attack start sound (`/sounds/time-attack-start.mp3`). The resume button (「続きから」) SHALL use the time attack resume sound (`/sounds/time-attack-resume.mp3`). Keypad digit buttons (0–9) and keyboard digit entry during a quiz SHALL play a short synthesized click sound (~18ms) via Web Audio API for minimum latency. Keypad backspace and 「答える」 buttons, and tapping the mascot to return home, SHALL NOT play a button sound or the keypad digit sound.
 
-#### Scenario: Keypad is silent
-- **WHEN** a player taps any keypad button or uses keypad keyboard shortcuts during a quiz
-- **THEN** the system does not play a button sound
+#### Scenario: Keypad digit sound
+- **WHEN** a player taps a digit button on the keypad or presses a digit key (0–9) on the keyboard during a quiz
+- **THEN** the system plays the keypad digit sound effect
+
+#### Scenario: Keypad non-digit is silent
+- **WHEN** a player taps backspace or 「答える」 on the keypad, or uses Backspace/Delete/Enter keyboard shortcuts during a quiz
+- **THEN** the system does not play a button sound or the keypad digit sound
 
 #### Scenario: Non-keypad button sound
 - **WHEN** a player taps a primary action button outside the keypad such as a mode button

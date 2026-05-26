@@ -1,5 +1,7 @@
 "use client";
 
+import { resumeKeypadAudioContext } from "@/lib/keypad-sounds";
+
 const UNLOCK_SOUND_SRC = "/sounds/button.mp3";
 
 let unlocked = false;
@@ -19,7 +21,14 @@ export function isAudioUnlocked(): boolean {
   return unlocked;
 }
 
+/** Resume low-latency audio on user gesture (sync, safe to call every pointerdown). */
+export function prepareAudioForInteraction(): void {
+  resumeKeypadAudioContext();
+}
+
 export function unlockAudioPlayback(): Promise<void> {
+  prepareAudioForInteraction();
+
   if (typeof window === "undefined" || unlocked) {
     return Promise.resolve();
   }
@@ -38,10 +47,12 @@ export function unlockAudioPlayback(): Promise<void> {
         audio.currentTime = 0;
         audio.volume = 1;
         unlocked = true;
+        resumeKeypadAudioContext();
         resolve();
       })
       .catch(() => {
         unlocked = true;
+        resumeKeypadAudioContext();
         resolve();
       })
       .finally(() => {

@@ -62,6 +62,8 @@ const CORRECT_POPUP_MS = 1000;
 const HEART_LOSS_PAUSE_MS = 220;
 const DARK_FADE_MS = 950;
 const GAUGE_DRAIN_MS = 580;
+/** Matches `.time-attack-gauge__fill--attack` width transition in globals.css */
+const GAUGE_FILL_RISE_MS = 550;
 const GAUGE_REFLECT_PAUSE_MS = 240;
 const ONI_SHAKE_MS = 520;
 const ONI_EXPLODE_MS = 680;
@@ -280,6 +282,7 @@ export function TimeAttackClient({
       timeAttackState?: TimeAttackState;
       questions?: Question[];
     },
+    options?: { awaitGaugeFill?: boolean },
   ) => {
     if (!result.waveComplete || !result.timeAttackState) {
       return;
@@ -305,7 +308,11 @@ export function TimeAttackClient({
       pendingTotalScoreRef.current = null;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, motionMs(GAUGE_REFLECT_PAUSE_MS, 80)));
+    const pauseBeforeDrain =
+      (options?.awaitGaugeFill ?? false)
+        ? motionMs(GAUGE_FILL_RISE_MS + GAUGE_REFLECT_PAUSE_MS, 300)
+        : motionMs(GAUGE_REFLECT_PAUSE_MS, 80);
+    await new Promise((resolve) => setTimeout(resolve, pauseBeforeDrain));
 
     setGaugeDraining(true);
     setMascotCharging(true);
@@ -402,7 +409,7 @@ export function TimeAttackClient({
     const advance = pendingAdvanceRef.current;
     if (advance) {
       pendingAdvanceRef.current = null;
-      void beginWaveAttack(advance.sessionId, advance.result);
+      void beginWaveAttack(advance.sessionId, advance.result, { awaitGaugeFill: true });
     }
   };
 
@@ -471,7 +478,7 @@ export function TimeAttackClient({
     if (result.waveComplete) {
       markDefeatLoading(result);
       advanceAfterWavePopup(result);
-      void beginWaveAttack(sessionId, result);
+      void beginWaveAttack(sessionId, result, { awaitGaugeFill: false });
       return;
     }
 

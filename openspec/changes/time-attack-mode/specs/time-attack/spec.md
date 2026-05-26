@@ -353,6 +353,7 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th
 #### Scenario: Q5 result reflected before attack drain
 - **WHEN** a player completes the 5th question of a wave with a correct answer
 - **THEN** the attack gauge updates to include that question's score before the drain animation begins
+- **AND** the gauge fill rise animation completes (reaching the score position) before the gauge-to-mascot light sequence starts
 
 #### Scenario: Attack gauge drains while light flies to mascot
 - **WHEN** a 5-question wave completes

@@ -16,15 +16,36 @@ The progress dashboard SHALL allow switching between **足し算** and **引き�
 
 ### Requirement: Recent session history
 
-The system SHALL display the 5 most recent sessions for the selected player **and selected operation**, showing date, level, correct count, accuracy, stars, and total score.
+The system SHALL display the 5 most recent sessions for the selected player **and selected operation**, in reverse chronological order. The list SHALL include both **standard** (10-question) sessions and **time attack** sessions for the selected operation.
+
+**Standard sessions** SHALL show date, level, correct count, stars, and total score.
+
+**Time attack sessions** SHALL show date, total score, outcome (クリア / 3回ミス / おつかれさま), boss reached (`到達`), and bosses defeated count (`ボス撃破`). Star rating SHALL NOT be shown for time attack entries.
+
+The dashboard SHALL also show **タイムアタック** **過去最高得点** (highest total score across all completed time attack sessions for the selected operation). When the player has no completed time attack sessions for that operation, the dashboard SHALL show `—` and a brief message that they have not played yet.
+
+Weekly average accuracy, level unlock progress, and weak spots SHALL continue to use **standard sessions only**.
 
 #### Scenario: View recent subtraction history
 - **WHEN** a player opens the progress dashboard with 引き算 selected
-- **THEN** the 5 most recent subtraction sessions are listed in reverse chronological order
+- **THEN** the 5 most recent subtraction sessions (standard and time attack) are listed in reverse chronological order
 
 #### Scenario: View recent addition history
 - **WHEN** a player opens the progress dashboard with 足し算 selected
-- **THEN** the 5 most recent addition sessions are listed in reverse chronological order
+- **THEN** the 5 most recent addition sessions (standard and time attack) are listed in reverse chronological order
+
+#### Scenario: Time attack entry in recent history
+- **WHEN** a player has completed a time attack session for the selected operation
+- **THEN** the recent history shows a **タイムアタック** row with score, outcome, boss reached, and bosses defeated
+- **AND** no star rating is shown for that row
+
+#### Scenario: Time attack best score
+- **WHEN** a player has completed time attack sessions for the selected operation
+- **THEN** the dashboard shows the highest total score among those sessions as **過去最高得点**
+
+#### Scenario: No time attack sessions
+- **WHEN** a player has no completed time attack sessions for the selected operation
+- **THEN** **過去最高得点** shows `—` and indicates they have not played yet
 
 ### Requirement: Weekly average accuracy
 

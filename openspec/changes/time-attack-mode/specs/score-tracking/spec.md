@@ -99,3 +99,18 @@ Time attack session results SHALL be persisted to the database for authenticated
 #### Scenario: In-progress session saved
 - **WHEN** a player answers a question during an active time attack session
 - **THEN** the session state is persisted for later resume
+
+### Requirement: Time attack results in progress dashboard
+
+Completed time attack sessions SHALL appear in the progress dashboard **最近の結果** list for the matching operation, mixed with standard sessions in reverse chronological order (most recent 5 total). Each time attack row SHALL show **タイムアタック**, played date, total score, outcome, boss reached, and bosses defeated. Star rating SHALL NOT be shown.
+
+The progress dashboard SHALL also display **過去最高得点** for the selected operation: the maximum total score among all completed time attack sessions for that operation.
+
+#### Scenario: Time attack shown in recent history
+- **WHEN** a logged-in player opens the progress dashboard after completing a time attack session
+- **THEN** that session appears in **最近の結果** for the matching operation tab
+- **AND** the row shows score and boss progress without stars
+
+#### Scenario: Time attack best score on dashboard
+- **WHEN** a logged-in player has multiple completed time attack sessions for an operation
+- **THEN** the dashboard **タイムアタック** section shows the highest total score as **過去最高得点**

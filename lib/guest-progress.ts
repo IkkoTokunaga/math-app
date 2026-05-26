@@ -3,6 +3,7 @@ import type { GuestCompletedSession } from "@/lib/guest/types";
 import { formatExpression } from "@/lib/operations";
 import type { Operation } from "@/lib/operations";
 import { DEFAULT_OPERATION } from "@/lib/operations";
+import type { ProgressData, RecentSession } from "@/lib/progress";
 
 function getWeekStart(date: Date): Date {
   const result = new Date(date);
@@ -40,7 +41,7 @@ function calculateLearningStreak(dates: Date[]): number {
 export function computeGuestProgress(
   completedSessions: GuestCompletedSession[],
   operation: Operation = DEFAULT_OPERATION,
-) {
+): ProgressData {
   const scoped = completedSessions.filter(
     (session) => (session.operation ?? DEFAULT_OPERATION) === operation,
   );
@@ -48,8 +49,9 @@ export function computeGuestProgress(
     (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
   );
 
-  const recentSessions = sorted.slice(0, 5).map((session) => ({
+  const recentSessions: RecentSession[] = sorted.slice(0, 5).map((session) => ({
     id: session.localId,
+    mode: "standard" as const,
     level: session.level,
     correctAnswers: session.correctAnswers,
     accuracy: session.accuracy,
@@ -107,6 +109,7 @@ export function computeGuestProgress(
   return {
     operation,
     recentSessions,
+    timeAttackBestScore: null,
     weeklyAverage,
     learningStreak,
     unlockedLevel,

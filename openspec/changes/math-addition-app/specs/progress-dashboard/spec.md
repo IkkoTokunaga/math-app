@@ -2,11 +2,15 @@
 
 ### Requirement: Recent session history
 
-The system SHALL display the 5 most recent sessions for the selected player, showing date, level, correct count, accuracy, stars, and total score.
+The system SHALL display the 5 most recent sessions for the selected player, in reverse chronological order. The list SHALL include both standard (10-question) sessions and time attack sessions. Standard sessions show date, level, correct count, accuracy, stars, and total score. Time attack sessions show date, total score, outcome, boss reached, and bosses defeated without stars. The dashboard SHALL also show time attack **過去最高得点** for logged-in players.
 
 #### Scenario: View recent history
 - **WHEN** a player opens the progress dashboard
-- **THEN** the 5 most recent sessions are listed in reverse chronological order
+- **THEN** the 5 most recent sessions (standard and time attack) are listed in reverse chronological order
+
+#### Scenario: Time attack entry in recent history
+- **WHEN** a player has completed a time attack session
+- **THEN** the recent history shows a **タイムアタック** row with score and boss progress
 
 ### Requirement: Weekly average accuracy
 

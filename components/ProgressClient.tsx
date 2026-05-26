@@ -12,35 +12,65 @@ import { readGuestStore } from "@/lib/guest-storage";
 import { QUESTIONS_PER_SESSION } from "@/lib/questions";
 import type { Operation } from "@/lib/operations";
 import { DEFAULT_OPERATION, getMascotSrc, parseOperation } from "@/lib/operations";
+import { formatPoints } from "@/lib/format-number";
 import { renderStars, STAR_COUNT } from "@/lib/scoring";
-
-type ProgressData = {
-  operation: Operation;
-  recentSessions: Array<{
-    id: string;
-    level: number;
-    correctAnswers: number | null;
-    accuracy: number | null;
-    totalQuestions?: number | null;
-    stars: number | null;
-    totalScore: number | null;
-    playedAt: string | Date;
-  }>;
-  weeklyAverage: number | null;
-  learningStreak: number;
-  unlockedLevel: number;
-  unlockProgress: {
-    nextLevel: number | null;
-    currentStar4: number;
-    requiredStar4: number;
-    hasPerfect: boolean;
-  };
-  weakSpots: Array<{ label: string; missCount: number }>;
-};
+import type { ProgressData, RecentSession } from "@/lib/progress";
 
 type ProgressClientProps = {
   auth: AuthState;
 };
+
+function formatTimeAttackOutcome(session: Extract<RecentSession, { mode: "time_attack" }>): string {
+  if (session.cleared) {
+    return "クリア！";
+  }
+  if (session.failReason === "mistakes") {
+    return "3回ミス";
+  }
+  return "おつかれさま";
+}
+
+function RecentSessionRow({ session }: { session: RecentSession }) {
+  if (session.mode === "time_attack") {
+    return (
+      <div className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-bold">タイムアタック</p>
+          <p className="text-sm text-dim">
+            {new Date(session.playedAt).toLocaleString("ja-JP")}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className={`font-bold ${session.cleared ? "text-success" : ""}`}>
+            {formatTimeAttackOutcome(session)}
+          </p>
+          <p>{formatPoints(session.totalScore)}点</p>
+          <p className="text-sm text-dim">
+            到達: {session.bossLabel}　ボス撃破: {session.bossesDefeated}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="font-bold">Lv{session.level}</p>
+        <p className="text-sm text-dim">
+          {new Date(session.playedAt).toLocaleString("ja-JP")}
+        </p>
+      </div>
+      <div className="text-right">
+        <p>{renderStars(session.stars ?? 0)}</p>
+        <p>
+          {session.correctAnswers}/{session.totalQuestions ?? QUESTIONS_PER_SESSION} 問　
+          {formatPoints(session.totalScore)}点
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function ProgressClient({ auth }: ProgressClientProps) {
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
@@ -217,28 +247,28 @@ export function ProgressClient({ auth }: ProgressClientProps) {
             </section>
           )}
 
+          {auth.loggedIn && (
+            <section className="progress-panel-section">
+              <h2 className="chalk-heading mb-2 text-2xl font-bold">タイムアタック</h2>
+              <div>
+                <p className="text-sm text-muted">過去最高得点</p>
+                <p className="text-2xl font-bold">
+                  {displayData.timeAttackBestScore != null
+                    ? `${formatPoints(displayData.timeAttackBestScore)}点`
+                    : "—"}
+                </p>
+                {displayData.timeAttackBestScore == null && auth.loggedIn && (
+                  <p className="text-sm text-muted">まだプレイしていません</p>
+                )}
+              </div>
+            </section>
+          )}
+
           <section className="progress-panel-section">
             <h2 className="chalk-heading mb-4 text-2xl font-bold">最近の結果</h2>
             <div className="flex flex-col gap-3">
               {displayData.recentSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div>
-                    <p className="font-bold">Lv{session.level}</p>
-                    <p className="text-sm text-dim">
-                      {new Date(session.playedAt).toLocaleString("ja-JP")}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p>{renderStars(session.stars ?? 0)}</p>
-                    <p>
-                      {session.correctAnswers}/{session.totalQuestions ?? QUESTIONS_PER_SESSION} 問　
-                      {session.totalScore}点
-                    </p>
-                  </div>
-                </div>
+                <RecentSessionRow key={session.id} session={session} />
               ))}
               {displayData.recentSessions.length === 0 && (
                 <p className="text-muted">まだ記録がありません</p>

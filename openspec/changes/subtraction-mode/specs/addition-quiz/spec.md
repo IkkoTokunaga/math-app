@@ -2,7 +2,7 @@
 
 ### Requirement: Operation selection on play screen
 
-The play screen SHALL allow choosing between **足し算** (addition) and **引き算** (subtraction) before level or mode selection. The selected operation SHALL persist while the player remains on the play screen. Operation selection SHALL be presented as **tabs** with a blackboard-style frame: two tab labels (**足し算** / **引き算**) above a shared panel that shows the mode and level controls for the selected operation.
+The play screen SHALL allow choosing between **足し算** (addition) and **引き算** (subtraction) before level or mode selection. The selected operation SHALL persist while the player remains on the play screen. Operation selection SHALL be presented as **tabs** with a blackboard-style frame: two tab labels (**足し算** / **引き算**) above a shared panel that shows the mode and level controls for the selected operation. The active tab SHALL share the same background as the panel below with no dividing line between them; inactive tabs SHALL appear recessed with a bottom border separating them from the panel.
 
 #### Scenario: Operation tabs visible on play screen
 - **WHEN** a player opens the play screen

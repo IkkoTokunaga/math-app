@@ -157,6 +157,7 @@ export function applyWaveDamage(state: TimeAttackState, waveScore: number): Wave
     oniHpRemaining: 0,
     totalScore: next.totalScore + defeatBonus,
     bossesDefeated: state.bossesDefeated + 1,
+    mistakeCount: Math.max(0, state.mistakeCount - 1),
   };
 
   if (state.currentLevel < 9) {

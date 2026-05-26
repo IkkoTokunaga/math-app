@@ -95,6 +95,31 @@ describe("time-attack state", () => {
     }
   });
 
+  it("recovers one heart on boss defeat without exceeding max", () => {
+    const state = { ...createInitialTimeAttackState(), mistakeCount: 2 };
+    const result = applyWaveDamage(state, state.oniHpMax);
+    assert.equal(result.kind, "defeated");
+    if (result.kind === "defeated") {
+      assert.equal(result.state.mistakeCount, 1);
+    }
+
+    const fullHearts = createInitialTimeAttackState();
+    const noChange = applyWaveDamage(fullHearts, fullHearts.oniHpMax);
+    assert.equal(noChange.kind, "defeated");
+    if (noChange.kind === "defeated") {
+      assert.equal(noChange.state.mistakeCount, 0);
+    }
+  });
+
+  it("does not recover hearts when wave damage is insufficient", () => {
+    const state = { ...createInitialTimeAttackState(), mistakeCount: 2 };
+    const result = applyWaveDamage(state, 50);
+    assert.equal(result.kind, "continue");
+    if (result.kind === "continue") {
+      assert.equal(result.state.mistakeCount, 2);
+    }
+  });
+
   it("advances from level 8 to Enma at level 9", () => {
     const state = createDevTimeAttackState({ level: 8, enmaNumber: 0 });
     const result = applyWaveDamage(state, state.oniHpMax);

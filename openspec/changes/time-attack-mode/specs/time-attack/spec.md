@@ -136,6 +136,25 @@ When the mistake count reaches **3**, the time attack session SHALL end and navi
 - **AND** the screen darkens
 - **AND** the result screen is shown
 
+### Requirement: Heart recovery on boss defeat
+
+When a boss is defeated by wave damage, the system SHALL recover **one heart** by decreasing the mistake count by 1. The mistake count SHALL NOT fall below **0**, so the player SHALL have at most **3 hearts** at any time.
+
+#### Scenario: Heart recovered on oni defeat
+- **WHEN** a player defeats a boss and had previously lost at least one heart
+- **THEN** the empty heart slot expands once
+- **AND** the heart fills back in and returns to normal size
+- **AND** the heart display reflects the recovered life before the next wave begins
+
+#### Scenario: Hearts capped at three
+- **WHEN** a player defeats a boss while already at full hearts (mistake count 0)
+- **THEN** the mistake count remains 0
+- **AND** no additional hearts are granted
+
+#### Scenario: No recovery on non-defeat wave
+- **WHEN** a wave ends without defeating the boss
+- **THEN** the mistake count is unchanged
+
 ### Requirement: Per-question time limit without session end on timeout
 
 Each question SHALL have an internal time limit used for **time bonus calculation only**. The limit SHALL NOT be shown to the player. When the limit elapses, the session SHALL **NOT** end. The player MAY continue answering; a correct answer after timeout SHALL award **base points only** (time bonus = 0). Timeout SHALL NOT increment the mistake counter.
@@ -260,19 +279,19 @@ After defeating **閻魔大王** at level 10, the time attack session SHALL end 
 
 During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 5-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. Numeric score values SHALL NOT be shown on the attack or HP gauges. A separate **鬼 HP** gauge (segmented) SHALL remain visible at all times. The HP gauge header SHALL combine the boss level label and HP into one line (e.g. **鬼 Lv3 HP** for oni stages, **閻魔大王 HP** for Enma). The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
 
-When a player answers correctly, the system SHALL NOT show earned points in the success popup. The success popup SHALL dismiss after approximately **1 second**, and the next question SHALL become available at that time (except when the wave is complete). The light and gauge charge animation SHALL continue independently in the background until it finishes. White sparkling light orbs SHALL gather from a wide area around the feedback, merge into one cluster at the center, and then travel together toward the attack gauge. The gauge fill SHALL increase when the cluster reaches the gauge.
+When a player answers correctly, the system SHALL NOT show earned points in the success popup. The success popup SHALL dismiss after approximately **1 second**, and the next question SHALL become available at that time (except when the wave is complete). The attack gauge fill SHALL increase to the new score position **before** the light gather animation begins. After the gauge rise completes, white sparkling light orbs SHALL gather from a wide area around the feedback, merge into one cluster at the center, and then travel together toward the attack gauge at the updated fill position.
 
 #### Scenario: Bar updates on correct answer
 - **WHEN** a player earns points during a wave
-- **THEN** white sparkling light orbs gather from a wide area into one cluster
-- **AND** the cluster travels to the attack gauge
-- **AND** the attack gauge fill increases when the cluster reaches the gauge
+- **THEN** the attack gauge fill rises to the new score position
+- **AND** after the rise completes, white sparkling light orbs gather from a wide area into one cluster
+- **AND** the cluster travels to the attack gauge at the updated fill position
 
 #### Scenario: Success popup dismisses before light animation completes
 - **WHEN** a player answers correctly
 - **THEN** the success popup dismisses after approximately 1 second
 - **AND** the next question is shown (unless the wave is complete)
-- **AND** the light gather and gauge charge animation continues until the cluster reaches the attack gauge
+- **AND** the gauge rise and subsequent light gather animation continue until the cluster reaches the attack gauge
 
 #### Scenario: No numeric values on gauges
 - **WHEN** the quiz view is displayed
@@ -352,8 +371,8 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th
 
 #### Scenario: Q5 result reflected before attack drain
 - **WHEN** a player completes the 5th question of a wave with a correct answer
-- **THEN** the attack gauge updates to include that question's score before the drain animation begins
-- **AND** the gauge fill rise animation completes (reaching the score position) before the gauge-to-mascot light sequence starts
+- **THEN** the attack gauge rises to include that question's score before the light gather animation begins
+- **AND** the gauge-to-mascot light sequence starts only after the feedback-to-gauge light animation completes
 
 #### Scenario: Attack gauge drains while light flies to mascot
 - **WHEN** a 5-question wave completes

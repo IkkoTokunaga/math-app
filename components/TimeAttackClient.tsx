@@ -14,6 +14,7 @@ import { QuizMascot } from "@/components/QuizMascot";
 import { TimeAttackArena } from "@/components/TimeAttackArena";
 import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
 import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
+import type { HeartRecoveryAnim } from "@/components/TimeAttackLives";
 import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
 import { getWaveMaxScoreForState, isEnmaBoss, type TimeAttackState } from "@/lib/time-attack";
@@ -60,6 +61,8 @@ function getMaxAnswerDigits(operation: Operation, level: TimeAttackState["curren
 
 const CORRECT_POPUP_MS = 1000;
 const HEART_LOSS_PAUSE_MS = 220;
+const HEART_RECOVER_EXPAND_MS = 320;
+const HEART_RECOVER_FILL_MS = 360;
 const DARK_FADE_MS = 950;
 const GAUGE_DRAIN_MS = 580;
 /** Matches `.time-attack-gauge__fill--attack` width transition in globals.css */
@@ -148,6 +151,7 @@ export function TimeAttackClient({
   const [displayMistakeCount, setDisplayMistakeCount] = useState(
     initialSession.timeAttackState.mistakeCount,
   );
+  const [heartRecovery, setHeartRecovery] = useState<HeartRecoveryAnim | null>(null);
   const [evilOrbAnimId, setEvilOrbAnimId] = useState(0);
   const [mascotHit, setMascotHit] = useState(false);
   const [screenDarkening, setScreenDarkening] = useState(false);
@@ -160,9 +164,8 @@ export function TimeAttackClient({
   const oniRef = useRef<HTMLDivElement>(null);
   const feedbackPopupRef = useRef<HTMLDivElement>(null);
   const attackGaugeRef = useRef<HTMLDivElement>(null);
-  const pendingGaugeTargetRef = useRef<number | null>(null);
-  const pendingTotalScoreRef = useRef<number | null>(null);
   const pendingAdvanceRef = useRef<PendingAdvance | null>(null);
+  const gaugeLightDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingQuestionStateRef = useRef<TimeAttackState | null>(null);
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mascotLightDoneRef = useRef<(() => void) | null>(null);
@@ -183,6 +186,9 @@ export function TimeAttackClient({
       document.body.classList.remove("quiz-active");
       if (correctPopupTimerRef.current != null) {
         clearTimeout(correctPopupTimerRef.current);
+      }
+      if (gaugeLightDelayTimerRef.current != null) {
+        clearTimeout(gaugeLightDelayTimerRef.current);
       }
     };
   }, [initialSession.timeAttackState.currentLevel]);
@@ -254,6 +260,24 @@ export function TimeAttackClient({
     setPreviewWaveScore(null);
   };
 
+  const playHeartRecovery = async (prevMistakeCount: number, nextMistakeCount: number) => {
+    if (nextMistakeCount >= prevMistakeCount) {
+      return;
+    }
+
+    const heartIndex = MAX_MISTAKES - prevMistakeCount;
+    setHeartRecovery({ index: heartIndex, phase: "expand" });
+    await new Promise((resolve) =>
+      setTimeout(resolve, motionMs(HEART_RECOVER_EXPAND_MS, 120)),
+    );
+
+    setHeartRecovery({ index: heartIndex, phase: "fill" });
+    setDisplayMistakeCount(nextMistakeCount);
+    await new Promise((resolve) => setTimeout(resolve, motionMs(HEART_RECOVER_FILL_MS, 120)));
+
+    setHeartRecovery(null);
+  };
+
   const unlockQuestionInput = () => {
     setAnswer("");
     questionStartedAtRef.current = Date.now();
@@ -282,7 +306,6 @@ export function TimeAttackClient({
       timeAttackState?: TimeAttackState;
       questions?: Question[];
     },
-    options?: { awaitGaugeFill?: boolean },
   ) => {
     if (!result.waveComplete || !result.timeAttackState) {
       return;
@@ -300,19 +323,9 @@ export function TimeAttackClient({
       clearFeedbackPopup();
     }
 
-    pendingGaugeTargetRef.current = null;
-
     setGaugeDisplayScore(reflectedWaveScore);
-    if (pendingTotalScoreRef.current != null) {
-      setRunningScore(pendingTotalScoreRef.current);
-      pendingTotalScoreRef.current = null;
-    }
 
-    const pauseBeforeDrain =
-      (options?.awaitGaugeFill ?? false)
-        ? motionMs(GAUGE_FILL_RISE_MS + GAUGE_REFLECT_PAUSE_MS, 300)
-        : motionMs(GAUGE_REFLECT_PAUSE_MS, 80);
-    await new Promise((resolve) => setTimeout(resolve, pauseBeforeDrain));
+    await new Promise((resolve) => setTimeout(resolve, motionMs(GAUGE_REFLECT_PAUSE_MS, 80)));
 
     setGaugeDraining(true);
     setMascotCharging(true);
@@ -348,6 +361,10 @@ export function TimeAttackClient({
         setTimeout(resolve, motionMs(isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS, isFinalClear ? 700 : 350)),
       );
       setOniPhase("hidden");
+
+      if (!result.sessionEnded) {
+        await playHeartRecovery(displayMistakeCount, result.timeAttackState.mistakeCount);
+      }
 
       if (result.sessionEnded) {
         await new Promise((resolve) =>
@@ -394,22 +411,13 @@ export function TimeAttackClient({
   };
 
   const handleGaugeReach = () => {
-    if (pendingGaugeTargetRef.current != null) {
-      setGaugeDisplayScore(pendingGaugeTargetRef.current);
-      pendingGaugeTargetRef.current = null;
-    }
-    if (pendingTotalScoreRef.current != null) {
-      setRunningScore(pendingTotalScoreRef.current);
-      pendingTotalScoreRef.current = null;
-    }
-
     setGaugeCharging(true);
     setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
 
     const advance = pendingAdvanceRef.current;
     if (advance) {
       pendingAdvanceRef.current = null;
-      void beginWaveAttack(advance.sessionId, advance.result, { awaitGaugeFill: true });
+      void beginWaveAttack(advance.sessionId, advance.result);
     }
   };
 
@@ -478,7 +486,7 @@ export function TimeAttackClient({
     if (result.waveComplete) {
       markDefeatLoading(result);
       advanceAfterWavePopup(result);
-      void beginWaveAttack(sessionId, result, { awaitGaugeFill: false });
+      void beginWaveAttack(sessionId, result);
       return;
     }
 
@@ -575,12 +583,13 @@ export function TimeAttackClient({
         setFeedbackType("success");
 
         if (result.timeAttackState) {
-          pendingGaugeTargetRef.current = result.timeAttackState.waveScoreAccumulated;
-          pendingTotalScoreRef.current = result.timeAttackState.totalScore;
           const maxScore = getWaveMaxScoreForState(result.timeAttackState);
           setGaugeLightFillRatio(
             maxScore > 0 ? result.timeAttackState.waveScoreAccumulated / maxScore : 0,
           );
+          setGaugeCharging(true);
+          setGaugeDisplayScore(result.timeAttackState.waveScoreAccumulated);
+          setRunningScore(result.timeAttackState.totalScore);
           if (!waveComplete) {
             pendingQuestionStateRef.current = result.timeAttackState;
           }
@@ -593,7 +602,15 @@ export function TimeAttackClient({
           pendingAdvanceRef.current = null;
         }
 
-        setGaugeLightAnimId((id) => id + 1);
+        if (gaugeLightDelayTimerRef.current != null) {
+          clearTimeout(gaugeLightDelayTimerRef.current);
+        }
+        gaugeLightDelayTimerRef.current = setTimeout(() => {
+          gaugeLightDelayTimerRef.current = null;
+          setGaugeCharging(false);
+          setGaugeLightAnimId((id) => id + 1);
+        }, motionMs(GAUGE_FILL_RISE_MS, 220));
+
         scheduleCorrectPopupDismiss(waveComplete);
         return;
       }
@@ -680,6 +697,7 @@ export function TimeAttackClient({
           previewWaveScore={previewWaveScore}
           mistakeCount={displayMistakeCount}
           maxMistakes={MAX_MISTAKES}
+          heartRecovery={heartRecovery}
         />
         <TimeAttackArena
           className="time-attack-arena--inline time-attack-top__hp"

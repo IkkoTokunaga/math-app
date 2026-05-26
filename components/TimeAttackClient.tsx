@@ -6,9 +6,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   submitTimeAttackAnswerAction,
 } from "@/app/actions/time-attack";
-import { GaugeLightCharge } from "@/components/GaugeLightCharge";
+import { GaugeLightCharge, ATTACK_GATHER_MS, ATTACK_CLUSTER_HOLD_MS, ATTACK_FLY_MS } from "@/components/GaugeLightCharge";
 import { Keypad } from "@/components/Keypad";
-import { MascotLightOrb, type OniPhase } from "@/components/MascotLightOrb";
+import { MascotLightOrb, LIGHT_ORB_FLY_MS, type OniPhase } from "@/components/MascotLightOrb";
 import { OniEvilOrb } from "@/components/OniEvilOrb";
 import { QuizMascot } from "@/components/QuizMascot";
 import { TimeAttackArena } from "@/components/TimeAttackArena";
@@ -90,6 +90,8 @@ type WrongAnswerResult = {
 
 type PendingAdvance = {
   sessionId: string;
+  waveMaxScore: number;
+  hpAfter: number;
   result: {
     waveComplete?: boolean;
     waveScore?: number;
@@ -102,12 +104,31 @@ type PendingAdvance = {
   };
 };
 
+type QueuedWaveAttack = {
+  sessionId: string;
+  waveScore: number;
+  waveMaxScore: number;
+  hpAfter: number;
+  awaitGaugeFill?: boolean;
+  result: PendingAdvance["result"];
+};
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 function motionMs(full: number, reduced: number): number {
   return prefersReducedMotion() ? reduced : full;
+}
+
+const MASCOT_LIGHT_MS = ATTACK_GATHER_MS + ATTACK_CLUSTER_HOLD_MS + ATTACK_FLY_MS;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function waitWithMotionFallback(promise: Promise<void>, timeoutMs: number): Promise<void> {
+  return Promise.race([promise, delay(motionMs(timeoutMs, Math.round(timeoutMs * 0.4)))]);
 }
 
 /** 5問目完了時は timeAttackState.waveScoreAccumulated が既に 0 になっているため waveScore を使う */
@@ -155,7 +176,11 @@ export function TimeAttackClient({
   const [mascotCharging, setMascotCharging] = useState(false);
   const [lightOrbAnimId, setLightOrbAnimId] = useState(0);
   const [lightOrbFiring, setLightOrbFiring] = useState(false);
-  const [previewWaveScore, setPreviewWaveScore] = useState<number | null>(null);
+  const [attackDrain, setAttackDrain] = useState<{
+    score: number;
+    maxScore: number;
+    draining: boolean;
+  } | null>(null);
   const [timerPaused, setTimerPaused] = useState(false);
   const [waveMessage, setWaveMessage] = useState<string | null>(null);
   const [oniPhase, setOniPhase] = useState<OniPhase>("idle");
@@ -186,6 +211,8 @@ export function TimeAttackClient({
   const lightOrbDoneRef = useRef<(() => void) | null>(null);
   const pendingWrongResultRef = useRef<WrongAnswerResult | null>(null);
   const oniEnterDoneRef = useRef<(() => void) | null>(null);
+  const attackQueueRef = useRef<QueuedWaveAttack[]>([]);
+  const processingAttackRef = useRef(false);
 
   useEffect(() => {
     questionStartedAtRef.current = Date.now();
@@ -273,7 +300,6 @@ export function TimeAttackClient({
     if (!options?.preserveGaugeDisplay) {
       setGaugeDisplayScore(state.waveScoreAccumulated);
     }
-    setPreviewWaveScore(null);
   };
 
   const playHeartRecovery = async (prevMistakeCount: number, nextMistakeCount: number) => {
@@ -302,61 +328,21 @@ export function TimeAttackClient({
     setSubmitting(false);
   };
 
-  const advanceAfterWavePopup = (result: PendingAdvance["result"]) => {
-    if (result.bossDefeated || !result.timeAttackState) {
-      return;
-    }
-    applyWaveAdvanceState(result.timeAttackState, result.questions, {
-      preserveGaugeDisplay: true,
-    });
-    unlockQuestionInput();
-  };
-
-  const beginWaveAttack = async (
-    id: string,
-    result: {
-      waveComplete?: boolean;
-      waveScore?: number;
-      bossDefeated?: boolean;
-      defeatBonus?: number;
-      cleared?: boolean;
-      sessionEnded?: boolean;
-      timeAttackState?: TimeAttackState;
-      questions?: Question[];
-    },
-    options?: { awaitGaugeFill?: boolean },
-  ) => {
-    if (!result.waveComplete || !result.timeAttackState) {
-      return;
-    }
-
-    const waveScore = result.waveScore ?? 0;
-    const hpAfter = result.bossDefeated ? 0 : result.timeAttackState.oniHpRemaining;
-    const reflectedWaveScore =
-      waveScore > 0 ? waveScore : result.timeAttackState.waveScoreAccumulated;
-    const isBossDefeat = Boolean(result.bossDefeated);
-
-    if (isBossDefeat) {
-      setDefeatLoading(true);
-      setTimerPaused(true);
-      clearFeedbackPopup();
-    }
-
-    pendingGaugeTargetRef.current = null;
-
-    if (!(options?.awaitGaugeFill ?? false)) {
-      setGaugeDisplayScore(reflectedWaveScore);
-    }
+  const playBackgroundWaveAttack = async (attack: QueuedWaveAttack) => {
+    const { waveScore, waveMaxScore, hpAfter } = attack;
 
     const pauseBeforeDrain =
-      (options?.awaitGaugeFill ?? false)
+      (attack.awaitGaugeFill ?? false)
         ? motionMs(GAUGE_FILL_RISE_MS + GAUGE_REFLECT_PAUSE_MS, 300)
         : motionMs(GAUGE_REFLECT_PAUSE_MS, 80);
-    await new Promise((resolve) => setTimeout(resolve, pauseBeforeDrain));
+    await delay(pauseBeforeDrain);
 
+    setGaugeDisplayScore(0);
     setGaugeDraining(true);
     setMascotCharging(true);
-    setGaugeDisplayScore(0);
+    setAttackDrain({ score: waveScore, maxScore: waveMaxScore, draining: true });
+    await delay(16);
+    setAttackDrain({ score: 0, maxScore: waveMaxScore, draining: true });
     playTimeAttackGaugeChargeSound();
 
     const mascotLightPromise = new Promise<void>((resolve) => {
@@ -365,79 +351,177 @@ export function TimeAttackClient({
     });
 
     await Promise.all([
-      new Promise((resolve) => setTimeout(resolve, motionMs(GAUGE_DRAIN_MS, 220))),
-      mascotLightPromise,
+      delay(motionMs(GAUGE_DRAIN_MS, 220)),
+      waitWithMotionFallback(mascotLightPromise, MASCOT_LIGHT_MS),
     ]);
     setGaugeDraining(false);
+    setMascotCharging(false);
 
-    await playLightOrbAttack();
+    await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
 
     setOniPhase("shaking");
     setHpHit(true);
     setDisplayHp(hpAfter);
 
-    await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_SHAKE_MS, 320)));
+    await delay(motionMs(ONI_SHAKE_MS, 320));
     setHpHit(false);
+    setOniPhase("idle");
+    setAttackDrain(null);
+  };
 
-    if (result.bossDefeated) {
-      const isFinalClear = Boolean(result.cleared);
-      showDefeatPopup(isFinalClear ? "鬼、すべて撃破！" : "鬼撃破！");
-
-      setOniPhase("exploding");
-      await new Promise((resolve) =>
-        setTimeout(resolve, motionMs(isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS, isFinalClear ? 700 : 350)),
-      );
-      setOniPhase("hidden");
-
-      if (!result.sessionEnded) {
-        await playHeartRecovery(displayMistakeCount, result.timeAttackState.mistakeCount);
-      }
-
-      if (result.sessionEnded) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, motionMs(isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS, isFinalClear ? 900 : 400)),
-        );
-        clearFeedbackPopup();
-        redirectToResult(id);
-        return;
-      }
-
-      setAwaitingNextOni(true);
-
-      await new Promise((resolve) => setTimeout(resolve, motionMs(80, 40)));
-      syncBossDisplay(result.timeAttackState);
-      if (
-        result.timeAttackState &&
-        !isEnmaBoss(result.timeAttackState.currentLevel)
-      ) {
-        playTimeAttackOniRoarSound();
-      }
-      setOniPhase("entering");
-      await Promise.race([
-        waitForOniEnterComplete(),
-        new Promise((resolve) => setTimeout(resolve, motionMs(ONI_ENTER_MS + 80, 320))),
-      ]);
-      oniEnterDoneRef.current = null;
-      setOniPhase("idle");
-      await new Promise((resolve) => setTimeout(resolve, motionMs(ONI_SETTLE_MS, 80)));
-      setAwaitingNextOni(false);
-
-      applyWaveAdvanceState(result.timeAttackState, result.questions);
-
-      clearFeedbackPopup();
-      setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
-      await new Promise((resolve) => setTimeout(resolve, motionMs(DEFEAT_MSG_MS, 400)));
-      setWaveMessage(null);
-
-      unlockQuestionInput();
+  const playBossDefeatAttack = async (attack: QueuedWaveAttack) => {
+    const { sessionId: id, waveScore, waveMaxScore, result } = attack;
+    if (!result.timeAttackState) {
       return;
     }
 
-    setOniPhase("idle");
+    setDefeatLoading(true);
+    setTimerPaused(true);
+    clearFeedbackPopup();
+
+    const pauseBeforeDrain =
+      (attack.awaitGaugeFill ?? false)
+        ? motionMs(GAUGE_FILL_RISE_MS + GAUGE_REFLECT_PAUSE_MS, 300)
+        : motionMs(GAUGE_REFLECT_PAUSE_MS, 80);
+    await delay(pauseBeforeDrain);
+
+    setGaugeDraining(true);
+    setMascotCharging(true);
+    setAttackDrain({ score: waveScore, maxScore: waveMaxScore, draining: true });
+    await delay(16);
+    setAttackDrain({ score: 0, maxScore: waveMaxScore, draining: true });
+    playTimeAttackGaugeChargeSound();
+
+    const mascotLightPromise = new Promise<void>((resolve) => {
+      mascotLightDoneRef.current = resolve;
+      setMascotLightAnimId((current) => current + 1);
+    });
+
+    await Promise.all([
+      delay(motionMs(GAUGE_DRAIN_MS, 220)),
+      waitWithMotionFallback(mascotLightPromise, MASCOT_LIGHT_MS),
+    ]);
+    setGaugeDraining(false);
+
+    await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
+
+    setOniPhase("shaking");
+    setHpHit(true);
+    setDisplayHp(0);
+
+    await delay(motionMs(ONI_SHAKE_MS, 320));
+    setHpHit(false);
+
+    const isFinalClear = Boolean(result.cleared);
+    showDefeatPopup(isFinalClear ? "鬼、すべて撃破！" : "鬼撃破！");
+
+    setOniPhase("exploding");
+    await delay(
+      motionMs(
+        isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS,
+        isFinalClear ? 700 : 350,
+      ),
+    );
+    setOniPhase("hidden");
+
+    if (!result.sessionEnded) {
+      await playHeartRecovery(displayMistakeCount, result.timeAttackState.mistakeCount);
+    }
+
+    if (result.sessionEnded) {
+      await delay(
+        motionMs(
+          isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS,
+          isFinalClear ? 900 : 400,
+        ),
+      );
+      clearFeedbackPopup();
+      redirectToResult(id);
+      return;
+    }
+
+    setAwaitingNextOni(true);
+
+    await delay(motionMs(80, 40));
     syncBossDisplay(result.timeAttackState);
+    if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
+      playTimeAttackOniRoarSound();
+    }
+    setOniPhase("entering");
+    await Promise.race([
+      waitForOniEnterComplete(),
+      delay(motionMs(ONI_ENTER_MS + 80, 320)),
+    ]);
+    oniEnterDoneRef.current = null;
+    setOniPhase("idle");
+    await delay(motionMs(ONI_SETTLE_MS, 80));
+    setAwaitingNextOni(false);
+
+    applyWaveAdvanceState(result.timeAttackState, result.questions);
+    setAttackDrain(null);
+
+    clearFeedbackPopup();
+    setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
+    await delay(motionMs(DEFEAT_MSG_MS, 400));
+    setWaveMessage(null);
+
+    unlockQuestionInput();
+  };
+
+  const processAttackQueue = async () => {
+    if (processingAttackRef.current) {
+      return;
+    }
+    processingAttackRef.current = true;
+    try {
+      while (attackQueueRef.current.length > 0) {
+        const attack = attackQueueRef.current.shift();
+        if (!attack) {
+          continue;
+        }
+        if (attack.result.bossDefeated) {
+          await playBossDefeatAttack(attack);
+        } else {
+          await playBackgroundWaveAttack(attack);
+        }
+      }
+    } finally {
+      processingAttackRef.current = false;
+    }
+  };
+
+  const enqueueWaveAttack = (attack: QueuedWaveAttack) => {
+    attackQueueRef.current.push(attack);
+    void processAttackQueue();
   };
 
   const handleGaugeReach = () => {
+    const advance = pendingAdvanceRef.current;
+    if (advance) {
+      pendingAdvanceRef.current = null;
+      if (pendingTotalScoreRef.current != null) {
+        setRunningScore(pendingTotalScoreRef.current);
+        pendingTotalScoreRef.current = null;
+      }
+      const waveScore =
+        pendingGaugeTargetRef.current ?? getGaugeWaveScore(advance.result);
+      pendingGaugeTargetRef.current = null;
+
+      setGaugeDisplayScore(waveScore);
+      setGaugeCharging(true);
+      setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
+
+      enqueueWaveAttack({
+        sessionId: advance.sessionId,
+        waveScore,
+        waveMaxScore: advance.waveMaxScore,
+        hpAfter: advance.hpAfter,
+        awaitGaugeFill: true,
+        result: advance.result,
+      });
+      return;
+    }
+
     if (pendingGaugeTargetRef.current != null) {
       setGaugeDisplayScore(pendingGaugeTargetRef.current);
       pendingGaugeTargetRef.current = null;
@@ -449,12 +533,6 @@ export function TimeAttackClient({
 
     setGaugeCharging(true);
     setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
-
-    const advance = pendingAdvanceRef.current;
-    if (advance) {
-      pendingAdvanceRef.current = null;
-      void beginWaveAttack(advance.sessionId, advance.result, { awaitGaugeFill: true });
-    }
   };
 
   const handleMascotLightReach = () => {
@@ -521,8 +599,28 @@ export function TimeAttackClient({
 
     if (result.waveComplete) {
       markDefeatLoading(result);
-      advanceAfterWavePopup(result);
-      void beginWaveAttack(sessionId, result);
+      const waveScore = result.waveScore ?? 0;
+      const waveMaxScore = getWaveMaxScoreForState(timeAttackState);
+      const hpAfter = result.bossDefeated
+        ? 0
+        : (result.timeAttackState?.oniHpRemaining ?? displayHp);
+
+      setGaugeDisplayScore(waveScore);
+      if (!result.bossDefeated && result.timeAttackState) {
+        applyWaveAdvanceState(result.timeAttackState, result.questions, {
+          preserveGaugeDisplay: true,
+        });
+        unlockQuestionInput();
+      }
+
+      enqueueWaveAttack({
+        sessionId,
+        waveScore,
+        waveMaxScore,
+        hpAfter,
+        awaitGaugeFill: true,
+        result,
+      });
       return;
     }
 
@@ -565,8 +663,14 @@ export function TimeAttackClient({
 
     if (waveComplete) {
       const advance = pendingAdvanceRef.current;
-      if (advance) {
-        advanceAfterWavePopup(advance.result);
+      if (advance?.result.bossDefeated) {
+        return;
+      }
+      if (advance?.result.timeAttackState) {
+        applyWaveAdvanceState(advance.result.timeAttackState, advance.result.questions, {
+          preserveGaugeDisplay: true,
+        });
+        unlockQuestionInput();
       }
       return;
     }
@@ -632,7 +736,15 @@ export function TimeAttackClient({
         }
 
         if (waveComplete) {
-          pendingAdvanceRef.current = { sessionId, result };
+          const hpAfter = result.bossDefeated
+            ? 0
+            : (result.timeAttackState?.oniHpRemaining ?? displayHp);
+          pendingAdvanceRef.current = {
+            sessionId,
+            waveMaxScore: getWaveMaxScoreForState(timeAttackState),
+            hpAfter,
+            result,
+          };
           markDefeatLoading(result);
         } else {
           pendingAdvanceRef.current = null;
@@ -722,7 +834,7 @@ export function TimeAttackClient({
           displayScore={gaugeDisplayScore}
           charging={gaugeCharging}
           draining={gaugeDraining}
-          previewWaveScore={previewWaveScore}
+          attackDrain={attackDrain}
           mistakeCount={displayMistakeCount}
           maxMistakes={MAX_MISTAKES}
           heartRecovery={heartRecovery}

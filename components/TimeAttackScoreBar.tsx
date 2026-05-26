@@ -5,12 +5,18 @@ import { TimeAttackLives, type HeartRecoveryAnim } from "@/components/TimeAttack
 import { getWaveMaxScoreForState } from "@/lib/time-attack";
 import type { TimeAttackState } from "@/lib/time-attack";
 
+type AttackDrainOverlay = {
+  score: number;
+  maxScore: number;
+  draining: boolean;
+};
+
 type TimeAttackScoreBarProps = {
   state: TimeAttackState;
-  /** 光玉攻撃演出中はウェーブ得点をフル表示 */
-  previewWaveScore?: number | null;
   /** 光の演出が届くまでの表示用スコア */
   displayScore?: number;
+  /** 裏で進行中のウェーブ攻撃のゲージ排出オーバーレイ */
+  attackDrain?: AttackDrainOverlay | null;
   charging?: boolean;
   draining?: boolean;
   mistakeCount?: number;
@@ -23,8 +29,8 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
   function TimeAttackScoreBar(
     {
       state,
-      previewWaveScore = null,
       displayScore,
+      attackDrain = null,
       charging = false,
       draining = false,
       mistakeCount = 0,
@@ -35,10 +41,14 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
     ref,
   ) {
     const maxScore = getWaveMaxScoreForState(state);
-    const currentScore = previewWaveScore ?? displayScore ?? state.waveScoreAccumulated;
-    const fillPercent =
-      maxScore > 0 ? Math.min(100, (currentScore / maxScore) * 100) : 0;
-    const pulsing = previewWaveScore != null || charging || draining;
+    const liveScore = displayScore ?? state.waveScoreAccumulated;
+    const liveFillPercent =
+      maxScore > 0 ? Math.min(100, (liveScore / maxScore) * 100) : 0;
+    const attackDrainPercent =
+      attackDrain && attackDrain.maxScore > 0
+        ? Math.min(100, (attackDrain.score / attackDrain.maxScore) * 100)
+        : 0;
+    const pulsing = attackDrain != null || charging || draining;
 
     return (
       <div
@@ -49,9 +59,15 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
         </div>
         <div ref={ref} className="time-attack-gauge__track">
           <div
-            className={`time-attack-gauge__fill time-attack-gauge__fill--attack ${draining ? "time-attack-gauge__fill--draining" : ""}`}
-            style={{ width: `${fillPercent}%` }}
+            className="time-attack-gauge__fill time-attack-gauge__fill--attack"
+            style={{ width: `${liveFillPercent}%` }}
           />
+          {attackDrain != null && attackDrain.maxScore > 0 && (
+            <div
+              className={`time-attack-gauge__fill time-attack-gauge__fill--attack time-attack-gauge__fill--attack-overlay ${attackDrain.draining ? "time-attack-gauge__fill--draining" : ""}`}
+              style={{ width: `${attackDrainPercent}%` }}
+            />
+          )}
         </div>
         <TimeAttackLives
           mistakeCount={mistakeCount}

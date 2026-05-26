@@ -279,7 +279,9 @@ After defeating **閻魔大王** at level 10, the time attack session SHALL end 
 
 During an active wave, the system SHALL display a clearly visible **攻撃ゲージ** progress bar whose maximum is the **theoretical maximum score for the current 5-question wave** (base points + time bonus at instant answers, **excluding streak bonuses**). The bar fill SHALL reflect the running total score earned in the current wave. Numeric score values SHALL NOT be shown on the attack or HP gauges. A separate **鬼 HP** gauge (segmented) SHALL remain visible at all times. The HP gauge header SHALL combine the boss level label and HP into one line (e.g. **鬼 Lv3 HP** for oni stages, **閻魔大王 HP** for Enma). The attack gauge and oni HP gauge SHALL be displayed **side by side** in one row, with the oni HP gauge **aligned to the right**.
 
-When a player answers correctly, the system SHALL NOT show earned points in the success popup. The success popup SHALL dismiss after approximately **1 second**, and the next question SHALL become available at that time (except when the wave is complete). For each correct answer, the sequence SHALL be: (1) success popup, (2) white sparkling light orbs gather from a wide area around the feedback and merge into one cluster, (3) the cluster travels toward the attack gauge, (4) the attack gauge fill increases when the cluster reaches the gauge. The light animation SHALL continue independently in the background after the popup dismisses.
+When a player answers correctly, the system SHALL NOT show earned points in the success popup. The success popup SHALL dismiss after approximately **1 second**, and the next question SHALL become available at that time (**including when a non-defeat wave completes**). For each correct answer, the sequence SHALL be: (1) success popup, (2) white sparkling light orbs gather from a wide area around the feedback and merge into one cluster, (3) the cluster travels toward the attack gauge, (4) the attack gauge fill increases when the cluster reaches the gauge. The light animation SHALL continue independently in the background after the popup dismisses.
+
+When a non-defeat wave completes, the wave attack sequence (gauge drain overlay → light to mascot → light orb → oni shake → HP update) SHALL play **in the background** without blocking the next wave's questions. The live attack gauge SHALL reset to **0** for the new wave and continue accumulating score from new answers while the completed wave's attack animation plays as a **semi-transparent overlay drain** on top of the gauge. Multiple completed-wave attacks SHALL queue and play sequentially if the player finishes waves faster than the animations complete.
 
 #### Scenario: Bar updates on correct answer
 - **WHEN** a player earns points during a wave
@@ -291,7 +293,7 @@ When a player answers correctly, the system SHALL NOT show earned points in the 
 #### Scenario: Success popup dismisses before light animation completes
 - **WHEN** a player answers correctly
 - **THEN** the success popup dismisses after approximately 1 second
-- **AND** the next question is shown (unless the wave is complete)
+- **AND** the next question is shown after the popup dismisses (including when a non-defeat wave completes)
 - **AND** the light gather, fly, and gauge charge animation continues until the cluster reaches the attack gauge
 
 #### Scenario: No numeric values on gauges
@@ -348,7 +350,13 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th
 #### Scenario: No attack popup on non-defeat wave
 - **WHEN** a wave ends without defeating the boss
 - **THEN** the attack animation plays without an attack popup
-- **AND** the next wave question begins after the animation completes
+- **AND** the next wave's first question becomes available after the success popup dismisses (~1 second), without waiting for the attack animation to finish
+- **AND** the live attack gauge for the new wave accumulates score while the completed wave's attack animation plays in the background
+
+#### Scenario: Parallel gauge fill during background attack
+- **WHEN** a player answers questions in a new wave while a previous wave's attack animation is still playing
+- **THEN** the live attack gauge fill increases from new answers beneath the draining attack overlay
+- **AND** the oni HP gauge updates when each queued attack's light orb hits
 
 #### Scenario: Defeat popup on boss defeat
 - **WHEN** a boss is defeated by wave damage (except level 10 final clear)

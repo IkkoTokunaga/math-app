@@ -171,7 +171,7 @@ During standard quiz play, the system SHALL play short sound effects when an ans
 
 ### Requirement: Home screen BGM
 
-The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3`. Background music SHALL stop when the player starts a standard quiz or opens time attack.
+The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3`. If the browser blocks audible autoplay, the system SHALL start muted playback when possible and unmute after the player's first interaction. Background music SHALL stop when the player starts a standard quiz or opens time attack.
 
 #### Scenario: Home BGM on mode select
 - **WHEN** a player opens the home screen and is not in an active quiz

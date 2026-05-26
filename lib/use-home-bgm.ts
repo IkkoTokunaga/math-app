@@ -2,11 +2,11 @@
 
 import { useLayoutEffect } from "react";
 import {
-  isHomeBgmPlaying,
   playHomeBgm,
   primeHomeBgm,
   resumePendingHomeBgm,
   stopHomeBgm,
+  unlockHomeBgm,
 } from "@/lib/home-bgm";
 import { useSoundEnabled } from "@/lib/use-sound-enabled";
 
@@ -24,11 +24,7 @@ export function useHomeBgm(active: boolean): void {
     resumePendingHomeBgm();
 
     const unlockUntilPlaying = () => {
-      if (isHomeBgmPlaying()) {
-        return;
-      }
-
-      resumePendingHomeBgm();
+      unlockHomeBgm();
     };
 
     document.addEventListener("pointerdown", unlockUntilPlaying, { capture: true });

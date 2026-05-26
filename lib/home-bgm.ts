@@ -10,6 +10,7 @@ let bgmAudio: HTMLAudioElement | null = null;
 let bgmPrimed = false;
 let bgmUnlocked = false;
 let pendingPlay = false;
+let awaitingUnmute = false;
 
 function getPreloadAudio(): HTMLAudioElement {
   if (preloadAudio == null) {
@@ -18,6 +19,14 @@ function getPreloadAudio(): HTMLAudioElement {
   }
 
   return preloadAudio;
+}
+
+function finishHomeBgmUnlock(): void {
+  if (tryUnmuteHomeBgm()) {
+    return;
+  }
+
+  resumePendingHomeBgm();
 }
 
 export function primeHomeBgm(): void {
@@ -30,7 +39,12 @@ export function primeHomeBgm(): void {
 }
 
 export function unlockHomeBgm(): void {
-  if (typeof window === "undefined" || bgmUnlocked) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (bgmUnlocked) {
+    finishHomeBgmUnlock();
     return;
   }
 
@@ -49,21 +63,56 @@ export function unlockHomeBgm(): void {
     .catch(() => undefined)
     .finally(() => {
       audio.volume = previousVolume;
+      finishHomeBgmUnlock();
     });
 }
 
+export function tryUnmuteHomeBgm(): boolean {
+  const audio = bgmAudio;
+  if (audio == null || !audio.muted || audio.paused) {
+    return false;
+  }
+
+  audio.muted = false;
+  audio.volume = BGM_VOLUME;
+  awaitingUnmute = false;
+  pendingPlay = false;
+  return true;
+}
+
 export function isHomeBgmPlaying(): boolean {
-  return bgmAudio != null && !bgmAudio.paused;
+  return bgmAudio != null && !bgmAudio.paused && !awaitingUnmute;
 }
 
 export function stopHomeBgm(): void {
   if (bgmAudio != null) {
     bgmAudio.pause();
     bgmAudio.currentTime = 0;
+    bgmAudio.muted = false;
     bgmAudio = null;
   }
 
   pendingPlay = false;
+  awaitingUnmute = false;
+}
+
+function startMutedHomeBgm(audio: HTMLAudioElement): void {
+  audio.muted = true;
+  void audio.play().then(
+    () => {
+      awaitingUnmute = true;
+      pendingPlay = true;
+
+      if (tryUnmuteHomeBgm()) {
+        return;
+      }
+    },
+    () => {
+      pendingPlay = true;
+      bgmAudio = null;
+      awaitingUnmute = false;
+    },
+  );
 }
 
 export function playHomeBgm(): void {
@@ -81,25 +130,30 @@ export function playHomeBgm(): void {
 
   const audio = getPreloadAudio();
   audio.loop = true;
+  audio.muted = false;
   audio.volume = BGM_VOLUME;
   audio.currentTime = 0;
   bgmAudio = audio;
   pendingPlay = true;
+  awaitingUnmute = false;
 
   void audio.play().then(
     () => {
       pendingPlay = false;
     },
     () => {
-      pendingPlay = true;
-      bgmAudio = null;
+      startMutedHomeBgm(audio);
     },
   );
 }
 
 export function resumePendingHomeBgm(): boolean {
-  if (!pendingPlay) {
+  if (!pendingPlay && !awaitingUnmute) {
     return isHomeBgmPlaying();
+  }
+
+  if (tryUnmuteHomeBgm()) {
+    return true;
   }
 
   playHomeBgm();

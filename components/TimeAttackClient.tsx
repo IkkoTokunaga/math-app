@@ -12,6 +12,7 @@ import { MascotLightOrb, LIGHT_ORB_FLY_MS, type OniPhase } from "@/components/Ma
 import { OniEvilOrb } from "@/components/OniEvilOrb";
 import { QuizMascot } from "@/components/QuizMascot";
 import { TimeAttackArena } from "@/components/TimeAttackArena";
+import { SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
 import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
 import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
 import type { HeartRecoveryAnim } from "@/components/TimeAttackLives";
@@ -40,6 +41,7 @@ import {
   playTimeAttackOniRoarSound,
 } from "@/lib/time-attack-sounds";
 import { playQuizCorrectSound } from "@/lib/quiz-sounds";
+import { getCountUpDurationMs } from "@/lib/use-animated-score";
 
 type InitialSession = {
   sessionId: string;
@@ -193,6 +195,9 @@ export function TimeAttackClient({
   const [mascotHit, setMascotHit] = useState(false);
   const [screenDarkening, setScreenDarkening] = useState(false);
   const [defeatLoading, setDefeatLoading] = useState(false);
+  const [pendingDefeatBonusPoints, setPendingDefeatBonusPoints] = useState<number | null>(null);
+  const [defeatBonusFlyLabel, setDefeatBonusFlyLabel] = useState<string | null>(null);
+  const [defeatBonusAnimId, setDefeatBonusAnimId] = useState(0);
 
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
@@ -200,9 +205,12 @@ export function TimeAttackClient({
   const mascotRef = useRef<HTMLButtonElement>(null);
   const oniRef = useRef<HTMLDivElement>(null);
   const feedbackPopupRef = useRef<HTMLDivElement>(null);
+  const defeatBonusRef = useRef<HTMLParagraphElement>(null);
   const attackGaugeRef = useRef<HTMLDivElement>(null);
   const pendingGaugeTargetRef = useRef<number | null>(null);
   const pendingTotalScoreRef = useRef<number | null>(null);
+  const pendingDefeatBonusAmountRef = useRef(0);
+  const defeatBonusFlyDoneRef = useRef<(() => void) | null>(null);
   const pendingAdvanceRef = useRef<PendingAdvance | null>(null);
   const pendingQuestionStateRef = useRef<TimeAttackState | null>(null);
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -288,7 +296,7 @@ export function TimeAttackClient({
   const applyWaveAdvanceState = (
     state: TimeAttackState,
     nextQuestions?: Question[],
-    options?: { preserveGaugeDisplay?: boolean },
+    options?: { preserveGaugeDisplay?: boolean; skipScoreUpdate?: boolean },
   ) => {
     pendingQuestionStateRef.current = null;
     setTimeAttackState(state);
@@ -296,11 +304,64 @@ export function TimeAttackClient({
     if (nextQuestions) {
       setQuestions(nextQuestions);
     }
-    setRunningScore(state.totalScore);
+    if (!options?.skipScoreUpdate) {
+      setRunningScore(state.totalScore);
+    }
     if (!options?.preserveGaugeDisplay) {
       setGaugeDisplayScore(state.waveScoreAccumulated);
     }
   };
+
+  const applyPendingTotalScore = (result?: PendingAdvance["result"]) => {
+    if (pendingTotalScoreRef.current == null) {
+      return;
+    }
+
+    const total = pendingTotalScoreRef.current;
+    pendingTotalScoreRef.current = null;
+    const defeatBonus =
+      result?.bossDefeated && (result.defeatBonus ?? 0) > 0 ? result.defeatBonus! : 0;
+    setRunningScore(total - defeatBonus);
+  };
+
+  const applyDefeatBonus = useCallback(() => {
+    setRunningScore((score) => score + pendingDefeatBonusAmountRef.current);
+    setPendingDefeatBonusPoints(null);
+    setDefeatBonusFlyLabel(null);
+    pendingDefeatBonusAmountRef.current = 0;
+    defeatBonusFlyDoneRef.current?.();
+    defeatBonusFlyDoneRef.current = null;
+  }, []);
+
+  const playDefeatBonusAward = useCallback(async (defeatBonus: number) => {
+    if (defeatBonus <= 0) {
+      return;
+    }
+
+    setWaveMessage(`ボス撃破！ +${defeatBonus}点ボーナス`);
+
+    if (prefersReducedMotion()) {
+      setRunningScore((score) => score + defeatBonus);
+      await delay(motionMs(DEFEAT_MSG_MS, 400));
+      setWaveMessage(null);
+      return;
+    }
+
+    pendingDefeatBonusAmountRef.current = defeatBonus;
+    setDefeatBonusFlyLabel(`+${defeatBonus}点ボーナス`);
+    setPendingDefeatBonusPoints(defeatBonus);
+
+    await new Promise<void>((resolve) => {
+      defeatBonusFlyDoneRef.current = resolve;
+      requestAnimationFrame(() => {
+        setDefeatBonusAnimId((id) => id + 1);
+      });
+    });
+
+    await delay(getCountUpDurationMs(defeatBonus));
+    await delay(motionMs(DEFEAT_MSG_MS, 400));
+    setWaveMessage(null);
+  }, []);
 
   const playHeartRecovery = async (prevMistakeCount: number, nextMistakeCount: number) => {
     if (nextMistakeCount >= prevMistakeCount) {
@@ -429,6 +490,11 @@ export function TimeAttackClient({
     }
 
     if (result.sessionEnded) {
+      if (result.timeAttackState) {
+        const defeatBonus = result.defeatBonus ?? 0;
+        setRunningScore(result.timeAttackState.totalScore - defeatBonus);
+      }
+      await playDefeatBonusAward(result.defeatBonus ?? 0);
       await delay(
         motionMs(
           isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS,
@@ -457,13 +523,15 @@ export function TimeAttackClient({
     await delay(motionMs(ONI_SETTLE_MS, 80));
     setAwaitingNextOni(false);
 
-    applyWaveAdvanceState(result.timeAttackState, result.questions);
+    applyWaveAdvanceState(result.timeAttackState, result.questions, { skipScoreUpdate: true });
     setAttackDrain(null);
 
     clearFeedbackPopup();
-    setWaveMessage(`ボス撃破！ +${result.defeatBonus ?? 0}点ボーナス`);
-    await delay(motionMs(DEFEAT_MSG_MS, 400));
-    setWaveMessage(null);
+    if (result.timeAttackState) {
+      const defeatBonus = result.defeatBonus ?? 0;
+      setRunningScore(result.timeAttackState.totalScore - defeatBonus);
+    }
+    await playDefeatBonusAward(result.defeatBonus ?? 0);
 
     unlockQuestionInput();
   };
@@ -499,10 +567,7 @@ export function TimeAttackClient({
     const advance = pendingAdvanceRef.current;
     if (advance) {
       pendingAdvanceRef.current = null;
-      if (pendingTotalScoreRef.current != null) {
-        setRunningScore(pendingTotalScoreRef.current);
-        pendingTotalScoreRef.current = null;
-      }
+      applyPendingTotalScore(advance.result);
       const waveScore =
         pendingGaugeTargetRef.current ?? getGaugeWaveScore(advance.result);
       pendingGaugeTargetRef.current = null;
@@ -526,10 +591,7 @@ export function TimeAttackClient({
       setGaugeDisplayScore(pendingGaugeTargetRef.current);
       pendingGaugeTargetRef.current = null;
     }
-    if (pendingTotalScoreRef.current != null) {
-      setRunningScore(pendingTotalScoreRef.current);
-      pendingTotalScoreRef.current = null;
-    }
+    applyPendingTotalScore();
 
     setGaugeCharging(true);
     setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
@@ -815,11 +877,12 @@ export function TimeAttackClient({
         <TimeAttackOniScore
           layout="split"
           score={runningScore}
-          pointsEarned={null}
-          flyLabel={null}
-          animId={0}
-          getFlyFromElement={() => null}
-          onPointsApplied={() => {}}
+          pointsEarned={pendingDefeatBonusPoints}
+          flyLabel={defeatBonusFlyLabel}
+          flyClassName="score-fly-badge--streak"
+          animId={defeatBonusAnimId}
+          getFlyFromElement={() => defeatBonusRef.current}
+          onPointsApplied={applyDefeatBonus}
           oniPhase={oniPhase}
           oniRef={oniRef}
           bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
@@ -895,6 +958,17 @@ export function TimeAttackClient({
             <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
           </div>
         </section>
+      )}
+
+      {defeatBonusFlyLabel && (
+        <div
+          className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-6"
+          aria-hidden="true"
+        >
+          <p ref={defeatBonusRef} className="feedback-points-streak">
+            {defeatBonusFlyLabel}
+          </p>
+        </div>
       )}
 
       {feedback && (

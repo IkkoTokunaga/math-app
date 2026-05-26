@@ -382,6 +382,11 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th
 - **THEN** the question board and keypad are hidden until the next boss oni entrance animation completes
 - **AND** the next wave question begins only after the new oni is visible in idle state and the defeat popup is dismissed
 - **AND** the defeat bonus mascot message is shown after the new wave question state is applied
+- **AND** the defeat bonus label flies into the session total score, which counts up with a coin-like pickup sound on each increment while sound is enabled
+
+#### Scenario: Defeat bonus on final clear
+- **WHEN** the final boss is defeated and the session ends
+- **THEN** the defeat bonus flies into the session total and counts up with sound before navigating to the clear result screen
 
 #### Scenario: Q5 result reflected before attack drain
 - **WHEN** a player completes the 5th question of a wave with a correct answer

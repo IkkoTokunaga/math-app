@@ -19,6 +19,7 @@ type TimeAttackOniScoreProps = {
   flyLabel: string | null;
   flyDelayMs?: number;
   flyDurationMs?: number;
+  flyClassName?: string;
   animId: number;
   getFlyFromElement: () => HTMLElement | null;
   onPointsApplied: () => void;
@@ -55,6 +56,7 @@ export function TimeAttackOniScore({
   flyLabel,
   flyDelayMs = SCORE_FLY_DELAY_MS,
   flyDurationMs = SCORE_FLY_DURATION_MS,
+  flyClassName = "",
   animId,
   getFlyFromElement,
   onPointsApplied,
@@ -225,7 +227,7 @@ export function TimeAttackOniScore({
         {oniWrap}
         {flying && flyLabel != null && (
           <span
-            className="score-fly-badge"
+            className={`score-fly-badge ${flyClassName}`.trim()}
             style={
               {
                 ...flyStyle,
@@ -249,7 +251,7 @@ export function TimeAttackOniScore({
       </div>
       {flying && flyLabel != null && (
         <span
-          className="score-fly-badge"
+          className={`score-fly-badge ${flyClassName}`.trim()}
           style={
             {
               ...flyStyle,

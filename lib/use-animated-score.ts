@@ -19,7 +19,7 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function getCountUpDurationMs(delta: number): number {
+export function getCountUpDurationMs(delta: number): number {
   return Math.min(
     SCORE_COUNT_UP_MAX_MS,
     Math.max(SCORE_COUNT_UP_MIN_MS, delta * SCORE_COUNT_UP_MS_PER_POINT),

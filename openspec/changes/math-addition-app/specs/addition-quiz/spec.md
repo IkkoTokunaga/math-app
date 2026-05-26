@@ -137,6 +137,10 @@ The system SHALL play short sound effects on selected button presses. Primary ac
 - **WHEN** a player taps the mascot to return home during a quiz
 - **THEN** the system does not play a button sound
 
+#### Scenario: Scroll without tap is silent
+- **WHEN** a player scrolls a screen that contains primary action buttons without activating one
+- **THEN** the system does not play a button sound
+
 ### Requirement: Mascot speech bubble on answer
 
 When a player submits a correct answer during a quiz, the mascot SHALL show a random positive praise comment in a speech bubble to the right of the mascot (e.g. 「すごい！」). On an incorrect answer, the mascot SHALL NOT show a speech bubble. The bubble SHALL clear when feedback ends.

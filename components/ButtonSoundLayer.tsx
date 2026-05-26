@@ -9,7 +9,11 @@ import {
 
 export function ButtonSoundLayer() {
   useEffect(() => {
-    const onPointerDown = (event: PointerEvent) => {
+    const onClick = (event: MouseEvent) => {
+      if (!event.isTrusted) {
+        return;
+      }
+
       if (event.button !== 0) {
         return;
       }
@@ -21,11 +25,11 @@ export function ButtonSoundLayer() {
       playButtonSound();
     };
 
-    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("click", onClick);
     document.addEventListener("pointerdown", primeButtonSounds, { once: true });
 
     return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("click", onClick);
     };
   }, []);
 

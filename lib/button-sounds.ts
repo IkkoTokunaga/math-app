@@ -117,6 +117,10 @@ export function resolveButtonSoundSrc(target: EventTarget | null): string | null
     return BUTTON_SOUND_SRC;
   }
 
+  if (interactive.classList.contains("play-record-board__link")) {
+    return BUTTON_SOUND_SRC;
+  }
+
   return null;
 }
 

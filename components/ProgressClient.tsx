@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { OperationTabsPanel } from "@/components/OperationTabsPanel";
+import { SoundToggleButton } from "@/components/SoundToggleButton";
 import { useIsClient } from "@/lib/use-is-client";
 import { useHomeBgm } from "@/lib/use-home-bgm";
 import type { AuthState } from "@/lib/auth/state";
@@ -9,7 +11,7 @@ import { computeGuestProgress } from "@/lib/guest-progress";
 import { readGuestStore } from "@/lib/guest-storage";
 import { QUESTIONS_PER_SESSION } from "@/lib/questions";
 import type { Operation } from "@/lib/operations";
-import { DEFAULT_OPERATION, parseOperation } from "@/lib/operations";
+import { DEFAULT_OPERATION, getMascotSrc, parseOperation } from "@/lib/operations";
 import { renderStars, STAR_COUNT } from "@/lib/scoring";
 
 type ProgressData = {
@@ -39,33 +41,6 @@ type ProgressData = {
 type ProgressClientProps = {
   auth: AuthState;
 };
-
-function OperationTabs({
-  operation,
-  onChange,
-}: {
-  operation: Operation;
-  onChange: (operation: Operation) => void;
-}) {
-  return (
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={() => onChange("addition")}
-        className={`big-btn flex-1 ${operation === "addition" ? "big-btn-primary" : "big-btn-secondary"}`}
-      >
-        足し算
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("subtraction")}
-        className={`big-btn flex-1 ${operation === "subtraction" ? "big-btn-primary" : "big-btn-secondary"}`}
-      >
-        引き算
-      </button>
-    </div>
-  );
-}
 
 export function ProgressClient({ auth }: ProgressClientProps) {
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
@@ -105,8 +80,20 @@ export function ProgressClient({ auth }: ProgressClientProps) {
         }
         return response.json();
       })
-      .then(setMemberData)
-      .catch(() => setError("記録の読み込みに失敗しました"));
+      .then((data) => {
+        if (!cancelled) {
+          setMemberData(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("記録の読み込みに失敗しました");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [auth, operation]);
 
   const guestStore = isClient && !auth.loggedIn ? readGuestStore() : null;
@@ -117,6 +104,7 @@ export function ProgressClient({ auth }: ProgressClientProps) {
   const displayData = auth.loggedIn ? memberData : guestData;
   const displayError = auth.loggedIn ? error : null;
   const guestNotice = !auth.loggedIn;
+  const playHref = operation === "subtraction" ? "/play?operation=subtraction" : "/play";
 
   if (!isClient) {
     return <p className="text-center text-lg text-muted">読み込み中...</p>;
@@ -124,12 +112,17 @@ export function ProgressClient({ auth }: ProgressClientProps) {
 
   if (displayError) {
     return (
-      <div className="card text-center">
-        <p className="mb-4">{displayError}</p>
-        <Link href="/play" className="big-btn big-btn-primary inline-block">
-          れんしゅうへ
-        </Link>
-      </div>
+      <>
+        <SoundToggleButton />
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+          <div className="play-board p-6 text-center">
+            <p className="mb-4">{displayError}</p>
+            <Link href={playHref} className="play-record-board__link">
+              れんしゅうへ
+            </Link>
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -138,114 +131,138 @@ export function ProgressClient({ auth }: ProgressClientProps) {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <OperationTabs operation={operation} onChange={selectOperation} />
-
-      {guestNotice && (
-        <p className="text-center text-sm text-dim">
-          きろくは この 端末に だけ 保存されています
-        </p>
-      )}
-
-      <section className="card grid gap-4 sm:grid-cols-3">
-        <div>
-          <p className="text-sm text-muted">今週の平均正答率</p>
-          <p className="text-3xl font-bold">
-            {displayData.weeklyAverage !== null ? `${displayData.weeklyAverage}%` : "今週はまだプレイしていません"}
-          </p>
+    <>
+      <SoundToggleButton />
+      <header className="mb-8 text-center">
+        <div className="flex items-center justify-center gap-3 sm:gap-4">
+          <img
+            src={getMascotSrc(operation)}
+            alt=""
+            width={155}
+            height={312}
+            className="h-20 w-auto shrink-0 sm:h-24"
+            aria-hidden
+          />
+          <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">これまでの記録</h1>
         </div>
-        <div>
-          <p className="text-sm text-muted">連続学習日数</p>
-          <p className="text-3xl font-bold">{displayData.learningStreak}日</p>
+      </header>
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
+        <div className="play-record-board">
+          <div className="play-record-board__body">
+            <Link href={playHref} className="play-record-board__link">
+              れんしゅうへ
+            </Link>
+          </div>
         </div>
-        <div>
-          <p className="text-sm text-muted">解放レベル</p>
-          <p className="text-3xl font-bold">Lv{displayData.unlockedLevel}</p>
-        </div>
-      </section>
 
-      {displayData.unlockProgress.nextLevel && (
-        <section className="card">
-          <p className="text-lg">
-            次のレベル（Lv{displayData.unlockProgress.nextLevel}）へ
-          </p>
-          <ul className="mt-2 list-inside list-disc text-muted">
-            <li>{renderStars(STAR_COUNT)} 満点で すぐ解放</li>
-            <li>
-              または {renderStars(4).replace(/☆/g, "")} を あと{" "}
-              {Math.max(
-                displayData.unlockProgress.requiredStar4 -
-                  displayData.unlockProgress.currentStar4,
-                0,
-              )}{" "}
-              回（{displayData.unlockProgress.currentStar4}/
-              {displayData.unlockProgress.requiredStar4}）
-            </li>
-          </ul>
-          {displayData.unlockProgress.hasPerfect && (
-            <p className="mt-2 text-success">満点を とれたよ！ 次のレベルが ひらける</p>
+        <OperationTabsPanel
+          operation={operation}
+          onSelectOperation={selectOperation}
+          tabPanelId="progress-operation-tabpanel"
+        >
+          {guestNotice && (
+            <p className="text-center text-sm text-dim">
+              きろくは この 端末に だけ 保存されています
+            </p>
           )}
-        </section>
-      )}
 
-      <section className="card">
-        <h2 className="mb-4 text-2xl font-bold">最近の結果</h2>
-        <div className="flex flex-col gap-3">
-          {displayData.recentSessions.map((session) => (
-            <div
-              key={session.id}
-              className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="font-bold">Lv{session.level}</p>
-                <p className="text-sm text-dim">
-                  {new Date(session.playedAt).toLocaleString("ja-JP")}
-                </p>
-              </div>
-              <div className="text-right">
-                <p>{renderStars(session.stars ?? 0)}</p>
-                <p>
-                  {session.correctAnswers}/{session.totalQuestions ?? QUESTIONS_PER_SESSION} 問　{session.totalScore}点
-                </p>
-              </div>
+          <section className="progress-panel-section grid gap-4 sm:grid-cols-3">
+            <div>
+              <p className="text-sm text-muted">今週の平均正答率</p>
+              <p className="text-2xl font-bold">
+                {displayData.weeklyAverage !== null
+                  ? `${displayData.weeklyAverage}%`
+                  : "今週はまだプレイしていません"}
+              </p>
             </div>
-          ))}
-          {displayData.recentSessions.length === 0 && (
-            <p className="text-muted">まだ記録がありません</p>
+            <div>
+              <p className="text-sm text-muted">連続学習日数</p>
+              <p className="text-2xl font-bold">{displayData.learningStreak}日</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted">解放レベル</p>
+              <p className="text-2xl font-bold">Lv{displayData.unlockedLevel}</p>
+            </div>
+          </section>
+
+          {displayData.unlockProgress.nextLevel && (
+            <section className="progress-panel-section">
+              <p className="text-lg font-bold">
+                次のレベル（Lv{displayData.unlockProgress.nextLevel}）へ
+              </p>
+              <ul className="mt-2 list-inside list-disc text-muted">
+                <li>{renderStars(STAR_COUNT)} 満点で すぐ解放</li>
+                <li>
+                  または {renderStars(4).replace(/☆/g, "")} を あと{" "}
+                  {Math.max(
+                    displayData.unlockProgress.requiredStar4 -
+                      displayData.unlockProgress.currentStar4,
+                    0,
+                  )}{" "}
+                  回（{displayData.unlockProgress.currentStar4}/
+                  {displayData.unlockProgress.requiredStar4}）
+                </li>
+              </ul>
+              {displayData.unlockProgress.hasPerfect && (
+                <p className="mt-2 text-success">満点を とれたよ！ 次のレベルが ひらける</p>
+              )}
+            </section>
           )}
-        </div>
-      </section>
 
-      {displayData.weakSpots.length > 0 && (
-        <section className="card">
-          <h2 className="mb-4 text-2xl font-bold">よく間違える問題</h2>
-          <ul className="flex flex-col gap-2">
-            {displayData.weakSpots.map((spot) => (
-              <li key={spot.label} className="row-item-warn text-lg">
-                {spot.label}（{spot.missCount}回）
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+          <section className="progress-panel-section">
+            <h2 className="chalk-heading mb-4 text-2xl font-bold">最近の結果</h2>
+            <div className="flex flex-col gap-3">
+              {displayData.recentSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className="row-item flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-bold">Lv{session.level}</p>
+                    <p className="text-sm text-dim">
+                      {new Date(session.playedAt).toLocaleString("ja-JP")}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p>{renderStars(session.stars ?? 0)}</p>
+                    <p>
+                      {session.correctAnswers}/{session.totalQuestions ?? QUESTIONS_PER_SESSION} 問　
+                      {session.totalScore}点
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {displayData.recentSessions.length === 0 && (
+                <p className="text-muted">まだ記録がありません</p>
+              )}
+            </div>
+          </section>
 
-      {!auth.loggedIn && (
-        <p className="text-center">
-          <Link
-            href="/signup"
-            className="text-dim text-sm underline hover:text-muted"
-          >
-            きろくを とうろくする（おうちのひとと）
-          </Link>
-        </p>
-      )}
+          {displayData.weakSpots.length > 0 && (
+            <section className="progress-panel-section">
+              <h2 className="chalk-heading mb-4 text-2xl font-bold">よく間違える問題</h2>
+              <ul className="flex flex-col gap-2">
+                {displayData.weakSpots.map((spot) => (
+                  <li key={spot.label} className="row-item-warn text-lg">
+                    {spot.label}（{spot.missCount}回）
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-      <Link
-        href={operation === "subtraction" ? "/play?operation=subtraction" : "/play"}
-        className="big-btn big-btn-primary text-center"
-      >
-        れんしゅうへ
-      </Link>
-    </div>
+          {!auth.loggedIn && (
+            <p className="progress-panel-section text-center">
+              <Link
+                href="/signup"
+                className="play-record-board__link"
+              >
+                きろくを とうろくする（おうちのひとと）
+              </Link>
+            </p>
+          )}
+        </OperationTabsPanel>
+      </div>
+    </>
   );
 }

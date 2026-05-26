@@ -1,6 +1,7 @@
 "use client";
 
 import { primeButtonSounds } from "@/lib/button-sounds";
+import { primeKeypadSounds } from "@/lib/keypad-sounds";
 import { primeHomeBgm, waitForHomeBgmReady } from "@/lib/home-bgm";
 import { primeQuizBgm, waitForQuizBgmReady } from "@/lib/quiz-bgm";
 import { primeQuizSounds } from "@/lib/quiz-sounds";
@@ -41,6 +42,7 @@ export function bootstrapApp(): Promise<void> {
 
     initSoundSettings();
     primeButtonSounds();
+    primeKeypadSounds();
     primeQuizSounds();
     primeHomeBgm();
     primeQuizBgm();

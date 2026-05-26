@@ -11,6 +11,7 @@ import {
 } from "@/app/actions/session";
 import { AuthLinks } from "@/components/AuthLinks";
 import { Keypad } from "@/components/Keypad";
+import { OperationTabsPanel } from "@/components/OperationTabsPanel";
 import { QuizMascot } from "@/components/QuizMascot";
 import {
   COMPLETION_BAR_FILL_MS,
@@ -771,43 +772,18 @@ export function PlayClient({
           <p className="mt-2 text-lg text-muted">モードを選んでね</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-          <div className="operation-tabs">
-            <div className="operation-tabs__list" role="tablist" aria-label="演算を選ぶ">
-              <button
-                type="button"
-                role="tab"
-                id="operation-tab-addition"
-                aria-selected={operation === "addition"}
-                aria-controls="operation-tabpanel"
-                onClick={() => selectOperation("addition")}
-                className={`operation-tabs__tab ${operation === "addition" ? "operation-tabs__tab--active" : ""}`}
+          <div className="play-record-board">
+            <div className="play-record-board__body">
+              <p className="play-record-board__name">{displayName}</p>
+              <Link
+                href={`/progress?operation=${operation}`}
+                className="play-record-board__link"
               >
-                足し算
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="operation-tab-subtraction"
-                aria-selected={operation === "subtraction"}
-                aria-controls="operation-tabpanel"
-                onClick={() => selectOperation("subtraction")}
-                className={`operation-tabs__tab ${operation === "subtraction" ? "operation-tabs__tab--active" : ""}`}
-              >
-                引き算
-              </button>
-            </div>
-            <div
-              id="operation-tabpanel"
-              role="tabpanel"
-              aria-labelledby={
-                operation === "addition" ? "operation-tab-addition" : "operation-tab-subtraction"
-              }
-              className="operation-tabs__panel"
-            >
-              <p className="text-center text-xl font-bold">{displayName}</p>
-              <Link href={`/progress?operation=${operation}`} className="big-btn big-btn-secondary text-center">
                 これまでの記録
               </Link>
+            </div>
+          </div>
+          <OperationTabsPanel operation={operation} onSelectOperation={selectOperation}>
               <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
               <button
                 type="button"
@@ -905,8 +881,7 @@ export function PlayClient({
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+          </OperationTabsPanel>
         {error && <p className="feedback-error">{error}</p>}
         <AuthLinks auth={auth} />
         {auth.loggedIn && (

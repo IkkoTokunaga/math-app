@@ -2,7 +2,7 @@
 
 ### Requirement: Operation tabs on progress dashboard
 
-The progress dashboard SHALL allow switching between **足し算** and **引き算** views. Each view SHALL show statistics computed only from sessions with the matching `operation`.
+The progress dashboard SHALL allow switching between **足し算** and **引き算** views using the same blackboard-style operation tabs as the play screen. Each view SHALL show statistics computed only from sessions with the matching `operation` inside the active tab panel. The page header SHALL show the mascot and **これまでの記録** title. A **れんしゅうへ** link back to the play screen SHALL appear above the tabs as simple left-aligned underlined text without a bordered frame.
 
 #### Scenario: View subtraction progress
 - **WHEN** a player opens the progress dashboard and selects 引き算

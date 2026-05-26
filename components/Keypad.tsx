@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { playKeypadDigitSound } from "@/lib/keypad-sounds";
 
 type KeypadProps = {
   value: string;
@@ -28,6 +29,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
     if (disabled || value.length >= maxDigits) {
       return;
     }
+    playKeypadDigitSound();
     onChange(value + digit);
   };
 
@@ -47,6 +49,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       if (/^[0-9]$/.test(event.key)) {
         event.preventDefault();
         if (value.length < maxDigits) {
+          playKeypadDigitSound();
           onChange(value + event.key);
         }
         return;

@@ -264,7 +264,6 @@ export function TimeAttackClient({
       return;
     }
     applyWaveAdvanceState(result.timeAttackState, result.questions);
-    syncBossDisplay(result.timeAttackState);
     unlockQuestionInput();
   };
 

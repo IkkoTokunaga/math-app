@@ -108,7 +108,7 @@ The system SHALL persist in-progress time attack sessions per **operation**. A l
 - **THEN** 続きから for subtraction is not shown under 足し算
 
 #### Scenario: New subtraction run abandons prior subtraction session only
-- **WHEN** a player confirms starting a new subtraction time attack while a subtraction session is in progress
+- **WHEN** a player selects タイムアタックを新しく始める while a subtraction session is in progress
 - **THEN** only the prior subtraction in-progress session is abandoned
 - **AND** any addition in-progress time attack session remains unchanged
 

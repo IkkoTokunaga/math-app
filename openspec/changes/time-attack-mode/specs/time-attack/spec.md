@@ -393,6 +393,11 @@ The system SHALL persist in-progress time attack sessions after each answer and 
 - **THEN** 続きから is available
 - **AND** resuming restores the same sessionId, boss, HP, and wave position
 
+#### Scenario: Start new run without confirmation
+- **WHEN** a player with an in-progress session selects タイムアタックを新しく始める
+- **THEN** the system abandons the in-progress session and starts a new time attack at level 1
+- **AND** no browser confirmation dialog is shown
+
 #### Scenario: Cleared or failed sessions not resumable
 - **WHEN** a time attack session has status cleared or failed
 - **THEN** it cannot be resumed from 続きから

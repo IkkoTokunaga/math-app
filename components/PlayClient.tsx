@@ -794,15 +794,6 @@ export function PlayClient({
                       href="/play/time-attack?new=1"
                       data-button-sound="time-attack-start"
                       className="big-btn big-btn-secondary text-center"
-                      onClick={(event) => {
-                        if (
-                          !window.confirm(
-                            "進行中のタイムアタックをやめて、新しく始めますか？",
-                          )
-                        ) {
-                          event.preventDefault();
-                        }
-                      }}
                     >
                       タイムアタックを新しく始める
                     </Link>
@@ -855,15 +846,6 @@ export function PlayClient({
                       href="/play/time-attack?operation=subtraction&new=1"
                       data-button-sound="time-attack-start"
                       className="big-btn big-btn-secondary text-center"
-                      onClick={(event) => {
-                        if (
-                          !window.confirm(
-                            "進行中のタイムアタックをやめて、新しく始めますか？",
-                          )
-                        ) {
-                          event.preventDefault();
-                        }
-                      }}
                     >
                       タイムアタックを新しく始める
                     </Link>

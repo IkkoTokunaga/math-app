@@ -215,7 +215,7 @@ Lv10 黒い閻魔: `timeLimitSeconds = 7`, `timeBonusMultiplier = 10`
 | 保存 | 各回答・ウェーブ完了ごとに `time_attack_state` と `questions` を DB 更新 |
 | 入口 | `/play` のタイムアタック選択時、進行中セッションがあれば **「続きから」** を優先表示 |
 | 再開 | 同一 `sessionId`・同一鬼・同一 HP・同一ウェーブ内インデックスから再開 |
-| 新規開始 | 進行中がある場合は確認（上書き/abandon して新規） |
+| 新規開始 | 「タイムアタックを新しく始める」選択時は確認なしで abandon して新規 |
 | 終了後 | `cleared` / `failed` セッションは再開不可 |
 
 **Server Action**: `resumeTimeAttackSessionAction(playerId)` — 進行中セッションと問題配列を返す
@@ -262,7 +262,7 @@ Lv10 黒い閻魔: `timeLimitSeconds = 7`, `timeBonusMultiplier = 10`
 
 | Action | 用途 |
 |--------|------|
-| `startTimeAttackSessionAction(playerId)` | Lv1・鬼#0・HP 初期化・第1ウェーブ5問生成（進行中があれば確認） |
+| `startTimeAttackSessionAction(playerId)` | Lv1・鬼#0・HP 初期化・第1ウェーブ5問生成（`new=1` 時は進行中を abandon） |
 | `resumeTimeAttackSessionAction(playerId)` | 進行中セッション・問題配列・状態を返す |
 | `submitTimeAttackAnswerAction(sessionId, index, answer, elapsedSeconds)` | 採点（制限後は base のみ）・ミス判定・次問 or ウェーブ完了 |
 | `finalizeTimeAttackWaveAction(sessionId)` | ウェーブ集計・HP 更新・撃破/継続/クリア判定（5問目 submit 内から呼び出し可） |

@@ -232,6 +232,26 @@ export function playKeypadBackspaceSound(): void {
   });
 }
 
+/** Short coin-like tick while the total score counts up. */
+export function playScoreCountTick(): void {
+  playPreparedSound((ctx) => {
+    const t = ctx.currentTime;
+    const duration = 0.032;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(760 + Math.random() * 60, t);
+    osc.frequency.exponentialRampToValueAtTime(1180, t + duration * 0.45);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    osc.connect(gain);
+    gain.connect(getOutputGain(ctx));
+    osc.start(t);
+    osc.stop(t + duration + 0.01);
+  });
+}
+
 /** @internal test helper */
 export function resetKeypadSoundsForTests(): void {
   void audioContext?.close();

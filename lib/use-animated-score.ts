@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { playScoreCountTick } from "@/lib/score-sounds";
+import { playScoreCountTick } from "@/lib/keypad-sounds";
 
 export const SCORE_COUNT_UP_MIN_MS = 280;
 export const SCORE_COUNT_UP_MAX_MS = 750;

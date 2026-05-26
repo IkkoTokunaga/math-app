@@ -1,1 +1,1 @@
-export const BGM_VOLUME = 0.32;
+export const BGM_VOLUME = 0.12;

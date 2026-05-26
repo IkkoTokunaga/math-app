@@ -267,7 +267,20 @@ When a player submits a correct answer during a quiz, the mascot SHALL show a ra
 
 ### Requirement: Level selection screen
 
-The level selection screen SHALL show each level as `Lv1` through `Lv10` only, without level names or unlock status text. Levels SHALL be arranged in a single vertical column. Locked levels SHALL appear disabled (non-clickable) but SHALL NOT show additional labels such as 「まだ」. During a quiz, the header SHALL show the level number only (e.g. `Lv2`) without the level name.
+The level selection screen SHALL show each level as `Lv1` through `Lv10` only, without level names or unlock status text. Levels SHALL be arranged in a single vertical column. Locked levels SHALL appear disabled (non-clickable) but SHALL NOT show additional labels such as 「まだ」. During a quiz, the header SHALL show the level number only (e.g. `Lv2`) without the level name. The level list SHALL be hidden until the player taps **通常モード（10問チャレンジ）**; tapping the same button again SHALL hide the level list.
+
+#### Scenario: Level list hidden until standard mode is chosen
+- **WHEN** a player opens the play screen
+- **THEN** the level selection list is not shown
+- **AND** only the mode selection buttons are visible
+
+#### Scenario: Open level list from standard mode button
+- **WHEN** a player taps **通常モード（10問チャレンジ）**
+- **THEN** the level selection list is shown
+
+#### Scenario: Close level list from standard mode button
+- **WHEN** a player taps **通常モード（10問チャレンジ）** while the level list is open
+- **THEN** the level selection list is hidden
 
 #### Scenario: Locked level display
 - **WHEN** a player has not unlocked level 3

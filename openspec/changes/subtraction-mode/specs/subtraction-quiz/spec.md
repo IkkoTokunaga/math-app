@@ -99,7 +99,11 @@ The mascot speech bubble behavior SHALL match the addition standard quiz (praise
 
 ### Requirement: Subtraction level selection screen
 
-The subtraction level selection screen SHALL show `Lv1` through `Lv10` in a single vertical column with the same locked/unlocked visual rules as addition. Unlock progress SHALL be computed independently from addition levels.
+The subtraction level selection screen SHALL show `Lv1` through `Lv10` in a single vertical column with the same locked/unlocked visual rules as addition. Unlock progress SHALL be computed independently from addition levels. The level list SHALL be hidden until the player taps **通常モード（10問チャレンジ）**; tapping the same button again SHALL hide the level list.
+
+#### Scenario: Subtraction level list hidden initially
+- **WHEN** a player selects 引き算 on the play screen
+- **THEN** the subtraction level list is not shown until **通常モード（10問チャレンジ）** is tapped
 
 #### Scenario: Subtraction locked level display
 - **WHEN** a player has not unlocked subtraction level 3

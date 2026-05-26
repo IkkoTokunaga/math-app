@@ -204,6 +204,73 @@ body.quiz-active {
   color: var(--chalk);
 }
 
+.operation-tabs {
+  --operation-tab-border: 6px;
+  overflow: hidden;
+  border: var(--operation-tab-border) solid var(--frame);
+  border-radius: 0.375rem;
+  background:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgb(255 255 255 / 0.03) 0%, transparent 35%),
+    linear-gradient(165deg, var(--board-highlight) 0%, var(--board) 45%, var(--board-deep) 100%);
+  box-shadow:
+    inset 0 0 60px rgb(0 0 0 / 0.25),
+    0 4px 0 var(--frame-dark),
+    0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+.operation-tabs__list {
+  display: flex;
+  border-bottom: var(--operation-tab-border) solid var(--frame);
+  background: linear-gradient(180deg, var(--board-deep) 0%, #182820 100%);
+}
+
+.operation-tabs__tab {
+  flex: 1;
+  position: relative;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-right: var(--operation-tab-border) solid var(--frame);
+  border-radius: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--chalk-muted);
+  box-shadow: none;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.operation-tabs__tab:last-child {
+  border-right: none;
+}
+
+.operation-tabs__tab:hover:not(.operation-tabs__tab--active) {
+  color: var(--chalk);
+}
+
+.operation-tabs__tab--active {
+  color: var(--chalk);
+  background:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgb(255 255 255 / 0.03) 0%, transparent 35%),
+    linear-gradient(165deg, var(--board-highlight) 0%, var(--board) 45%, var(--board-deep) 100%);
+}
+
+.operation-tabs__tab:focus-visible {
+  outline: 2px solid var(--chalk-yellow);
+  outline-offset: -2px;
+}
+
+.operation-tabs__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
 .big-btn {
   display: block;
   width: 100%;

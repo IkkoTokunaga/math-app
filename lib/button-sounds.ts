@@ -113,6 +113,10 @@ export function resolveButtonSoundSrc(target: EventTarget | null): string | null
     return BUTTON_SOUND_SRC;
   }
 
+  if (interactive.classList.contains("operation-tabs__tab")) {
+    return BUTTON_SOUND_SRC;
+  }
+
   return null;
 }
 

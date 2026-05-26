@@ -207,7 +207,9 @@ export function PlayClient({
   const [celebratingLevel, setCelebratingLevel] = useState<Level | null>(null);
   const [devUnlockApplied, setDevUnlockApplied] = useState(false);
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
+  const [standardLevelSelectOpen, setStandardLevelSelectOpen] = useState(false);
   const levelCellRefs = useRef<Map<Level, HTMLDivElement>>(new Map());
+  const standardModeSectionRef = useRef<HTMLDivElement>(null);
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
   const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -341,6 +343,7 @@ export function PlayClient({
 
   const selectOperation = (next: Operation) => {
     setSelectedOperation(next);
+    setStandardLevelSelectOpen(false);
     if (typeof window === "undefined") {
       return;
     }
@@ -351,6 +354,18 @@ export function PlayClient({
       url.searchParams.delete("operation");
     }
     window.history.replaceState({}, "", url.pathname + url.search);
+  };
+
+  const toggleStandardLevelSelect = () => {
+    setStandardLevelSelectOpen((open) => {
+      const nextOpen = !open;
+      if (nextOpen) {
+        requestAnimationFrame(() => {
+          standardModeSectionRef.current?.scrollIntoView({ behavior: "smooth" });
+        });
+      }
+      return nextOpen;
+    });
   };
 
   const guestUnlocked = isClient ? getGuestUnlockedLevel(operation) : 1;
@@ -698,6 +713,7 @@ export function PlayClient({
   const backToLevels = () => {
     submitLockRef.current = false;
     setSubmitting(false);
+    setStandardLevelSelectOpen(true);
     setSessionId(null);
     setLocalId(null);
     setLevel(null);
@@ -728,6 +744,14 @@ export function PlayClient({
 
   if (!sessionId && !localId) {
     const pageTitle = operation === "subtraction" ? "ひきざん" : "たしざん";
+    const timeAttackResume =
+      operation === "addition" ? additionTimeAttackResume : subtractionTimeAttackResume;
+    const timeAttackHref =
+      operation === "addition" ? "/play/time-attack" : "/play/time-attack?operation=subtraction";
+    const timeAttackNewHref =
+      operation === "addition"
+        ? "/play/time-attack?new=1"
+        : "/play/time-attack?operation=subtraction&new=1";
 
     return (
       <>
@@ -747,176 +771,141 @@ export function PlayClient({
           <p className="mt-2 text-lg text-muted">モードを選んでね</p>
         </header>
         <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => selectOperation("addition")}
-              className={`big-btn flex-1 ${operation === "addition" ? "big-btn-primary" : "big-btn-secondary"}`}
-            >
-              足し算
-            </button>
-            <button
-              type="button"
-              onClick={() => selectOperation("subtraction")}
-              className={`big-btn flex-1 ${operation === "subtraction" ? "big-btn-primary" : "big-btn-secondary"}`}
-            >
-              引き算
-            </button>
-          </div>
-          <p className="text-center text-xl font-bold">{displayName}</p>
-          <Link href={`/progress?operation=${operation}`} className="big-btn big-btn-secondary text-center">
-            これまでの記録
-          </Link>
-          {operation === "addition" && (
-            <>
-              <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
+          <div className="operation-tabs">
+            <div className="operation-tabs__list" role="tablist" aria-label="演算を選ぶ">
               <button
                 type="button"
-                onClick={() => {
-                  const el = document.getElementById("standard-mode-section");
-                  el?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="big-btn big-btn-primary"
+                role="tab"
+                id="operation-tab-addition"
+                aria-selected={operation === "addition"}
+                aria-controls="operation-tabpanel"
+                onClick={() => selectOperation("addition")}
+                className={`operation-tabs__tab ${operation === "addition" ? "operation-tabs__tab--active" : ""}`}
               >
-                通常モード（10問チャレンジ）
+                足し算
               </button>
-              {auth.loggedIn ? (
-                additionTimeAttackResume ? (
-                  <div className="grid gap-3">
-                    <Link
-                      href="/play/time-attack"
-                      data-button-sound="time-attack-resume"
-                      className="big-btn big-btn-primary text-center"
-                    >
-                      続きから（{additionTimeAttackResume.bossLabel}）
-                    </Link>
-                    <Link
-                      href="/play/time-attack?new=1"
-                      data-button-sound="time-attack-start"
-                      className="big-btn big-btn-secondary text-center"
-                    >
-                      タイムアタックを新しく始める
-                    </Link>
-                  </div>
-                ) : (
-                  <Link
-                    href="/play/time-attack?new=1"
-                    data-button-sound="time-attack-start"
-                    className="big-btn big-btn-secondary text-center"
-                  >
-                    タイムアタック（鬼退治）
-                  </Link>
-                )
-              ) : (
-                <div className="mode-select-locked">
-                  <button type="button" disabled className="big-btn w-full opacity-50">
-                    🔒 タイムアタック（鬼退治）
-                  </button>
-                  <p className="mt-2 text-center text-sm text-muted">
-                    タイムアタックはログインすると遊べます
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-          {operation === "subtraction" && (
-            <>
-              <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
               <button
                 type="button"
-                onClick={() => {
-                  const el = document.getElementById("standard-mode-section");
-                  el?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="big-btn big-btn-primary"
+                role="tab"
+                id="operation-tab-subtraction"
+                aria-selected={operation === "subtraction"}
+                aria-controls="operation-tabpanel"
+                onClick={() => selectOperation("subtraction")}
+                className={`operation-tabs__tab ${operation === "subtraction" ? "operation-tabs__tab--active" : ""}`}
               >
-                通常モード（10問チャレンジ）
-              </button>
-              {auth.loggedIn ? (
-                subtractionTimeAttackResume ? (
-                  <div className="grid gap-3">
-                    <Link
-                      href="/play/time-attack?operation=subtraction"
-                      data-button-sound="time-attack-resume"
-                      className="big-btn big-btn-primary text-center"
-                    >
-                      続きから（{subtractionTimeAttackResume.bossLabel}）
-                    </Link>
-                    <Link
-                      href="/play/time-attack?operation=subtraction&new=1"
-                      data-button-sound="time-attack-start"
-                      className="big-btn big-btn-secondary text-center"
-                    >
-                      タイムアタックを新しく始める
-                    </Link>
-                  </div>
-                ) : (
-                  <Link
-                    href="/play/time-attack?operation=subtraction&new=1"
-                    data-button-sound="time-attack-start"
-                    className="big-btn big-btn-secondary text-center"
-                  >
-                    タイムアタック（鬼退治）
-                  </Link>
-                )
-              ) : (
-                <div className="mode-select-locked">
-                  <button type="button" disabled className="big-btn w-full opacity-50">
-                    🔒 タイムアタック（鬼退治）
-                  </button>
-                  <p className="mt-2 text-center text-sm text-muted">
-                    タイムアタックはログインすると遊べます
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-          <div id="standard-mode-section" className="mt-4">
-            <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
-        <div className={`level-select-list ${celebratingLevel != null ? "level-select-list--celebrating" : ""}`}>
-        {Array.from({ length: MAX_LEVEL }, (_, index) => {
-          const lv = (index + 1) as Level;
-          const disabled = lv > effectiveUnlocked;
-          const isUnlocking = celebratingLevel === lv;
-          return (
-            <div
-              key={lv}
-              ref={(element) => {
-                if (element) {
-                  levelCellRefs.current.set(lv, element);
-                } else {
-                  levelCellRefs.current.delete(lv);
-                }
-              }}
-              className={`level-unlock-cell ${isUnlocking ? "level-unlock-cell--active" : ""}`}
-            >
-              {isUnlocking && (
-                <div className="level-unlock-fx" aria-hidden="true">
-                  <span className="level-unlock-flash" />
-                  <span className="level-unlock-wave level-unlock-wave--1" />
-                  <span className="level-unlock-wave level-unlock-wave--2" />
-                  <span className="level-unlock-spark level-unlock-spark--1">✦</span>
-                  <span className="level-unlock-spark level-unlock-spark--2">★</span>
-                  <span className="level-unlock-spark level-unlock-spark--3">✦</span>
-                  <span className="level-unlock-spark level-unlock-spark--4">★</span>
-                  <span className="level-unlock-spark level-unlock-spark--5">✦</span>
-                  <span className="level-unlock-spark level-unlock-spark--6">★</span>
-                </div>
-              )}
-              <button
-                type="button"
-                disabled={submitting || disabled}
-                onClick={() => startSession(lv)}
-                data-button-sound="level-start"
-                className={`big-btn disabled:opacity-40 ${isUnlocking ? "big-btn--unlocking" : ""}`}
-                aria-label={isUnlocking ? `Lv${lv} が新しく解放されました` : undefined}
-              >
-                Lv{lv}
+                引き算
               </button>
             </div>
-          );
-        })}
-        </div>
+            <div
+              id="operation-tabpanel"
+              role="tabpanel"
+              aria-labelledby={
+                operation === "addition" ? "operation-tab-addition" : "operation-tab-subtraction"
+              }
+              className="operation-tabs__panel"
+            >
+              <p className="text-center text-xl font-bold">{displayName}</p>
+              <Link href={`/progress?operation=${operation}`} className="big-btn big-btn-secondary text-center">
+                これまでの記録
+              </Link>
+              <h2 className="chalk-heading text-center text-3xl font-bold">モードを選ぶ</h2>
+              <button
+                type="button"
+                onClick={toggleStandardLevelSelect}
+                aria-expanded={standardLevelSelectOpen}
+                className={`big-btn ${standardLevelSelectOpen ? "big-btn-primary" : "big-btn-secondary"}`}
+              >
+                通常モード（10問チャレンジ）
+              </button>
+              {auth.loggedIn ? (
+                timeAttackResume ? (
+                  <div className="grid gap-3">
+                    <Link
+                      href={timeAttackHref}
+                      data-button-sound="time-attack-resume"
+                      className="big-btn big-btn-primary text-center"
+                    >
+                      続きから（{timeAttackResume.bossLabel}）
+                    </Link>
+                    <Link
+                      href={timeAttackNewHref}
+                      data-button-sound="time-attack-start"
+                      className="big-btn big-btn-secondary text-center"
+                    >
+                      タイムアタックを新しく始める
+                    </Link>
+                  </div>
+                ) : (
+                  <Link
+                    href={timeAttackNewHref}
+                    data-button-sound="time-attack-start"
+                    className="big-btn big-btn-secondary text-center"
+                  >
+                    タイムアタック（鬼退治）
+                  </Link>
+                )
+              ) : (
+                <div className="mode-select-locked">
+                  <button type="button" disabled className="big-btn w-full opacity-50">
+                    🔒 タイムアタック（鬼退治）
+                  </button>
+                  <p className="mt-2 text-center text-sm text-muted">
+                    タイムアタックはログインすると遊べます
+                  </p>
+                </div>
+              )}
+              {standardLevelSelectOpen && (
+                <div ref={standardModeSectionRef} id="standard-mode-section">
+                  <h2 className="chalk-heading text-center text-3xl font-bold">レベルを選ぶ</h2>
+                  <div
+                    className={`level-select-list ${celebratingLevel != null ? "level-select-list--celebrating" : ""}`}
+                  >
+                    {Array.from({ length: MAX_LEVEL }, (_, index) => {
+                      const lv = (index + 1) as Level;
+                      const disabled = lv > effectiveUnlocked;
+                      const isUnlocking = celebratingLevel === lv;
+                      return (
+                        <div
+                          key={lv}
+                          ref={(element) => {
+                            if (element) {
+                              levelCellRefs.current.set(lv, element);
+                            } else {
+                              levelCellRefs.current.delete(lv);
+                            }
+                          }}
+                          className={`level-unlock-cell ${isUnlocking ? "level-unlock-cell--active" : ""}`}
+                        >
+                          {isUnlocking && (
+                            <div className="level-unlock-fx" aria-hidden="true">
+                              <span className="level-unlock-flash" />
+                              <span className="level-unlock-wave level-unlock-wave--1" />
+                              <span className="level-unlock-wave level-unlock-wave--2" />
+                              <span className="level-unlock-spark level-unlock-spark--1">✦</span>
+                              <span className="level-unlock-spark level-unlock-spark--2">★</span>
+                              <span className="level-unlock-spark level-unlock-spark--3">✦</span>
+                              <span className="level-unlock-spark level-unlock-spark--4">★</span>
+                              <span className="level-unlock-spark level-unlock-spark--5">✦</span>
+                              <span className="level-unlock-spark level-unlock-spark--6">★</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            disabled={submitting || disabled}
+                            onClick={() => startSession(lv)}
+                            data-button-sound="level-start"
+                            className={`big-btn disabled:opacity-40 ${isUnlocking ? "big-btn--unlocking" : ""}`}
+                            aria-label={isUnlocking ? `Lv${lv} が新しく解放されました` : undefined}
+                          >
+                            Lv{lv}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         {error && <p className="feedback-error">{error}</p>}
         <AuthLinks auth={auth} />

@@ -1680,7 +1680,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   }
 
   100% {
-    transform: scale(1.45);
+    transform: scale(2);
   }
 }
 
@@ -1688,7 +1688,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   0% {
     color: rgb(255 255 255 / 0.22);
     text-shadow: none;
-    transform: scale(1.45);
+    transform: scale(2);
   }
 
   100% {

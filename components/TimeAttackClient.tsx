@@ -16,7 +16,7 @@ import { TimeAttackOniScore } from "@/components/TimeAttackOniScore";
 import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
 import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
-import { getWaveMaxScoreForState, type TimeAttackState } from "@/lib/time-attack";
+import { getWaveMaxScoreForState, isEnmaBoss, type TimeAttackState } from "@/lib/time-attack";
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
 import {
   formatExpression,
@@ -32,7 +32,11 @@ import {
   endTimeAttackBgmSession,
   useTimeAttackBgm,
 } from "@/lib/use-time-attack-bgm";
-import { playTimeAttackBeamSound, playTimeAttackOniAttackSound } from "@/lib/time-attack-sounds";
+import {
+  playTimeAttackBeamSound,
+  playTimeAttackOniAttackSound,
+  playTimeAttackOniRoarSound,
+} from "@/lib/time-attack-sounds";
 import { playQuizCorrectSound } from "@/lib/quiz-sounds";
 
 type InitialSession = {
@@ -168,6 +172,9 @@ export function TimeAttackClient({
     questionStartedAtRef.current = Date.now();
     document.documentElement.classList.add("quiz-active");
     document.body.classList.add("quiz-active");
+    if (!isEnmaBoss(initialSession.timeAttackState.currentLevel)) {
+      playTimeAttackOniRoarSound();
+    }
     return () => {
       document.documentElement.classList.remove("quiz-active");
       document.body.classList.remove("quiz-active");
@@ -175,7 +182,7 @@ export function TimeAttackClient({
         clearTimeout(correctPopupTimerRef.current);
       }
     };
-  }, []);
+  }, [initialSession.timeAttackState.currentLevel]);
 
   useQuizPanelFit(quizPanelRef, isClient && Boolean(sessionId));
 
@@ -347,6 +354,12 @@ export function TimeAttackClient({
 
       await new Promise((resolve) => setTimeout(resolve, motionMs(80, 40)));
       syncBossDisplay(result.timeAttackState);
+      if (
+        result.timeAttackState &&
+        !isEnmaBoss(result.timeAttackState.currentLevel)
+      ) {
+        playTimeAttackOniRoarSound();
+      }
       setOniPhase("entering");
       await Promise.race([
         waitForOniEnterComplete(),

@@ -4,10 +4,16 @@ import { isSoundEnabled } from "@/lib/sound-settings";
 
 export const TIME_ATTACK_BEAM_SOUND_SRC = "/sounds/time-attack-beam.mp3";
 export const TIME_ATTACK_ONI_ATTACK_SOUND_SRC = "/sounds/time-attack-oni-attack.mp3";
+export const ONI_ROAR_SOUND_SRCS = [
+  "/sounds/oni-roar-1.mp3",
+  "/sounds/oni-roar-2.mp3",
+  "/sounds/oni-roar-3.mp3",
+] as const;
 
 const TIME_ATTACK_SOUND_SRCS = [
   TIME_ATTACK_BEAM_SOUND_SRC,
   TIME_ATTACK_ONI_ATTACK_SOUND_SRC,
+  ...ONI_ROAR_SOUND_SRCS,
 ] as const;
 
 const audioPools = new Map<string, HTMLAudioElement[]>();
@@ -58,4 +64,9 @@ export function playTimeAttackBeamSound(): void {
 
 export function playTimeAttackOniAttackSound(): void {
   playTimeAttackSound(TIME_ATTACK_ONI_ATTACK_SOUND_SRC);
+}
+
+export function playTimeAttackOniRoarSound(): void {
+  const index = Math.floor(Math.random() * ONI_ROAR_SOUND_SRCS.length);
+  playTimeAttackSound(ONI_ROAR_SOUND_SRCS[index]!);
 }

@@ -484,3 +484,19 @@ When the oni fires the evil-orb counterattack toward the mascot after an incorre
 #### Scenario: Oni attack sound on wrong answer
 - **WHEN** the oni evil-orb attack animation begins after an incorrect answer
 - **THEN** the system plays the oni attack sound effect
+
+### Requirement: Oni appearance roar sound
+
+When an oni boss (levels 1–8) appears at the start of a time attack session or enters after the previous oni is defeated, the system SHALL play one roar sound chosen at random from `/sounds/oni-roar-1.mp3`, `/sounds/oni-roar-2.mp3`, and `/sounds/oni-roar-3.mp3`. Enma bosses (levels 9–10) SHALL NOT play this roar sound on appearance.
+
+#### Scenario: Random roar when oni enters
+- **WHEN** a new oni boss enters after the previous oni is defeated
+- **THEN** the system plays exactly one of the three oni roar sound effects at random
+
+#### Scenario: Random roar at session start
+- **WHEN** a time attack session begins against an oni boss at level 1–8
+- **THEN** the system plays exactly one of the three oni roar sound effects at random
+
+#### Scenario: No roar for Enma appearance
+- **WHEN** Enma appears at level 9 or 10, including after defeating the level 8 oni
+- **THEN** the system does not play any oni roar sound effect

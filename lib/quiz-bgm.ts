@@ -1,5 +1,6 @@
 "use client";
 
+import { isPageHidden } from "@/lib/page-visibility";
 import { waitForAudioReady } from "@/lib/audio-ready";
 import { BGM_VOLUME } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
@@ -7,11 +8,10 @@ import { isSoundEnabled } from "@/lib/sound-settings";
 export const QUIZ_BGM_SRC = "/sounds/bgm/quiz-bgm.mp3";
 
 let preloadAudio: HTMLAudioElement | null = null;
-let unlockAudio: HTMLAudioElement | null = null;
 let bgmAudio: HTMLAudioElement | null = null;
 let bgmPrimed = false;
-let bgmUnlocked = false;
 let pendingPlay = false;
+let pausedForBackground = false;
 
 function getPreloadAudio(): HTMLAudioElement {
   if (preloadAudio == null) {
@@ -20,15 +20,6 @@ function getPreloadAudio(): HTMLAudioElement {
   }
 
   return preloadAudio;
-}
-
-function getUnlockAudio(): HTMLAudioElement {
-  if (unlockAudio == null) {
-    unlockAudio = new Audio(QUIZ_BGM_SRC);
-    unlockAudio.preload = "auto";
-  }
-
-  return unlockAudio;
 }
 
 export function primeQuizBgm(): void {
@@ -46,30 +37,7 @@ export function waitForQuizBgmReady(timeoutMs = 5000): Promise<void> {
 }
 
 export function unlockQuizBgm(): void {
-  if (typeof window === "undefined" || bgmUnlocked) {
-    return;
-  }
-
-  bgmUnlocked = true;
-  primeQuizBgm();
-
-  if (bgmAudio != null && !bgmAudio.paused) {
-    return;
-  }
-
-  const audio = getUnlockAudio();
-  const previousVolume = audio.volume;
-  audio.volume = 0;
-  void audio
-    .play()
-    .then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      audio.volume = previousVolume;
-    });
+  // Browser autoplay unlock is handled globally in audio-unlock.ts.
 }
 
 export function isQuizBgmPlaying(): boolean {
@@ -84,6 +52,28 @@ export function stopQuizBgm(): void {
   }
 
   pendingPlay = false;
+  pausedForBackground = false;
+}
+
+export function pauseQuizBgmForBackground(): void {
+  const audio = bgmAudio;
+  if (audio == null || audio.paused) {
+    return;
+  }
+
+  audio.pause();
+  pausedForBackground = true;
+}
+
+export function resumeQuizBgmFromBackground(): void {
+  if (!pausedForBackground || bgmAudio == null || !isSoundEnabled()) {
+    return;
+  }
+
+  pausedForBackground = false;
+  void bgmAudio.play().catch(() => {
+    pausedForBackground = true;
+  });
 }
 
 export function playQuizBgm(): void {
@@ -93,7 +83,7 @@ export function playQuizBgm(): void {
 
   primeQuizBgm();
 
-  if (isQuizBgmPlaying()) {
+  if (isQuizBgmPlaying() || pausedForBackground) {
     return;
   }
 
@@ -106,9 +96,18 @@ export function playQuizBgm(): void {
   bgmAudio = audio;
   pendingPlay = true;
 
+  if (isPageHidden()) {
+    pausedForBackground = true;
+    pendingPlay = false;
+    return;
+  }
+
   void audio.play().then(
     () => {
       pendingPlay = false;
+      if (isPageHidden()) {
+        pauseQuizBgmForBackground();
+      }
     },
     () => {
       pendingPlay = true;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { unlockAudioPlayback } from "@/lib/audio-unlock";
 import {
   didPointerTapMove,
   playButtonSoundForTarget,
@@ -8,11 +9,10 @@ import {
   shouldPlayButtonSound,
   TIME_ATTACK_RESUME_SOUND_SRC,
   TIME_ATTACK_START_SOUND_SRC,
-  unlockButtonSounds,
 } from "@/lib/button-sounds";
-import { prepareTimeAttackBgmEntry } from "@/lib/time-attack-bgm";
+import { prepareTimeAttackBgmEntry, resumePendingTimeAttackBgm } from "@/lib/time-attack-bgm";
 import { unlockHomeBgm } from "@/lib/home-bgm";
-import { unlockQuizBgm } from "@/lib/quiz-bgm";
+import { resumePendingQuizBgm } from "@/lib/quiz-bgm";
 import { useAppReady } from "@/lib/use-app-ready";
 
 export function ButtonSoundLayer() {
@@ -39,9 +39,12 @@ export function ButtonSoundLayer() {
       tapStartX = event.clientX;
       tapStartY = event.clientY;
       tapTarget = event.target;
-      unlockButtonSounds();
-      unlockHomeBgm();
-      unlockQuizBgm();
+
+      void unlockAudioPlayback().then(() => {
+        unlockHomeBgm();
+        resumePendingQuizBgm();
+        resumePendingTimeAttackBgm();
+      });
     };
 
     const onPointerMove = (event: PointerEvent) => {
@@ -69,7 +72,9 @@ export function ButtonSoundLayer() {
         prepareTimeAttackBgmEntry();
       }
 
-      playButtonSoundForTarget(tapTarget);
+      void unlockAudioPlayback().then(() => {
+        playButtonSoundForTarget(tapTarget);
+      });
       playedForLastTap = true;
     };
 
@@ -90,7 +95,9 @@ export function ButtonSoundLayer() {
         prepareTimeAttackBgmEntry();
       }
 
-      playButtonSoundForTarget(event.target);
+      void unlockAudioPlayback().then(() => {
+        playButtonSoundForTarget(event.target);
+      });
     };
 
     document.addEventListener("pointerdown", onPointerDown, { capture: true });

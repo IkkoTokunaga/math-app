@@ -1,6 +1,7 @@
 "use client";
 
 import { isSoundEnabled } from "@/lib/sound-settings";
+import { unlockAudioPlayback } from "@/lib/audio-unlock";
 
 export const BUTTON_SOUND_SRC = "/sounds/button.mp3";
 export const TIME_ATTACK_START_SOUND_SRC = "/sounds/time-attack-start.mp3";
@@ -18,7 +19,6 @@ const TAP_MOVE_THRESHOLD_PX = 10;
 
 const audioPools = new Map<string, HTMLAudioElement[]>();
 let soundsPrimed = false;
-let audioUnlocked = false;
 
 function getAudio(src: string): HTMLAudioElement {
   const pool = audioPools.get(src) ?? [];
@@ -72,29 +72,8 @@ export function primeButtonSounds() {
   }
 }
 
-export function unlockButtonSounds() {
-  if (typeof window === "undefined" || audioUnlocked) {
-    return;
-  }
-
-  audioUnlocked = true;
-  primeButtonSounds();
-
-  for (const src of ALL_SOUND_SRCS) {
-    const audio = getAudio(src);
-    const previousVolume = audio.volume;
-    audio.volume = 0;
-    void audio
-      .play()
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        audio.volume = previousVolume;
-      });
-  }
+export function unlockButtonSounds(): void {
+  void unlockAudioPlayback();
 }
 
 export function resolveButtonSoundSrc(target: EventTarget | null): string | null {

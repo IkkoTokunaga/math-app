@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect } from "react";
+import { unlockAudioPlayback } from "@/lib/audio-unlock";
 import {
   isQuizBgmPlaying,
   playQuizBgm,
@@ -23,18 +24,18 @@ export function useQuizBgm(active: boolean): void {
     playQuizBgm();
 
     const unlockUntilPlaying = () => {
-      if (isQuizBgmPlaying()) {
-        return;
-      }
+      void unlockAudioPlayback().then(() => {
+        if (isQuizBgmPlaying()) {
+          return;
+        }
 
-      resumePendingQuizBgm();
+        resumePendingQuizBgm();
+      });
     };
 
-    document.addEventListener("pointerdown", unlockUntilPlaying, { capture: true });
     document.addEventListener("keydown", unlockUntilPlaying, { capture: true });
 
     return () => {
-      document.removeEventListener("pointerdown", unlockUntilPlaying, { capture: true });
       document.removeEventListener("keydown", unlockUntilPlaying, { capture: true });
       stopQuizBgm();
     };

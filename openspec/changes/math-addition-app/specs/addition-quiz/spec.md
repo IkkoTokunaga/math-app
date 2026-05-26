@@ -181,6 +181,22 @@ On first load, the system SHALL show a full-screen loading overlay with a spinne
 - **WHEN** the loading overlay is dismissed
 - **THEN** at most one background music track plays according to the current screen (home or quiz)
 
+### Requirement: Background BGM pause
+
+When the app moves to the background (e.g. the player switches to another app on mobile), the system SHALL pause all background music and SHALL NOT play background music while the page is hidden. When the player returns to the app, background music SHALL resume from the paused position if it was playing before.
+
+#### Scenario: BGM pauses on background
+- **WHEN** the player sends the app to the background while home, quiz, or time attack BGM is playing
+- **THEN** the background music pauses immediately
+
+#### Scenario: BGM resumes on foreground
+- **WHEN** the player returns to the app after backgrounding
+- **THEN** the same background music track resumes if sound is enabled and the screen still expects BGM
+
+#### Scenario: Single audio unlock on interaction
+- **WHEN** a player taps any button that plays a sound or starts a mode
+- **THEN** the system unlocks browser audio playback once and does not simultaneously play multiple BGM tracks for unlock
+
 ### Requirement: Home screen BGM
 
 The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3` after the initial loading gate completes. If the browser blocks audible autoplay, the system SHALL start muted playback when possible and unmute after the player's first interaction. Background music SHALL stop when the player starts a standard quiz or opens time attack.

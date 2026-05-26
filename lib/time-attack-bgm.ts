@@ -1,5 +1,6 @@
 "use client";
 
+import { isPageHidden } from "@/lib/page-visibility";
 import { primeTimeAttackSounds } from "@/lib/time-attack-sounds";
 import { BGM_VOLUME } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
@@ -160,11 +161,11 @@ export function clearTimeAttackBgmState(sessionId: string): void {
 
 const preloadPool = new Map<string, HTMLAudioElement>();
 let bgmPrimed = false;
-let bgmUnlocked = false;
 
 let bgmAudio: HTMLAudioElement | null = null;
 let currentTrack: string | null = null;
 let pendingTrack: string | null = null;
+let pausedForBackground = false;
 
 function getPreloadAudio(src: string): HTMLAudioElement {
   const existing = preloadPool.get(src);
@@ -191,28 +192,7 @@ export function primeTimeAttackBgm(): void {
 }
 
 export function unlockTimeAttackBgm(): void {
-  if (typeof window === "undefined" || bgmUnlocked) {
-    return;
-  }
-
-  bgmUnlocked = true;
-  primeTimeAttackBgm();
-
-  for (const src of TIME_ATTACK_BGM_TRACKS) {
-    const audio = getPreloadAudio(src);
-    const previousVolume = audio.volume;
-    audio.volume = 0;
-    void audio
-      .play()
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        audio.volume = previousVolume;
-      });
-  }
+  // Browser autoplay unlock is handled globally in audio-unlock.ts.
 }
 
 export function getCurrentTimeAttackBgmTrack(): string | null {
@@ -232,6 +212,28 @@ export function stopTimeAttackBgm(): void {
 
   currentTrack = null;
   pendingTrack = null;
+  pausedForBackground = false;
+}
+
+export function pauseTimeAttackBgmForBackground(): void {
+  const audio = bgmAudio;
+  if (audio == null || audio.paused) {
+    return;
+  }
+
+  audio.pause();
+  pausedForBackground = true;
+}
+
+export function resumeTimeAttackBgmFromBackground(): void {
+  if (!pausedForBackground || bgmAudio == null || !isSoundEnabled()) {
+    return;
+  }
+
+  pausedForBackground = false;
+  void bgmAudio.play().catch(() => {
+    pausedForBackground = true;
+  });
 }
 
 export function playTimeAttackBgm(src: string): boolean {
@@ -245,6 +247,10 @@ export function playTimeAttackBgm(src: string): boolean {
     return true;
   }
 
+  if (currentTrack === src && pausedForBackground) {
+    return true;
+  }
+
   stopTimeAttackBgm();
 
   const audio = getPreloadAudio(src);
@@ -255,10 +261,19 @@ export function playTimeAttackBgm(src: string): boolean {
   currentTrack = src;
   pendingTrack = src;
 
+  if (isPageHidden()) {
+    pausedForBackground = true;
+    pendingTrack = null;
+    return true;
+  }
+
   void audio.play().then(
     () => {
       if (pendingTrack === src) {
         pendingTrack = null;
+      }
+      if (isPageHidden()) {
+        pauseTimeAttackBgmForBackground();
       }
     },
     () => {
@@ -284,5 +299,5 @@ export function resumePendingTimeAttackBgm(): boolean {
 
 export function prepareTimeAttackBgmEntry(): void {
   primeTimeAttackSounds();
-  unlockTimeAttackBgm();
+  primeTimeAttackBgm();
 }

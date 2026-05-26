@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
+import { unlockAudioPlayback } from "@/lib/audio-unlock";
 import {
   clearTimeAttackBgmState,
   getCurrentTimeAttackBgmTrack,
@@ -53,18 +54,18 @@ export function useTimeAttackBgm(
     bossKeyRef.current = null;
 
     const unlockUntilPlaying = () => {
-      if (isTimeAttackBgmPlaying()) {
-        return;
-      }
+      void unlockAudioPlayback().then(() => {
+        if (isTimeAttackBgmPlaying()) {
+          return;
+        }
 
-      resumePendingTimeAttackBgm();
+        resumePendingTimeAttackBgm();
+      });
     };
 
-    document.addEventListener("pointerdown", unlockUntilPlaying, { capture: true });
     document.addEventListener("keydown", unlockUntilPlaying, { capture: true });
 
     return () => {
-      document.removeEventListener("pointerdown", unlockUntilPlaying, { capture: true });
       document.removeEventListener("keydown", unlockUntilPlaying, { capture: true });
 
       if (queueRef.current != null) {

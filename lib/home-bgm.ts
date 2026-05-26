@@ -1,5 +1,6 @@
 "use client";
 
+import { isPageHidden } from "@/lib/page-visibility";
 import { waitForAudioReady } from "@/lib/audio-ready";
 import { BGM_VOLUME } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
@@ -7,12 +8,11 @@ import { isSoundEnabled } from "@/lib/sound-settings";
 export const HOME_BGM_SRC = "/sounds/bgm/uchuyuei.mp3";
 
 let preloadAudio: HTMLAudioElement | null = null;
-let unlockAudio: HTMLAudioElement | null = null;
 let bgmAudio: HTMLAudioElement | null = null;
 let bgmPrimed = false;
-let bgmUnlocked = false;
 let pendingPlay = false;
 let awaitingUnmute = false;
+let pausedForBackground = false;
 
 function getPreloadAudio(): HTMLAudioElement {
   if (preloadAudio == null) {
@@ -23,21 +23,14 @@ function getPreloadAudio(): HTMLAudioElement {
   return preloadAudio;
 }
 
-function getUnlockAudio(): HTMLAudioElement {
-  if (unlockAudio == null) {
-    unlockAudio = new Audio(HOME_BGM_SRC);
-    unlockAudio.preload = "auto";
-  }
-
-  return unlockAudio;
-}
-
 function finishHomeBgmUnlock(): void {
   if (tryUnmuteHomeBgm()) {
     return;
   }
 
-  resumePendingHomeBgm();
+  if (pendingPlay || awaitingUnmute) {
+    resumePendingHomeBgm();
+  }
 }
 
 export function primeHomeBgm(): void {
@@ -59,33 +52,7 @@ export function unlockHomeBgm(): void {
     return;
   }
 
-  if (bgmUnlocked) {
-    finishHomeBgmUnlock();
-    return;
-  }
-
-  bgmUnlocked = true;
-  primeHomeBgm();
-
-  if (bgmAudio != null && !bgmAudio.paused) {
-    finishHomeBgmUnlock();
-    return;
-  }
-
-  const audio = getUnlockAudio();
-  const previousVolume = audio.volume;
-  audio.volume = 0;
-  void audio
-    .play()
-    .then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      audio.volume = previousVolume;
-      finishHomeBgmUnlock();
-    });
+  finishHomeBgmUnlock();
 }
 
 export function tryUnmuteHomeBgm(): boolean {
@@ -115,14 +82,52 @@ export function stopHomeBgm(): void {
 
   pendingPlay = false;
   awaitingUnmute = false;
+  pausedForBackground = false;
+}
+
+export function pauseHomeBgmForBackground(): void {
+  const audio = bgmAudio;
+  if (audio == null || audio.paused) {
+    return;
+  }
+
+  audio.pause();
+  pausedForBackground = true;
+}
+
+export function resumeHomeBgmFromBackground(): void {
+  if (!pausedForBackground || bgmAudio == null || !isSoundEnabled()) {
+    return;
+  }
+
+  pausedForBackground = false;
+
+  if (bgmAudio.paused) {
+    void bgmAudio.play().catch(() => {
+      pausedForBackground = true;
+    });
+  }
 }
 
 function startMutedHomeBgm(audio: HTMLAudioElement): void {
   audio.muted = true;
+
+  if (isPageHidden()) {
+    pausedForBackground = true;
+    awaitingUnmute = true;
+    pendingPlay = true;
+    return;
+  }
+
   void audio.play().then(
     () => {
       awaitingUnmute = true;
       pendingPlay = true;
+
+      if (isPageHidden()) {
+        pauseHomeBgmForBackground();
+        return;
+      }
 
       if (tryUnmuteHomeBgm()) {
         return;
@@ -143,7 +148,7 @@ export function playHomeBgm(): void {
 
   primeHomeBgm();
 
-  if (isHomeBgmPlaying() || awaitingUnmute) {
+  if (isHomeBgmPlaying() || awaitingUnmute || pausedForBackground) {
     return;
   }
 
@@ -158,9 +163,18 @@ export function playHomeBgm(): void {
   pendingPlay = true;
   awaitingUnmute = false;
 
+  if (isPageHidden()) {
+    pausedForBackground = true;
+    pendingPlay = false;
+    return;
+  }
+
   void audio.play().then(
     () => {
       pendingPlay = false;
+      if (isPageHidden()) {
+        pauseHomeBgmForBackground();
+      }
     },
     () => {
       startMutedHomeBgm(audio);

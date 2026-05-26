@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutEffect } from "react";
+import { unlockAudioPlayback } from "@/lib/audio-unlock";
 import {
   playHomeBgm,
   resumePendingHomeBgm,
@@ -23,15 +24,15 @@ export function useHomeBgm(active: boolean): void {
     playHomeBgm();
 
     const unlockUntilPlaying = () => {
-      unlockHomeBgm();
-      resumePendingHomeBgm();
+      void unlockAudioPlayback().then(() => {
+        unlockHomeBgm();
+        resumePendingHomeBgm();
+      });
     };
 
-    document.addEventListener("pointerdown", unlockUntilPlaying, { capture: true });
     document.addEventListener("keydown", unlockUntilPlaying, { capture: true });
 
     return () => {
-      document.removeEventListener("pointerdown", unlockUntilPlaying, { capture: true });
       document.removeEventListener("keydown", unlockUntilPlaying, { capture: true });
       stopHomeBgm();
     };

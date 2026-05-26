@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource/klee-one/400.css";
 import "@fontsource/klee-one/600.css";
 import { AppLoadingGate } from "@/components/AppLoadingGate";
+import { BgmVisibilityLayer } from "@/components/BgmVisibilityLayer";
 import { ButtonSoundLayer } from "@/components/ButtonSoundLayer";
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
@@ -51,6 +52,7 @@ export default function RootLayout({
     <html lang="ja">
       <body>
         <AppLoadingGate>
+          <BgmVisibilityLayer />
           <ButtonSoundLayer />
           {children}
         </AppLoadingGate>

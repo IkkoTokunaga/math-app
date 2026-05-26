@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { playKeypadDigitSound, resumeKeypadAudioContext } from "@/lib/keypad-sounds";
+import {
+  playKeypadBackspaceSound,
+  playKeypadDigitSound,
+  resumeKeypadAudioContext,
+} from "@/lib/keypad-sounds";
 
 type KeypadProps = {
   value: string;
@@ -29,13 +33,6 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
   const stateRef = useRef({ disabled, value, maxDigits, onChange });
   stateRef.current = { disabled, value, maxDigits, onChange };
 
-  const backspace = () => {
-    if (disabled) {
-      return;
-    }
-    onChange(value.slice(0, -1));
-  };
-
   useEffect(() => {
     resumeKeypadAudioContext();
   }, []);
@@ -46,25 +43,43 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       return;
     }
 
-    const handleDigitPointerDown = (event: PointerEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       if (event.button !== 0) {
         return;
       }
 
-      const button = (event.target as Element).closest("button.keypad-btn");
-      if (!(button instanceof HTMLButtonElement) || button.disabled) {
+      const target = event.target as Element;
+      const digitButton = target.closest("button.keypad-btn");
+      const backspaceButton = target.closest('button[data-keypad-sound="backspace"]');
+
+      if (!(digitButton instanceof HTMLButtonElement) || digitButton.disabled) {
+        if (!(backspaceButton instanceof HTMLButtonElement) || backspaceButton.disabled) {
+          return;
+        }
+      }
+
+      const { disabled: isDisabled, value: currentValue, maxDigits: limit, onChange: applyChange } =
+        stateRef.current;
+
+      if (backspaceButton instanceof HTMLButtonElement && !backspaceButton.disabled) {
+        event.preventDefault();
+        if (isDisabled || currentValue.length === 0) {
+          return;
+        }
+        applyChange(currentValue.slice(0, -1));
         return;
       }
 
-      const digit = button.textContent?.trim();
+      if (!(digitButton instanceof HTMLButtonElement) || digitButton.disabled) {
+        return;
+      }
+
+      const digit = digitButton.textContent?.trim();
       if (digit == null || !/^[0-9]$/.test(digit)) {
         return;
       }
 
       event.preventDefault();
-
-      const { disabled: isDisabled, value: currentValue, maxDigits: limit, onChange: applyChange } =
-        stateRef.current;
       if (isDisabled || currentValue.length >= limit) {
         return;
       }
@@ -72,9 +87,9 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       applyChange(currentValue + digit);
     };
 
-    keypad.addEventListener("pointerdown", handleDigitPointerDown, { capture: true });
+    keypad.addEventListener("pointerdown", handlePointerDown, { capture: true });
     return () => {
-      keypad.removeEventListener("pointerdown", handleDigitPointerDown, { capture: true });
+      keypad.removeEventListener("pointerdown", handlePointerDown, { capture: true });
     };
   }, []);
 
@@ -96,6 +111,11 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
 
       if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
+        if (value.length === 0) {
+          return;
+        }
+        resumeKeypadAudioContext();
+        playKeypadBackspaceSound();
         onChange(value.slice(0, -1));
         return;
       }
@@ -130,7 +150,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
       <button
         type="button"
         disabled={disabled || value.length === 0}
-        onClick={backspace}
+        data-keypad-sound="backspace"
         className="keypad-btn flex items-center justify-center"
         aria-label="1文字削除"
         title="1文字削除（Backspace / Delete）"

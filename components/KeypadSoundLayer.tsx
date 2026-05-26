@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { playKeypadDigitSound, resumeKeypadAudioContext } from "@/lib/keypad-sounds";
+import {
+  playKeypadBackspaceSound,
+  playKeypadDigitSound,
+  resumeKeypadAudioContext,
+} from "@/lib/keypad-sounds";
 import { useAppReady } from "@/lib/use-app-ready";
 
 function isKeypadDigitButton(target: EventTarget | null): boolean {
@@ -18,13 +22,26 @@ function isKeypadDigitButton(target: EventTarget | null): boolean {
   return digit != null && /^[0-9]$/.test(digit);
 }
 
-function playKeypadDigitFromTarget(target: EventTarget | null): void {
-  if (!isKeypadDigitButton(target)) {
+function isKeypadBackspaceButton(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  const button = target.closest('button[data-keypad-sound="backspace"]');
+  return button instanceof HTMLButtonElement && !button.disabled;
+}
+
+function playKeypadSoundFromTarget(target: EventTarget | null): void {
+  if (isKeypadDigitButton(target)) {
+    resumeKeypadAudioContext();
+    playKeypadDigitSound();
     return;
   }
 
-  resumeKeypadAudioContext();
-  playKeypadDigitSound();
+  if (isKeypadBackspaceButton(target)) {
+    resumeKeypadAudioContext();
+    playKeypadBackspaceSound();
+  }
 }
 
 export function KeypadSoundLayer() {
@@ -43,7 +60,7 @@ export function KeypadSoundLayer() {
       }
 
       lastTouchPlayAt = performance.now();
-      playKeypadDigitFromTarget(event.target);
+      playKeypadSoundFromTarget(event.target);
     };
 
     const onPointerDown = (event: PointerEvent) => {
@@ -55,7 +72,7 @@ export function KeypadSoundLayer() {
         return;
       }
 
-      playKeypadDigitFromTarget(event.target);
+      playKeypadSoundFromTarget(event.target);
     };
 
     document.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });

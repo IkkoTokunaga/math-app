@@ -1,8 +1,24 @@
 "use client";
 
+import { isSoundEnabled } from "@/lib/sound-settings";
+
 export const BUTTON_SOUND_SRC = "/sounds/button.mp3";
+export const TIME_ATTACK_START_SOUND_SRC = "/sounds/time-attack-start.mp3";
+export const TIME_ATTACK_RESUME_SOUND_SRC = "/sounds/time-attack-resume.mp3";
+export const LEVEL_START_SOUND_SRC = "/sounds/level-start.mp3";
+
+const ALL_SOUND_SRCS = [
+  BUTTON_SOUND_SRC,
+  TIME_ATTACK_START_SOUND_SRC,
+  TIME_ATTACK_RESUME_SOUND_SRC,
+  LEVEL_START_SOUND_SRC,
+] as const;
+
+const TAP_MOVE_THRESHOLD_PX = 10;
 
 const audioPools = new Map<string, HTMLAudioElement[]>();
+let soundsPrimed = false;
+let audioUnlocked = false;
 
 function getAudio(src: string): HTMLAudioElement {
   const pool = audioPools.get(src) ?? [];
@@ -20,11 +36,14 @@ function getAudio(src: string): HTMLAudioElement {
 }
 
 function playSound(src: string) {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || !isSoundEnabled()) {
     return;
   }
 
+  primeButtonSounds();
+
   const audio = getAudio(src);
+  audio.currentTime = 0;
   void audio.play().catch(() => undefined);
 }
 
@@ -32,34 +51,103 @@ export function playButtonSound() {
   playSound(BUTTON_SOUND_SRC);
 }
 
-export function primeButtonSounds() {
-  if (typeof window === "undefined") {
+export function playButtonSoundForTarget(target: EventTarget | null) {
+  const src = resolveButtonSoundSrc(target);
+  if (src == null) {
     return;
   }
 
-  getAudio(BUTTON_SOUND_SRC).load();
+  playSound(src);
 }
 
-export function shouldPlayButtonSound(target: EventTarget | null): boolean {
+export function primeButtonSounds() {
+  if (typeof window === "undefined" || soundsPrimed) {
+    return;
+  }
+
+  soundsPrimed = true;
+
+  for (const src of ALL_SOUND_SRCS) {
+    getAudio(src).load();
+  }
+}
+
+export function unlockButtonSounds() {
+  if (typeof window === "undefined" || audioUnlocked) {
+    return;
+  }
+
+  audioUnlocked = true;
+  primeButtonSounds();
+
+  for (const src of ALL_SOUND_SRCS) {
+    const audio = getAudio(src);
+    const previousVolume = audio.volume;
+    audio.volume = 0;
+    void audio
+      .play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        audio.volume = previousVolume;
+      });
+  }
+}
+
+export function resolveButtonSoundSrc(target: EventTarget | null): string | null {
   if (!(target instanceof Element)) {
-    return false;
+    return null;
   }
 
   const interactive = target.closest("button, a[href]");
   if (!interactive) {
-    return false;
+    return null;
   }
 
   if (interactive instanceof HTMLButtonElement && interactive.disabled) {
-    return false;
+    return null;
   }
 
   if (
     interactive.classList.contains("keypad-btn") ||
     interactive.classList.contains("keypad-btn-submit")
   ) {
-    return false;
+    return null;
   }
 
-  return interactive.classList.contains("big-btn");
+  if (interactive.dataset.buttonSound === "time-attack-start") {
+    return TIME_ATTACK_START_SOUND_SRC;
+  }
+
+  if (interactive.dataset.buttonSound === "time-attack-resume") {
+    return TIME_ATTACK_RESUME_SOUND_SRC;
+  }
+
+  if (interactive.dataset.buttonSound === "level-start") {
+    return LEVEL_START_SOUND_SRC;
+  }
+
+  if (interactive.classList.contains("big-btn")) {
+    return BUTTON_SOUND_SRC;
+  }
+
+  return null;
+}
+
+export function shouldPlayButtonSound(target: EventTarget | null): boolean {
+  return resolveButtonSoundSrc(target) != null;
+}
+
+export function didPointerTapMove(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+): boolean {
+  return (
+    Math.hypot(endX - startX, endY - startY) > TAP_MOVE_THRESHOLD_PX
+  );
 }

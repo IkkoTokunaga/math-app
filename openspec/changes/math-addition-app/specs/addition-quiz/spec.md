@@ -123,15 +123,27 @@ During a quiz, the header SHALL show the mascot image at the top left, player na
 
 ### Requirement: Button sound effects
 
-The system SHALL play short sound effects on selected button presses. Primary action buttons outside the keypad (including level selection and mode selection) SHALL use the confirm button sound (`/sounds/button.mp3`). All keypad buttons (digits, backspace, and 「答える」) and tapping the mascot to return home SHALL NOT play a button sound.
+The system SHALL play short sound effects on selected button presses. Primary action buttons outside the keypad (including mode selection) SHALL use the confirm button sound (`/sounds/button.mp3`). Level selection buttons (Lv1–Lv10) that start a standard quiz session SHALL use the level start sound (`/sounds/level-start.mp3`). Buttons that start a new time attack session (「タイムアタック（鬼退治）」, 「タイムアタックを新しく始める」, and time attack result 「もう一度」) SHALL use the time attack start sound (`/sounds/time-attack-start.mp3`). The resume button (「続きから」) SHALL use the time attack resume sound (`/sounds/time-attack-resume.mp3`). All keypad buttons (digits, backspace, and 「答える」) and tapping the mascot to return home SHALL NOT play a button sound.
 
 #### Scenario: Keypad is silent
 - **WHEN** a player taps any keypad button or uses keypad keyboard shortcuts during a quiz
 - **THEN** the system does not play a button sound
 
 #### Scenario: Non-keypad button sound
-- **WHEN** a player taps a primary action button outside the keypad such as a level or mode button
+- **WHEN** a player taps a primary action button outside the keypad such as a mode button
 - **THEN** the system plays the confirm button sound
+
+#### Scenario: Level start sound
+- **WHEN** a player taps an unlocked level button to start a standard quiz session
+- **THEN** the system plays the level start sound instead of the confirm button sound
+
+#### Scenario: Time attack start sound
+- **WHEN** a player taps a button that starts a new time attack session
+- **THEN** the system plays the time attack start sound instead of the confirm button sound
+
+#### Scenario: Time attack resume sound
+- **WHEN** a player taps 「続きから」 to resume an in-progress time attack
+- **THEN** the system plays the time attack resume sound instead of the confirm button sound
 
 #### Scenario: Mascot home is silent
 - **WHEN** a player taps the mascot to return home during a quiz
@@ -140,6 +152,74 @@ The system SHALL play short sound effects on selected button presses. Primary ac
 #### Scenario: Scroll without tap is silent
 - **WHEN** a player scrolls a screen that contains primary action buttons without activating one
 - **THEN** the system does not play a button sound
+
+### Requirement: Quiz answer sound effects
+
+During standard quiz play, the system SHALL play short sound effects when an answer is submitted. Correct answers SHALL use `/sounds/quiz-correct.mp3`. Incorrect answers SHALL use `/sounds/quiz-wrong.mp3`. The sound SHALL play immediately on submit using the same answer judgment as the server, without waiting for the server response. During time attack, only the correct answer sound SHALL play on submit; incorrect answers SHALL NOT play the quiz wrong sound (the oni counterattack sound plays instead). Keypad button presses SHALL NOT play these sounds.
+
+#### Scenario: Correct answer sound
+- **WHEN** a player submits a correct answer during standard mode or time attack
+- **THEN** the system plays the correct answer sound effect
+
+#### Scenario: Wrong answer sound in standard mode
+- **WHEN** a player submits an incorrect answer during standard mode
+- **THEN** the system plays the wrong answer sound effect
+
+#### Scenario: No quiz wrong sound in time attack
+- **WHEN** a player submits an incorrect answer during time attack
+- **THEN** the system does not play the quiz wrong answer sound effect
+
+### Requirement: Home screen BGM
+
+The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3`. Background music SHALL stop when the player starts a standard quiz or opens time attack.
+
+#### Scenario: Home BGM on mode select
+- **WHEN** a player opens the home screen and is not in an active quiz
+- **THEN** the home background music plays
+
+#### Scenario: Home BGM on progress dashboard
+- **WHEN** a player opens the progress dashboard
+- **THEN** the same home background music continues or resumes
+
+#### Scenario: Home BGM stops on quiz start
+- **WHEN** a player starts a standard quiz
+- **THEN** the home background music stops and quiz background music begins
+
+### Requirement: Standard quiz BGM
+
+During an active standard quiz session (addition or subtraction, not time attack), the system SHALL play looping background music using `/sounds/bgm/quiz-bgm.mp3`. Quiz BGM SHALL stop when the quiz ends and the player returns to the home screen or level selection.
+
+#### Scenario: Quiz BGM during standard mode
+- **WHEN** a player is answering questions in standard mode
+- **THEN** the quiz background music plays
+
+#### Scenario: Quiz BGM stops on quiz end
+- **WHEN** a player finishes or exits a standard quiz
+- **THEN** the quiz background music stops and home background music resumes
+
+### Requirement: Home screen sound toggle
+
+The home screen (`/play` mode and level selection, when not in an active quiz) SHALL show a sound on/off toggle button fixed at the top-left. The toggle SHALL NOT appear during an active standard quiz, time attack, or on other routes. When sound is off, the system SHALL NOT play button sound effects, quiz answer sounds, time attack action sounds, or background music. The preference SHALL persist in browser localStorage across visits. Toggling sound off SHALL immediately stop any playing background music.
+
+#### Scenario: Toggle on home screen only
+- **WHEN** a player opens the home screen and is not in an active quiz
+- **THEN** the sound toggle button is visible at the top-left of the screen
+
+#### Scenario: Toggle hidden during play
+- **WHEN** a player starts a standard quiz or enters time attack
+- **THEN** the sound toggle button is not shown
+
+#### Scenario: Mute all sounds
+- **WHEN** a player taps the sound toggle to turn sound off on the home screen
+- **THEN** no further sound effects or background music play until sound is turned back on
+
+#### Scenario: Sound preference persists
+- **WHEN** a player turns sound off and reloads the app
+- **THEN** sound remains off until the player turns it back on from the home screen
+
+#### Scenario: Unmute restores home BGM
+- **WHEN** a player turns sound back on while on the home screen
+- **THEN** the home background music resumes
 
 ### Requirement: Mascot speech bubble on answer
 

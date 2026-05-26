@@ -21,12 +21,19 @@ import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
 import {
   formatExpression,
   DEFAULT_OPERATION,
+  getCorrectAnswerForOperation,
   type Operation,
 } from "@/lib/operations";
 import { getSubtractionTimeAttackMaxAnswerDigits } from "@/lib/subtraction-time-attack-questions";
 import { getTimeAttackMaxAnswerDigits } from "@/lib/time-attack-questions";
 import { useIsClient } from "@/lib/use-is-client";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
+import {
+  endTimeAttackBgmSession,
+  useTimeAttackBgm,
+} from "@/lib/use-time-attack-bgm";
+import { playTimeAttackBeamSound, playTimeAttackOniAttackSound } from "@/lib/time-attack-sounds";
+import { playQuizCorrectSound } from "@/lib/quiz-sounds";
 
 type InitialSession = {
   sessionId: string;
@@ -176,10 +183,13 @@ export function TimeAttackClient({
 
   const redirectToResult = useCallback(
     (id: string) => {
+      endTimeAttackBgmSession(sessionId);
       router.push(`/result/time-attack/${id}`);
     },
-    [router],
+    [router, sessionId],
   );
+
+  useTimeAttackBgm(sessionId, arenaState);
 
   const syncBossDisplay = (state: TimeAttackState) => {
     setArenaState(state);
@@ -398,6 +408,7 @@ export function TimeAttackClient({
   const playEvilOrbAttack = () =>
     new Promise<void>((resolve) => {
       evilOrbDoneRef.current = resolve;
+      playTimeAttackOniAttackSound();
       setEvilOrbAnimId((current) => current + 1);
     });
 
@@ -405,6 +416,7 @@ export function TimeAttackClient({
     new Promise<void>((resolve) => {
       lightOrbDoneRef.current = resolve;
       setLightOrbFiring(true);
+      playTimeAttackBeamSound();
       setLightOrbAnimId((current) => current + 1);
     });
 
@@ -520,6 +532,13 @@ export function TimeAttackClient({
 
     const elapsedSeconds = getElapsedSeconds();
     const numericAnswer = Number(answer);
+    const question = questions[timeAttackState.waveQuestionIndex];
+    if (
+      question &&
+      numericAnswer === getCorrectAnswerForOperation(operation, question)
+    ) {
+      playQuizCorrectSound();
+    }
 
     try {
       const result = await submitTimeAttackAnswerAction(

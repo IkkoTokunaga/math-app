@@ -60,3 +60,11 @@ The system SHALL identify and display up to 3 operand pairs that the player has 
 #### Scenario: No incorrect answers yet
 - **WHEN** a player has no incorrect question logs
 - **THEN** the weak spots section is hidden
+
+### Requirement: Progress dashboard BGM
+
+The progress dashboard SHALL play the same looping home background music as `/play` using `/sounds/bgm/uchuyuei.mp3`, respecting the player's sound on/off preference.
+
+#### Scenario: Progress BGM plays
+- **WHEN** a player opens the progress dashboard with sound enabled
+- **THEN** the home background music plays

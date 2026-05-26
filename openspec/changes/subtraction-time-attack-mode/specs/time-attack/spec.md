@@ -87,7 +87,7 @@ During subtraction time attack, the teacher mascot SHALL wear **light blue (水�
 
 ### Requirement: Time attack mode entry
 
-The system SHALL offer **タイムアタック** per operation (**足し算** / **引き算**). Addition time attack behavior SHALL remain unchanged. Subtraction time attack SHALL follow the same boss progression, wave rules, mistake limit, HP formulas, and result flow as addition time attack except where subtraction-specific rules above apply.
+The system SHALL offer **タイムアタック** per operation (**足し算** / **引き算**). Addition time attack behavior SHALL remain unchanged. Subtraction time attack SHALL follow the same boss progression, wave rules, mistake limit, HP formulas, boss BGM rotation, and result flow as addition time attack except where subtraction-specific rules above apply.
 
 In-progress resume SHALL be scoped by **operation**: at most one resumable addition time attack session and at most one resumable subtraction time attack session per player.
 

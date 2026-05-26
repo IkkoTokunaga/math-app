@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useIsClient } from "@/lib/use-is-client";
+import { useHomeBgm } from "@/lib/use-home-bgm";
 import type { AuthState } from "@/lib/auth/state";
 import { computeGuestProgress } from "@/lib/guest-progress";
 import { readGuestStore } from "@/lib/guest-storage";
@@ -71,6 +72,8 @@ export function ProgressClient({ auth }: ProgressClientProps) {
   const [memberData, setMemberData] = useState<ProgressData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isClient = useIsClient();
+
+  useHomeBgm(isClient);
 
   const operation: Operation =
     selectedOperation ??

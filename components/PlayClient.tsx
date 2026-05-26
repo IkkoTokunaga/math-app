@@ -17,6 +17,7 @@ import {
   LiveScoreProgressBar,
 } from "@/components/LiveScoreProgressBar";
 import { RunningScore, SCORE_FLY_DELAY_MS, SCORE_FLY_DURATION_MS } from "@/components/RunningScore";
+import { SoundToggleButton } from "@/components/SoundToggleButton";
 import type { AuthState } from "@/lib/auth/state";
 import { getGuestLabel } from "@/lib/guest-storage";
 import {
@@ -25,6 +26,8 @@ import {
   submitGuestAnswer,
 } from "@/lib/guest-session";
 import { useIsClient } from "@/lib/use-is-client";
+import { useHomeBgm } from "@/lib/use-home-bgm";
+import { useQuizBgm } from "@/lib/use-quiz-bgm";
 import { useQuizPanelFit } from "@/lib/use-quiz-panel-fit";
 import { MAX_LEVEL } from "@/lib/levels";
 import {
@@ -50,6 +53,7 @@ import {
   SESSION_COMPLETE_MASCOT_COMMENT,
   pickRandomMascotComment,
 } from "@/lib/mascot-comments";
+import { playQuizAnswerSound } from "@/lib/quiz-sounds";
 import type { Question } from "@/lib/db/schema";
 import { applyDevUnlock, getDevUnlockFromSearch } from "@/lib/dev-unlock-setup";
 import {
@@ -309,6 +313,9 @@ export function PlayClient({
   const inQuiz = Boolean(sessionId || localId);
   const quizPanelRef = useRef<HTMLDivElement>(null);
 
+  useHomeBgm(isClient && !inQuiz);
+  useQuizBgm(isClient && inQuiz);
+
   useEffect(() => {
     const shell = document.querySelector(".page-shell");
     if (!shell) {
@@ -563,6 +570,11 @@ export function PlayClient({
       0,
       (Date.now() - questionStartedAtRef.current) / 1000,
     );
+    const numericAnswer = Number(answer);
+    const question = questions[currentIndex];
+    if (question) {
+      playQuizAnswerSound(operation, question, numericAnswer);
+    }
 
     let releaseSubmitLock = true;
 
@@ -573,7 +585,7 @@ export function PlayClient({
         const result = await submitAnswerAction(
           activeId,
           currentIndex,
-          Number(answer),
+          numericAnswer,
           elapsedSeconds,
         );
 
@@ -618,7 +630,7 @@ export function PlayClient({
         const result = submitGuestAnswer(
           activeId,
           currentIndex,
-          Number(answer),
+          numericAnswer,
           elapsedSeconds,
         );
 
@@ -719,6 +731,7 @@ export function PlayClient({
 
     return (
       <>
+        <SoundToggleButton />
         <header className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 sm:gap-4">
             <img
@@ -770,11 +783,16 @@ export function PlayClient({
               {auth.loggedIn ? (
                 additionTimeAttackResume ? (
                   <div className="grid gap-3">
-                    <Link href="/play/time-attack" className="big-btn big-btn-primary text-center">
+                    <Link
+                      href="/play/time-attack"
+                      data-button-sound="time-attack-resume"
+                      className="big-btn big-btn-primary text-center"
+                    >
                       続きから（{additionTimeAttackResume.bossLabel}）
                     </Link>
                     <Link
                       href="/play/time-attack?new=1"
+                      data-button-sound="time-attack-start"
                       className="big-btn big-btn-secondary text-center"
                       onClick={(event) => {
                         if (
@@ -790,7 +808,11 @@ export function PlayClient({
                     </Link>
                   </div>
                 ) : (
-                  <Link href="/play/time-attack?new=1" className="big-btn big-btn-secondary text-center">
+                  <Link
+                    href="/play/time-attack?new=1"
+                    data-button-sound="time-attack-start"
+                    className="big-btn big-btn-secondary text-center"
+                  >
                     タイムアタック（鬼退治）
                   </Link>
                 )
@@ -824,12 +846,14 @@ export function PlayClient({
                   <div className="grid gap-3">
                     <Link
                       href="/play/time-attack?operation=subtraction"
+                      data-button-sound="time-attack-resume"
                       className="big-btn big-btn-primary text-center"
                     >
                       続きから（{subtractionTimeAttackResume.bossLabel}）
                     </Link>
                     <Link
                       href="/play/time-attack?operation=subtraction&new=1"
+                      data-button-sound="time-attack-start"
                       className="big-btn big-btn-secondary text-center"
                       onClick={(event) => {
                         if (
@@ -847,6 +871,7 @@ export function PlayClient({
                 ) : (
                   <Link
                     href="/play/time-attack?operation=subtraction&new=1"
+                    data-button-sound="time-attack-start"
                     className="big-btn big-btn-secondary text-center"
                   >
                     タイムアタック（鬼退治）
@@ -900,6 +925,7 @@ export function PlayClient({
                 type="button"
                 disabled={submitting || disabled}
                 onClick={() => startSession(lv)}
+                data-button-sound="level-start"
                 className={`big-btn disabled:opacity-40 ${isUnlocking ? "big-btn--unlocking" : ""}`}
                 aria-label={isUnlocking ? `Lv${lv} が新しく解放されました` : undefined}
               >

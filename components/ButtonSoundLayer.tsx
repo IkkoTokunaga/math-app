@@ -2,19 +2,84 @@
 
 import { useEffect } from "react";
 import {
-  playButtonSound,
+  didPointerTapMove,
+  playButtonSoundForTarget,
   primeButtonSounds,
+  resolveButtonSoundSrc,
   shouldPlayButtonSound,
+  TIME_ATTACK_RESUME_SOUND_SRC,
+  TIME_ATTACK_START_SOUND_SRC,
+  unlockButtonSounds,
 } from "@/lib/button-sounds";
+import { prepareTimeAttackBgmEntry, primeTimeAttackBgm } from "@/lib/time-attack-bgm";
+import { primeHomeBgm, unlockHomeBgm } from "@/lib/home-bgm";
+import { primeQuizBgm, unlockQuizBgm } from "@/lib/quiz-bgm";
+import { primeQuizSounds } from "@/lib/quiz-sounds";
+import { primeTimeAttackSounds } from "@/lib/time-attack-sounds";
+import { initSoundSettings } from "@/lib/sound-settings";
 
 export function ButtonSoundLayer() {
   useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (!event.isTrusted) {
+    initSoundSettings();
+    primeButtonSounds();
+    primeTimeAttackBgm();
+    primeTimeAttackSounds();
+    primeQuizSounds();
+    primeHomeBgm();
+    primeQuizBgm();
+
+    let tapStartX = 0;
+    let tapStartY = 0;
+    let tapTarget: EventTarget | null = null;
+    let tapMoved = false;
+    let playedForLastTap = false;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) {
         return;
       }
 
-      if (event.button !== 0) {
+      playedForLastTap = false;
+      tapMoved = false;
+      tapStartX = event.clientX;
+      tapStartY = event.clientY;
+      tapTarget = event.target;
+      unlockButtonSounds();
+      unlockHomeBgm();
+      unlockQuizBgm();
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (tapMoved) {
+        return;
+      }
+
+      tapMoved = didPointerTapMove(tapStartX, tapStartY, event.clientX, event.clientY);
+    };
+
+    const onPointerUp = (event: PointerEvent) => {
+      if (event.button !== 0 || tapMoved || playedForLastTap) {
+        return;
+      }
+
+      if (!shouldPlayButtonSound(tapTarget)) {
+        return;
+      }
+
+      const soundSrc = resolveButtonSoundSrc(tapTarget);
+      if (
+        soundSrc === TIME_ATTACK_START_SOUND_SRC ||
+        soundSrc === TIME_ATTACK_RESUME_SOUND_SRC
+      ) {
+        prepareTimeAttackBgmEntry();
+      }
+
+      playButtonSoundForTarget(tapTarget);
+      playedForLastTap = true;
+    };
+
+    const onClick = (event: MouseEvent) => {
+      if (!event.isTrusted || playedForLastTap) {
         return;
       }
 
@@ -22,14 +87,27 @@ export function ButtonSoundLayer() {
         return;
       }
 
-      playButtonSound();
+      const soundSrc = resolveButtonSoundSrc(event.target);
+      if (
+        soundSrc === TIME_ATTACK_START_SOUND_SRC ||
+        soundSrc === TIME_ATTACK_RESUME_SOUND_SRC
+      ) {
+        prepareTimeAttackBgmEntry();
+      }
+
+      playButtonSoundForTarget(event.target);
     };
 
-    document.addEventListener("click", onClick);
-    document.addEventListener("pointerdown", primeButtonSounds, { once: true });
+    document.addEventListener("pointerdown", onPointerDown, { capture: true });
+    document.addEventListener("pointermove", onPointerMove, { capture: true });
+    document.addEventListener("pointerup", onPointerUp, { capture: true });
+    document.addEventListener("click", onClick, { capture: true });
 
     return () => {
-      document.removeEventListener("click", onClick);
+      document.removeEventListener("pointerdown", onPointerDown, { capture: true });
+      document.removeEventListener("pointermove", onPointerMove, { capture: true });
+      document.removeEventListener("pointerup", onPointerUp, { capture: true });
+      document.removeEventListener("click", onClick, { capture: true });
     };
   }, []);
 

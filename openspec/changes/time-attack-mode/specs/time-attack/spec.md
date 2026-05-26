@@ -443,3 +443,39 @@ Time attack SHALL reuse the standard quiz input experience: inline `?` answer di
 - **WHEN** the play layout fits within the viewport with room to spare
 - **THEN** the question board and keypad appear with consistent tight spacing
 - **AND** excess vertical space is not inserted between the question board and keypad
+
+### Requirement: Time attack boss BGM rotation
+
+During an active time attack session, the system SHALL play looping background music. Background music for each boss SHALL begin **1 second** after the boss becomes active (session entry, resume, or next boss enter). When the boss identity changes after a boss defeat (`currentLevel` and/or `enmaNumber` advances), the system SHALL switch to a different track chosen randomly from the configured boss BGM pool. Within the same session, a track SHALL NOT repeat until every other track in the pool has already played once. Resuming the same in-progress session SHALL continue the same non-repeating queue. Background music SHALL stop when the session ends or the player leaves time attack.
+
+#### Scenario: BGM starts on session entry
+- **WHEN** a player enters an active time attack session
+- **THEN** background music for the current boss begins after a 1 second delay
+
+#### Scenario: BGM changes on boss defeat
+- **WHEN** a player defeats a boss and the next boss enters
+- **THEN** the background music switches to a different unused track from the pool after a 1 second delay
+
+#### Scenario: No duplicate track within one cycle
+- **WHEN** multiple boss changes occur within the same session before the track pool is exhausted
+- **THEN** each new boss uses a track that has not yet played in that session cycle
+
+#### Scenario: BGM stops on session end
+- **WHEN** a time attack session ends or the player leaves time attack
+- **THEN** background music stops
+
+### Requirement: Mascot beam attack sound
+
+When the mascot fires the light-orb beam attack toward the boss after a wave's gauge attack sequence, the system SHALL play the beam attack sound effect (`/sounds/time-attack-beam.mp3`).
+
+#### Scenario: Beam sound on wave attack
+- **WHEN** the mascot beam attack animation begins after a completed wave gauge sequence
+- **THEN** the system plays the beam attack sound effect
+
+### Requirement: Oni counterattack sound
+
+When the oni fires the evil-orb counterattack toward the mascot after an incorrect answer, the system SHALL play the oni attack sound effect (`/sounds/time-attack-oni-attack.mp3`).
+
+#### Scenario: Oni attack sound on wrong answer
+- **WHEN** the oni evil-orb attack animation begins after an incorrect answer
+- **THEN** the system plays the oni attack sound effect

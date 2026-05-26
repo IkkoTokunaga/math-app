@@ -2950,3 +2950,43 @@ button.keypad-btn-submit:active:not(:disabled) {
     transition: none;
   }
 }
+
+.sound-toggle-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.sound-toggle-btn {
+  position: absolute;
+  top: calc(0.5rem + env(safe-area-inset-top, 0px));
+  left: calc(0.5rem + env(safe-area-inset-left, 0px));
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  border: 2px solid rgb(240 235 224 / 0.35);
+  background: rgb(42 69 56 / 0.92);
+  color: var(--chalk);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.08),
+    0 4px 12px rgb(0 0 0 / 0.35);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.sound-toggle-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgb(240 235 224 / 0.55);
+}
+
+.sound-toggle-btn:active {
+  transform: translateY(1px);
+}
+
+.sound-toggle-btn__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}

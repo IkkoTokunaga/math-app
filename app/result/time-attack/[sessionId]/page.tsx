@@ -46,7 +46,11 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <Link href={retryHref} className="big-btn big-btn-primary">
+          <Link
+            href={retryHref}
+            data-button-sound="time-attack-start"
+            className="big-btn big-btn-primary"
+          >
             もう一度
           </Link>
           <Link href={playHref} className="big-btn big-btn-secondary">

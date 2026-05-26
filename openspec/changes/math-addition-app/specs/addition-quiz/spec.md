@@ -382,8 +382,8 @@ The system SHALL NOT repeat the same operand combination within a single session
 
 ### Requirement: PWA home screen icon
 
-The system SHALL provide a web app manifest and home screen icons that show the game mascot on the app background with 「けいさん」 at the top, so that adding the app to a mobile home screen displays a branded icon.
+The system SHALL provide a web app manifest and home screen icons that show a zoomed-in view of the mascot's face on the game background, so that adding the app to a mobile home screen displays a branded icon.
 
 #### Scenario: Add to home screen on mobile
 - **WHEN** a player adds the app to their phone home screen
-- **THEN** the icon shows the mascot character on the game background with 「けいさん」 at the top
+- **THEN** the icon shows the mascot's face enlarged on the game background without a board frame or title text

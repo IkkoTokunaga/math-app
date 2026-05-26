@@ -2987,14 +2987,14 @@ html.app-loading body {
   100% { opacity: 0; }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 480px) {
   .time-attack-top {
-    grid-template-columns: 3.75rem minmax(0, 1fr) min(48%, 15rem);
+    grid-template-columns: 3.75rem minmax(0, 1fr) min(54%, 13rem);
     column-gap: 0.45rem;
   }
 
   .time-attack-top__oni {
-    margin-bottom: -1.25rem;
+    margin-bottom: -2.5rem;
   }
 
   .time-attack-top__meta {
@@ -3003,7 +3003,7 @@ html.app-loading body {
 
   .time-attack-oni-score__image--addition,
   .time-attack-oni-score__image--subtraction {
-    height: clamp(5.5rem, 18vw, 7rem);
+    height: clamp(8rem, 34vw, 10rem);
   }
 }
 

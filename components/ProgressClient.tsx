@@ -44,7 +44,9 @@ type ProgressClientProps = {
 
 export function ProgressClient({ auth }: ProgressClientProps) {
   const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null);
-  const [memberData, setMemberData] = useState<ProgressData | null>(null);
+  const [progressByOperation, setProgressByOperation] = useState<
+    Partial<Record<Operation, ProgressData>>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const isClient = useIsClient();
 
@@ -80,9 +82,9 @@ export function ProgressClient({ auth }: ProgressClientProps) {
         }
         return response.json();
       })
-      .then((data) => {
+      .then((data: ProgressData) => {
         if (!cancelled) {
-          setMemberData(data);
+          setProgressByOperation((prev) => ({ ...prev, [operation]: data }));
         }
       })
       .catch(() => {
@@ -101,7 +103,8 @@ export function ProgressClient({ auth }: ProgressClientProps) {
     ? computeGuestProgress(guestStore.completedSessions, operation)
     : null;
 
-  const displayData = auth.loggedIn ? memberData : guestData;
+  const displayData = auth.loggedIn ? (progressByOperation[operation] ?? null) : guestData;
+  const isPanelLoading = auth.loggedIn && displayData === null;
   const displayError = auth.loggedIn ? error : null;
   const guestNotice = !auth.loggedIn;
   const playHref = operation === "subtraction" ? "/play?operation=subtraction" : "/play";
@@ -126,23 +129,20 @@ export function ProgressClient({ auth }: ProgressClientProps) {
     );
   }
 
-  if (!displayData) {
-    return <p className="text-center text-lg text-muted">読み込み中...</p>;
-  }
-
   return (
     <>
       <SoundToggleButton />
       <header className="mb-8 text-center">
         <div className="flex items-center justify-center gap-3 sm:gap-4">
-          <img
-            src={getMascotSrc(operation)}
-            alt=""
-            width={155}
-            height={312}
-            className="h-20 w-auto shrink-0 sm:h-24"
-            aria-hidden
-          />
+          <div className="progress-header-mascot" aria-hidden>
+            <img
+              src={getMascotSrc(operation)}
+              alt=""
+              width={155}
+              height={312}
+              className="progress-header-mascot__img"
+            />
+          </div>
           <h1 className="chalk-heading text-4xl font-bold sm:text-5xl">これまでの記録</h1>
         </div>
       </header>
@@ -160,6 +160,13 @@ export function ProgressClient({ auth }: ProgressClientProps) {
           onSelectOperation={selectOperation}
           tabPanelId="progress-operation-tabpanel"
         >
+          {isPanelLoading ? (
+            <div className="progress-operation-panel-placeholder" aria-busy="true">
+              <p className="text-muted">読み込み中...</p>
+            </div>
+          ) : (
+            displayData && (
+              <>
           {guestNotice && (
             <p className="text-center text-sm text-dim">
               きろくは この 端末に だけ 保存されています
@@ -170,10 +177,11 @@ export function ProgressClient({ auth }: ProgressClientProps) {
             <div>
               <p className="text-sm text-muted">今週の平均正答率</p>
               <p className="text-2xl font-bold">
-                {displayData.weeklyAverage !== null
-                  ? `${displayData.weeklyAverage}%`
-                  : "今週はまだプレイしていません"}
+                {displayData.weeklyAverage !== null ? `${displayData.weeklyAverage}%` : "—"}
               </p>
+              {displayData.weeklyAverage === null && (
+                <p className="text-sm text-muted">今週はまだプレイしていません</p>
+              )}
             </div>
             <div>
               <p className="text-sm text-muted">連続学習日数</p>
@@ -260,6 +268,9 @@ export function ProgressClient({ auth }: ProgressClientProps) {
                 きろくを とうろくする（おうちのひとと）
               </Link>
             </p>
+          )}
+              </>
+            )
           )}
         </OperationTabsPanel>
       </div>

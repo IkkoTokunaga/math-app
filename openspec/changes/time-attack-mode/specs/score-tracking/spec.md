@@ -56,7 +56,7 @@ waveMaxScore   = maxPerQuestion × WAVE_QUESTION_COUNT
 Boss HP SHALL use:
 
 ```
-oniMaxHp = floor(waveMaxScore × getOniHpRatio(level, enmaNumber))
+oniMaxHp = floor(waveMaxScore × getOniHpRatio(level, enmaNumber) × ONI_HP_MULTIPLIER)
 ```
 
 Level-scaled ratios: Lv1–3 → 5, Lv4–7 → 3, Lv8 → 2, Lv9 閻魔 → 2, Lv10 黒い閻魔 → 4.
@@ -69,7 +69,7 @@ This value SHALL be used for the wave progress bar maximum and boss HP calculati
 
 #### Scenario: Level 1 boss HP
 - **WHEN** a level 1 oni appears
-- **THEN** oniMaxHp = floor(100 × 5) = 500
+- **THEN** oniMaxHp = floor(100 × 5 × 0.85) = 425
 
 #### Scenario: Level 10 Enma wave maximum
 - **WHEN** a level 10 閻魔 wave begins (7 sec, ×10)

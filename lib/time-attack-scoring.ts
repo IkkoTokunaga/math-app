@@ -4,6 +4,7 @@ import type { Level } from "@/lib/questions";
 export const WAVE_QUESTION_COUNT = 5;
 export const DEFEAT_BONUS_RATIO = 0.5;
 export const MAX_MISTAKES = 3;
+export const ONI_HP_MULTIPLIER = 0.85;
 export function getOniHpRatio(level: Level, enmaNumber: number): number {
   if (level >= 10 && enmaNumber === 2) {
     return 4;
@@ -89,7 +90,9 @@ export function calculateOniMaxHp(
     timeBonusMultiplier,
     questionCount,
   );
-  return Math.floor(waveMax * getOniHpRatio(level, enmaNumber));
+  return Math.floor(
+    waveMax * getOniHpRatio(level, enmaNumber) * ONI_HP_MULTIPLIER,
+  );
 }
 
 export function calculateDefeatBonus(waveScore: number): number {

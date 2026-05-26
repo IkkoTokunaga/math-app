@@ -26,7 +26,7 @@ describe("time-attack-scoring", () => {
 
   it("calculates level 1 wave maximum", () => {
     assert.equal(calculateWaveMaxScore(1, 10, 1), 100);
-    assert.equal(calculateOniMaxHp(1, 10, 1, 0), 500);
+    assert.equal(calculateOniMaxHp(1, 10, 1, 0), 425);
   });
 
   it("uses level-scaled HP ratios", () => {
@@ -39,7 +39,7 @@ describe("time-attack-scoring", () => {
 
   it("calculates level 10 Enma double HP wave maximum", () => {
     assert.equal(calculateWaveMaxScore(10, 7, 10), 4000);
-    assert.equal(calculateOniMaxHp(10, 7, 10, 2), 16000);
+    assert.equal(calculateOniMaxHp(10, 7, 10, 2), 13600);
   });
 
   it("awards base points only after bonus time expires", () => {
@@ -71,7 +71,7 @@ describe("time-attack state", () => {
     const state = createInitialTimeAttackState();
     assert.equal(state.currentLevel, 1);
     assert.equal(state.oniHpRemaining, state.oniHpMax);
-    assert.equal(state.oniHpMax, 500);
+    assert.equal(state.oniHpMax, 425);
     assert.equal(state.enmaNumber, 0);
   });
 

@@ -173,13 +173,14 @@ Each boss SHALL have HP calculated as:
 
 ```
 waveMaxScore = maxPerQuestion × WAVE_QUESTION_COUNT
-oniMaxHp     = floor(waveMaxScore × getOniHpRatio(level, enmaNumber))
+oniMaxHp     = floor(waveMaxScore × getOniHpRatio(level, enmaNumber) × ONI_HP_MULTIPLIER)
 ```
 
 Where:
 
 ```
 WAVE_QUESTION_COUNT = 5
+ONI_HP_MULTIPLIER = 0.85
 maxPerQuestion = level × 10 + level × timeLimitSeconds × timeBonusMultiplier
 ```
 

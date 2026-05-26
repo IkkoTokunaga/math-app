@@ -110,6 +110,18 @@ function motionMs(full: number, reduced: number): number {
   return prefersReducedMotion() ? reduced : full;
 }
 
+/** 5問目完了時は timeAttackState.waveScoreAccumulated が既に 0 になっているため waveScore を使う */
+function getGaugeWaveScore(result: {
+  waveComplete?: boolean;
+  waveScore?: number;
+  timeAttackState?: TimeAttackState;
+}): number {
+  if (result.waveComplete && result.waveScore != null) {
+    return result.waveScore;
+  }
+  return result.timeAttackState?.waveScoreAccumulated ?? 0;
+}
+
 export function TimeAttackClient({
   initialSession,
   operation = DEFAULT_OPERATION,
@@ -164,8 +176,9 @@ export function TimeAttackClient({
   const oniRef = useRef<HTMLDivElement>(null);
   const feedbackPopupRef = useRef<HTMLDivElement>(null);
   const attackGaugeRef = useRef<HTMLDivElement>(null);
+  const pendingGaugeTargetRef = useRef<number | null>(null);
+  const pendingTotalScoreRef = useRef<number | null>(null);
   const pendingAdvanceRef = useRef<PendingAdvance | null>(null);
-  const gaugeLightDelayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingQuestionStateRef = useRef<TimeAttackState | null>(null);
   const correctPopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mascotLightDoneRef = useRef<(() => void) | null>(null);
@@ -186,9 +199,6 @@ export function TimeAttackClient({
       document.body.classList.remove("quiz-active");
       if (correctPopupTimerRef.current != null) {
         clearTimeout(correctPopupTimerRef.current);
-      }
-      if (gaugeLightDelayTimerRef.current != null) {
-        clearTimeout(gaugeLightDelayTimerRef.current);
       }
     };
   }, [initialSession.timeAttackState.currentLevel]);
@@ -248,7 +258,11 @@ export function TimeAttackClient({
     oniEnterDoneRef.current = null;
   };
 
-  const applyWaveAdvanceState = (state: TimeAttackState, nextQuestions?: Question[]) => {
+  const applyWaveAdvanceState = (
+    state: TimeAttackState,
+    nextQuestions?: Question[],
+    options?: { preserveGaugeDisplay?: boolean },
+  ) => {
     pendingQuestionStateRef.current = null;
     setTimeAttackState(state);
     setDisplayMistakeCount(state.mistakeCount);
@@ -256,7 +270,9 @@ export function TimeAttackClient({
       setQuestions(nextQuestions);
     }
     setRunningScore(state.totalScore);
-    setGaugeDisplayScore(state.waveScoreAccumulated);
+    if (!options?.preserveGaugeDisplay) {
+      setGaugeDisplayScore(state.waveScoreAccumulated);
+    }
     setPreviewWaveScore(null);
   };
 
@@ -290,7 +306,9 @@ export function TimeAttackClient({
     if (result.bossDefeated || !result.timeAttackState) {
       return;
     }
-    applyWaveAdvanceState(result.timeAttackState, result.questions);
+    applyWaveAdvanceState(result.timeAttackState, result.questions, {
+      preserveGaugeDisplay: true,
+    });
     unlockQuestionInput();
   };
 
@@ -306,6 +324,7 @@ export function TimeAttackClient({
       timeAttackState?: TimeAttackState;
       questions?: Question[];
     },
+    options?: { awaitGaugeFill?: boolean },
   ) => {
     if (!result.waveComplete || !result.timeAttackState) {
       return;
@@ -323,9 +342,17 @@ export function TimeAttackClient({
       clearFeedbackPopup();
     }
 
-    setGaugeDisplayScore(reflectedWaveScore);
+    pendingGaugeTargetRef.current = null;
 
-    await new Promise((resolve) => setTimeout(resolve, motionMs(GAUGE_REFLECT_PAUSE_MS, 80)));
+    if (!(options?.awaitGaugeFill ?? false)) {
+      setGaugeDisplayScore(reflectedWaveScore);
+    }
+
+    const pauseBeforeDrain =
+      (options?.awaitGaugeFill ?? false)
+        ? motionMs(GAUGE_FILL_RISE_MS + GAUGE_REFLECT_PAUSE_MS, 300)
+        : motionMs(GAUGE_REFLECT_PAUSE_MS, 80);
+    await new Promise((resolve) => setTimeout(resolve, pauseBeforeDrain));
 
     setGaugeDraining(true);
     setMascotCharging(true);
@@ -411,13 +438,22 @@ export function TimeAttackClient({
   };
 
   const handleGaugeReach = () => {
+    if (pendingGaugeTargetRef.current != null) {
+      setGaugeDisplayScore(pendingGaugeTargetRef.current);
+      pendingGaugeTargetRef.current = null;
+    }
+    if (pendingTotalScoreRef.current != null) {
+      setRunningScore(pendingTotalScoreRef.current);
+      pendingTotalScoreRef.current = null;
+    }
+
     setGaugeCharging(true);
     setTimeout(() => setGaugeCharging(false), motionMs(450, 180));
 
     const advance = pendingAdvanceRef.current;
     if (advance) {
       pendingAdvanceRef.current = null;
-      void beginWaveAttack(advance.sessionId, advance.result);
+      void beginWaveAttack(advance.sessionId, advance.result, { awaitGaugeFill: true });
     }
   };
 
@@ -583,13 +619,13 @@ export function TimeAttackClient({
         setFeedbackType("success");
 
         if (result.timeAttackState) {
-          const maxScore = getWaveMaxScoreForState(result.timeAttackState);
-          setGaugeLightFillRatio(
-            maxScore > 0 ? result.timeAttackState.waveScoreAccumulated / maxScore : 0,
+          const gaugeWaveScore = getGaugeWaveScore(result);
+          pendingGaugeTargetRef.current = gaugeWaveScore;
+          pendingTotalScoreRef.current = result.timeAttackState.totalScore;
+          const maxScore = getWaveMaxScoreForState(
+            waveComplete ? timeAttackState : result.timeAttackState,
           );
-          setGaugeCharging(true);
-          setGaugeDisplayScore(result.timeAttackState.waveScoreAccumulated);
-          setRunningScore(result.timeAttackState.totalScore);
+          setGaugeLightFillRatio(maxScore > 0 ? gaugeWaveScore / maxScore : 0);
           if (!waveComplete) {
             pendingQuestionStateRef.current = result.timeAttackState;
           }
@@ -602,15 +638,7 @@ export function TimeAttackClient({
           pendingAdvanceRef.current = null;
         }
 
-        if (gaugeLightDelayTimerRef.current != null) {
-          clearTimeout(gaugeLightDelayTimerRef.current);
-        }
-        gaugeLightDelayTimerRef.current = setTimeout(() => {
-          gaugeLightDelayTimerRef.current = null;
-          setGaugeCharging(false);
-          setGaugeLightAnimId((id) => id + 1);
-        }, motionMs(GAUGE_FILL_RISE_MS, 220));
-
+        setGaugeLightAnimId((id) => id + 1);
         scheduleCorrectPopupDismiss(waveComplete);
         return;
       }

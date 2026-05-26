@@ -103,7 +103,7 @@ export function resolveButtonSoundSrc(target: EventTarget | null): string | null
   }
 
   const interactive = target.closest("button, a[href]");
-  if (!interactive) {
+  if (!(interactive instanceof HTMLElement)) {
     return null;
   }
 

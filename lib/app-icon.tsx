@@ -30,17 +30,20 @@ export async function createAppIconResponse(size: number) {
   const { width: mascotWidth = mascotDisplayWidth, height: mascotHeight = mascotDisplayWidth } =
     await sharp(resizedMascot).metadata();
 
-  const visibleHeight = Math.min(mascotHeight, size);
-  const mascotTop = await sharp(resizedMascot)
-    .extract({ left: 0, top: 0, width: mascotWidth, height: visibleHeight })
+  const cropWidth = Math.min(mascotWidth, size);
+  const cropHeight = Math.min(mascotHeight, size);
+  const cropLeft = Math.max(0, Math.round((mascotWidth - cropWidth) / 2));
+
+  const mascotCrop = await sharp(resizedMascot)
+    .extract({ left: cropLeft, top: 0, width: cropWidth, height: cropHeight })
     .png()
     .toBuffer();
 
   const background = await sharp(createBackgroundSvg(size)).png().toBuffer();
-  const left = Math.round((size - mascotWidth) / 2);
+  const left = Math.round((size - cropWidth) / 2);
 
   const png = await sharp(background)
-    .composite([{ input: mascotTop, left, top: 0 }])
+    .composite([{ input: mascotCrop, left, top: 0 }])
     .png()
     .toBuffer();
 

@@ -194,7 +194,7 @@ On first load, the system SHALL show a full-screen loading overlay with a spinne
 When the app moves to the background (e.g. the player switches to another app on mobile), the system SHALL pause all background music and SHALL NOT play background music while the page is hidden. When the player returns to the app, background music SHALL resume from the paused position if it was playing before.
 
 #### Scenario: BGM pauses on background
-- **WHEN** the player sends the app to the background while home, quiz, or time attack BGM is playing
+- **WHEN** the player sends the app to the background while home, quiz, clear screen, or time attack BGM is playing
 - **THEN** the background music pauses immediately
 
 #### Scenario: BGM resumes on foreground
@@ -211,7 +211,7 @@ On viewports that match touch-primary mobile devices (`pointer: coarse` and `max
 
 #### Scenario: Quieter BGM on smartphone
 - **WHEN** a player listens on a smartphone-sized touch viewport
-- **THEN** home, quiz, and time attack background music play at reduced volume and button/quiz/time attack sound effects keep their existing volume
+- **THEN** home, quiz, clear screen, and time attack background music play at reduced volume and button/quiz/time attack sound effects keep their existing volume
 
 ### Requirement: Home screen BGM
 
@@ -240,6 +240,30 @@ During an active standard quiz session (addition or subtraction, not time attack
 #### Scenario: Quiz BGM stops on quiz end
 - **WHEN** a player finishes or exits a standard quiz
 - **THEN** the quiz background music stops and home background music resumes
+
+### Requirement: Clear screen BGM
+
+The standard quiz result screen (`/result/[sessionId]`, `/result/guest/[localId]`) and the time attack result screen (`/result/time-attack/[sessionId]`) SHALL play looping background music using `/sounds/bgm/bacteria.mp3`. Clear screen BGM SHALL stop when the player leaves the result screen.
+
+#### Scenario: Clear screen BGM in standard mode
+- **WHEN** a player opens the standard quiz result screen after completing a session
+- **THEN** clear screen background music plays
+
+#### Scenario: Clear screen BGM in time attack
+- **WHEN** a player opens the time attack result screen after a session ends
+- **THEN** the same clear screen background music plays
+
+#### Scenario: Clear screen BGM stops on navigation
+- **WHEN** a player leaves a result screen
+- **THEN** clear screen background music stops
+
+#### Scenario: Home BGM after standard result
+- **WHEN** a player opens the home screen from a standard quiz result screen
+- **THEN** clear screen background music stops and home background music plays
+
+#### Scenario: Time attack BGM after time attack result
+- **WHEN** a player starts a new time attack session from the time attack result screen
+- **THEN** clear screen background music stops and time attack boss background music plays
 
 ### Requirement: Home screen sound toggle
 

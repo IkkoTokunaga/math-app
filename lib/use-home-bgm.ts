@@ -2,6 +2,7 @@
 
 import { useLayoutEffect } from "react";
 import { unlockAudioPlayback } from "@/lib/audio-unlock";
+import { stopClearScreenBgm } from "@/lib/clear-screen-bgm";
 import {
   playHomeBgm,
   resumePendingHomeBgm,
@@ -21,6 +22,7 @@ export function useHomeBgm(active: boolean): void {
       return;
     }
 
+    stopClearScreenBgm();
     playHomeBgm();
 
     const unlockUntilPlaying = () => {

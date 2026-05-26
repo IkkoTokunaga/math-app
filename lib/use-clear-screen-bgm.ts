@@ -2,36 +2,34 @@
 
 import { useLayoutEffect } from "react";
 import { unlockAudioPlayback } from "@/lib/audio-unlock";
-import { stopClearScreenBgm } from "@/lib/clear-screen-bgm";
 import {
-  isQuizBgmPlaying,
-  playQuizBgm,
-  resumePendingQuizBgm,
-  stopQuizBgm,
-} from "@/lib/quiz-bgm";
+  isClearScreenBgmPlaying,
+  playClearScreenBgm,
+  resumePendingClearScreenBgm,
+  stopClearScreenBgm,
+} from "@/lib/clear-screen-bgm";
 import { useAppReady } from "@/lib/use-app-ready";
 import { useSoundEnabled } from "@/lib/use-sound-enabled";
 
-export function useQuizBgm(active: boolean): void {
+export function useClearScreenBgm(active: boolean): void {
   const soundEnabled = useSoundEnabled();
   const appReady = useAppReady();
 
   useLayoutEffect(() => {
     if (!active || !soundEnabled || !appReady) {
-      stopQuizBgm();
+      stopClearScreenBgm();
       return;
     }
 
-    stopClearScreenBgm();
-    playQuizBgm();
+    playClearScreenBgm();
 
     const unlockUntilPlaying = () => {
       void unlockAudioPlayback().then(() => {
-        if (isQuizBgmPlaying()) {
+        if (isClearScreenBgmPlaying()) {
           return;
         }
 
-        resumePendingQuizBgm();
+        resumePendingClearScreenBgm();
       });
     };
 
@@ -39,7 +37,7 @@ export function useQuizBgm(active: boolean): void {
 
     return () => {
       document.removeEventListener("keydown", unlockUntilPlaying, { capture: true });
-      stopQuizBgm();
+      stopClearScreenBgm();
     };
   }, [active, soundEnabled, appReady]);
 }

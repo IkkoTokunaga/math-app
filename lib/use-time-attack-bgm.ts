@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react";
 import { unlockAudioPlayback } from "@/lib/audio-unlock";
+import { stopClearScreenBgm } from "@/lib/clear-screen-bgm";
 import {
   clearTimeAttackBgmState,
   getCurrentTimeAttackBgmTrack,
@@ -89,6 +90,7 @@ export function useTimeAttackBgm(
 
     if (bossKeyRef.current === bossKey) {
       if (!isTimeAttackBgmPlaying()) {
+        stopClearScreenBgm();
         resumePendingTimeAttackBgm();
       }
       return;
@@ -107,6 +109,7 @@ export function useTimeAttackBgm(
     persistBgmState(sessionId, queue, bossKey);
 
     const timer = window.setTimeout(() => {
+      stopClearScreenBgm();
       playTimeAttackBgm(track);
       resumePendingTimeAttackBgm();
     }, TIME_ATTACK_BGM_START_DELAY_MS);

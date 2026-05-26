@@ -148,7 +148,7 @@ export function playHomeBgm(): void {
 
   primeHomeBgm();
 
-  if (isHomeBgmPlaying() || awaitingUnmute || pausedForBackground) {
+  if (isHomeBgmPlaying()) {
     return;
   }
 

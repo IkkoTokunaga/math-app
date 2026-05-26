@@ -560,6 +560,22 @@ During an active time attack session, the system SHALL play looping background m
 - **WHEN** a time attack session ends or the player leaves time attack
 - **THEN** background music stops
 
+### Requirement: Time attack clear screen BGM
+
+The time attack result screen SHALL play clear screen background music using `/sounds/bgm/bacteria.mp3` (same track as standard mode result screens).
+
+#### Scenario: Clear screen BGM after time attack
+- **WHEN** a player opens the time attack result screen
+- **THEN** clear screen background music plays
+
+#### Scenario: Boss BGM after leaving time attack result
+- **WHEN** a player starts a new time attack session from the result screen
+- **THEN** clear screen background music stops and boss background music plays
+
+#### Scenario: Home BGM after leaving time attack result
+- **WHEN** a player returns to the home screen from the time attack result screen
+- **THEN** clear screen background music stops and home background music plays
+
 ### Requirement: Gauge-to-mascot charge sound
 
 When the attack gauge drains and white light orbs travel from the gauge toward the teacher mascot during a wave attack sequence, the system SHALL play the gauge charge sound effect (`/sounds/time-attack-gauge-charge.mp3`).

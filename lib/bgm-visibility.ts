@@ -9,6 +9,10 @@ import {
   resumeQuizBgmFromBackground,
 } from "@/lib/quiz-bgm";
 import {
+  pauseClearScreenBgmForBackground,
+  resumeClearScreenBgmFromBackground,
+} from "@/lib/clear-screen-bgm";
+import {
   pauseTimeAttackBgmForBackground,
   resumeTimeAttackBgmFromBackground,
 } from "@/lib/time-attack-bgm";
@@ -16,12 +20,14 @@ import {
 export function pauseAllBgmForBackground(): void {
   pauseHomeBgmForBackground();
   pauseQuizBgmForBackground();
+  pauseClearScreenBgmForBackground();
   pauseTimeAttackBgmForBackground();
 }
 
 export function resumeAllBgmFromBackground(): void {
   resumeHomeBgmFromBackground();
   resumeQuizBgmFromBackground();
+  resumeClearScreenBgmFromBackground();
   resumeTimeAttackBgmFromBackground();
 }
 

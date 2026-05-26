@@ -1,5 +1,6 @@
 "use client";
 
+import { stopClearScreenBgm } from "@/lib/clear-screen-bgm";
 import { stopHomeBgm } from "@/lib/home-bgm";
 import { stopQuizBgm } from "@/lib/quiz-bgm";
 import { setSoundEnabled } from "@/lib/sound-settings";
@@ -22,6 +23,7 @@ export function SoundToggleButton() {
       stopHomeBgm();
       stopQuizBgm();
       stopTimeAttackBgm();
+      stopClearScreenBgm();
     }
   };
 

@@ -4,6 +4,7 @@ import { primeButtonSounds } from "@/lib/button-sounds";
 import { primeKeypadSounds, waitForKeypadSoundsReady } from "@/lib/keypad-sounds";
 import { primeHomeBgm, waitForHomeBgmReady } from "@/lib/home-bgm";
 import { primeQuizBgm, waitForQuizBgmReady } from "@/lib/quiz-bgm";
+import { primeClearScreenBgm, waitForClearScreenBgmReady } from "@/lib/clear-screen-bgm";
 import { primeQuizSounds } from "@/lib/quiz-sounds";
 import { initSoundSettings } from "@/lib/sound-settings";
 
@@ -46,10 +47,12 @@ export function bootstrapApp(): Promise<void> {
     primeQuizSounds();
     primeHomeBgm();
     primeQuizBgm();
+    primeClearScreenBgm();
 
     await Promise.all([
       waitForHomeBgmReady(),
       waitForQuizBgmReady(),
+      waitForClearScreenBgmReady(),
       waitForKeypadSoundsReady(),
     ]);
 

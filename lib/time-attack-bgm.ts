@@ -269,7 +269,11 @@ export function playTimeAttackBgm(src: string): boolean {
     return true;
   }
 
-  if (currentTrack === src && pausedForBackground) {
+  if (currentTrack === src && pausedForBackground && bgmAudio != null) {
+    pausedForBackground = false;
+    void bgmAudio.play().catch(() => {
+      pausedForBackground = true;
+    });
     return true;
   }
 

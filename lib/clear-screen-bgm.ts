@@ -3,9 +3,12 @@
 import { isPageHidden } from "@/lib/page-visibility";
 import { waitForAudioReady } from "@/lib/audio-ready";
 import { getBgmVolume } from "@/lib/bgm-volume";
+import { stopHomeBgm } from "@/lib/home-bgm";
+import { stopQuizBgm } from "@/lib/quiz-bgm";
 import { isSoundEnabled } from "@/lib/sound-settings";
+import { stopTimeAttackBgm } from "@/lib/time-attack-bgm";
 
-export const QUIZ_BGM_SRC = "/sounds/bgm/quiz-bgm.mp3";
+export const CLEAR_SCREEN_BGM_SRC = "/sounds/bgm/bacteria.mp3";
 
 let preloadAudio: HTMLAudioElement | null = null;
 let bgmAudio: HTMLAudioElement | null = null;
@@ -15,14 +18,14 @@ let pausedForBackground = false;
 
 function getPreloadAudio(): HTMLAudioElement {
   if (preloadAudio == null) {
-    preloadAudio = new Audio(QUIZ_BGM_SRC);
+    preloadAudio = new Audio(CLEAR_SCREEN_BGM_SRC);
     preloadAudio.preload = "auto";
   }
 
   return preloadAudio;
 }
 
-export function primeQuizBgm(): void {
+export function primeClearScreenBgm(): void {
   if (typeof window === "undefined" || bgmPrimed) {
     return;
   }
@@ -31,31 +34,28 @@ export function primeQuizBgm(): void {
   getPreloadAudio().load();
 }
 
-export function waitForQuizBgmReady(timeoutMs = 5000): Promise<void> {
-  primeQuizBgm();
+export function waitForClearScreenBgmReady(timeoutMs = 5000): Promise<void> {
+  primeClearScreenBgm();
   return waitForAudioReady(getPreloadAudio(), timeoutMs);
 }
 
-export function unlockQuizBgm(): void {
-  // Browser autoplay unlock is handled globally in audio-unlock.ts.
-}
-
-export function isQuizBgmPlaying(): boolean {
+export function isClearScreenBgmPlaying(): boolean {
   return bgmAudio != null && !bgmAudio.paused;
 }
 
-export function stopQuizBgm(): void {
-  if (bgmAudio != null) {
-    bgmAudio.pause();
-    bgmAudio.currentTime = 0;
-    bgmAudio = null;
+export function stopClearScreenBgm(): void {
+  const audio = bgmAudio ?? preloadAudio;
+  if (audio != null) {
+    audio.pause();
+    audio.currentTime = 0;
   }
 
+  bgmAudio = null;
   pendingPlay = false;
   pausedForBackground = false;
 }
 
-export function pauseQuizBgmForBackground(): void {
+export function pauseClearScreenBgmForBackground(): void {
   const audio = bgmAudio;
   if (audio == null || audio.paused) {
     return;
@@ -65,7 +65,7 @@ export function pauseQuizBgmForBackground(): void {
   pausedForBackground = true;
 }
 
-export function resumeQuizBgmFromBackground(): void {
+export function resumeClearScreenBgmFromBackground(): void {
   if (!pausedForBackground || bgmAudio == null || !isSoundEnabled()) {
     return;
   }
@@ -76,18 +76,17 @@ export function resumeQuizBgmFromBackground(): void {
   });
 }
 
-export function playQuizBgm(): void {
+export function playClearScreenBgm(): void {
   if (typeof window === "undefined" || !isSoundEnabled()) {
     return;
   }
 
-  primeQuizBgm();
+  primeClearScreenBgm();
 
-  if (isQuizBgmPlaying()) {
-    return;
-  }
-
+  stopHomeBgm();
   stopQuizBgm();
+  stopTimeAttackBgm();
+  stopClearScreenBgm();
 
   const audio = getPreloadAudio();
   audio.loop = true;
@@ -106,7 +105,7 @@ export function playQuizBgm(): void {
     () => {
       pendingPlay = false;
       if (isPageHidden()) {
-        pauseQuizBgmForBackground();
+        pauseClearScreenBgmForBackground();
       }
     },
     () => {
@@ -116,15 +115,15 @@ export function playQuizBgm(): void {
   );
 }
 
-export function resumePendingQuizBgm(): boolean {
+export function resumePendingClearScreenBgm(): boolean {
   if (!pendingPlay) {
-    return isQuizBgmPlaying();
+    return isClearScreenBgmPlaying();
   }
 
-  if (isQuizBgmPlaying()) {
+  if (isClearScreenBgmPlaying()) {
     return true;
   }
 
-  playQuizBgm();
-  return isQuizBgmPlaying();
+  playClearScreenBgm();
+  return isClearScreenBgmPlaying();
 }

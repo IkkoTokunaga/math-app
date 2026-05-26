@@ -57,8 +57,9 @@ Time attack SHALL use **dedicated question generation rules per level**. Levels 
 | Lv8 | 1–999 + 1–99 (either order) | Any |
 | Lv9 | 1–999 + 1–999 | Any (閻魔) |
 | Lv10 | 1–999 + 1–999 | Any (黒い閻魔) |
+| Lv11 | 1–999 + 1–999 | Any (黒い閻魔・Lv10と同一ビジュアル) |
 
-Answer input SHALL accept up to **3 digits** for levels 1–7 and **4 digits** for levels 8–10.
+Answer input SHALL accept up to **3 digits** for levels 1–7 and **4 digits** for levels 8–11.
 
 #### Scenario: Level 7 question generation
 - **WHEN** a level 7 wave begins
@@ -74,6 +75,10 @@ Answer input SHALL accept up to **3 digits** for levels 1–7 and **4 digits** f
 
 #### Scenario: Level 10 question generation
 - **WHEN** a level 10 wave begins against 閻魔大王
+- **THEN** each operand is 1–999
+
+#### Scenario: Level 11 question generation
+- **WHEN** a level 11 wave begins against 閻魔大王
 - **THEN** each operand is 1–999
 
 ### Requirement: Five-question waves with server generation and scoring
@@ -161,7 +166,7 @@ Each question SHALL have an internal time limit used for **time bonus calculatio
 
 For levels 1–9 (non–double-HP bosses), the limit SHALL be **10 seconds**.
 
-For the final 閻魔大王 at level 10, the limit SHALL be **7 seconds** with time bonus multiplier **×10**.
+For 閻魔大王 at levels 10 and 11, the limit SHALL be **7 seconds** with time bonus multiplier **×10**.
 
 The first **1 second** after a question appears SHALL NOT advance the bonus countdown (same grace as standard mode).
 
@@ -211,7 +216,7 @@ Level-scaled HP ratio:
 | Lv4–7 oni | 3 |
 | Lv8 oni | 2 |
 | Lv9 閻魔 | 2 |
-| Lv10 閻魔（黒） | 4 |
+| Lv10–11 閻魔（黒） | 4 |
 
 When a wave ends, `remainingHp -= waveScore`. If remaining HP is **greater than 0**, the same boss continues and **HP carries over** to the next wave. If remaining HP is **≤ 0**, the boss is defeated.
 
@@ -252,7 +257,7 @@ defeatBonus = floor(waveScore × 0.5)
 
 ### Requirement: Level progression through oni and Enma bosses
 
-Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** on **`/enma.png`** (transparent background, no CSS color filter). Level 10 SHALL use **閻魔大王** on **`/enma-lv10.png`** (transparent background, no CSS color filter), and double the HP ratio of level 9. Both Enma stages SHALL display the label **閻魔大王** only (no 「体力倍」 suffix). Defeating the boss at level N SHALL advance the player to level N+1 with a fresh boss HP pool.
+Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** on **`/enma.png`** (transparent background, no CSS color filter). Levels 10 and 11 SHALL use **閻魔大王** on **`/enma-lv10.png`** (transparent background, no CSS color filter). Levels 10 and 11 SHALL use double the HP ratio of level 9. All Enma stages SHALL display the label **閻魔大王** only (no 「体力倍」 suffix). Defeating the boss at level N SHALL advance the player to level N+1 with a fresh boss HP pool, except level 10 advances to level 11 with the **same** boss artwork.
 
 #### Scenario: Level 1 oni defeated
 - **WHEN** the level 1 oni is defeated
@@ -266,14 +271,55 @@ Levels 1–8 SHALL use colored oni bosses. Level 9 SHALL use **閻魔大王** on
 - **WHEN** 閻魔大王 at level 9 is defeated
 - **THEN** the next wave starts at level 10 against 閻魔大王 on `/enma-lv10.png`
 
-### Requirement: Clear on level 10 Enma defeat
+#### Scenario: Level 10 Enma defeated
+- **WHEN** 閻魔大王 at level 10 is defeated
+- **THEN** the next wave starts at level 11 against the same 閻魔大王 on `/enma-lv10.png`
+- **AND** when 閻魔大王 enters at level 11, a clock phantom intro starts at the same time from 閻魔大王, wobbles, then flies to the **top-left** of the blackboard
+- **AND** after the phantom arrives, a circular **10-second** penalty countdown gauge appears at that position and begins counting down (independent of the time-bonus window used for scoring)
+- **AND** the first question appears near the end of that clock intro (before the intro fully completes)
 
-After defeating **閻魔大王** at level 10, the time attack session SHALL end with status **cleared** and navigate to the result screen. No further waves SHALL be offered.
+#### Scenario: Level 11 entrance question timing
+- **WHEN** 閻魔大王 appears at level 11 after defeating level 10
+- **THEN** the entrance clock phantom starts together with the boss enter animation (not after the enter animation completes)
+- **AND** the entrance clock flies to the same top-left position where the 10-second gauge will appear
+- **AND** the blackboard is reserved for the clock flight target during the intro
+- **AND** the question text and keypad become visible before the entrance clock animation finishes
+
+### Requirement: Clear on level 11 Enma defeat
+
+After defeating **閻魔大王** at level 11, the time attack session SHALL end with status **cleared** and navigate to the result screen. No further waves SHALL be offered.
 
 #### Scenario: Game clear
-- **WHEN** the player defeats 閻魔大王 at level 10
+- **WHEN** the player defeats 閻魔大王 at level 11
 - **THEN** the session status is cleared
 - **AND** the result screen shows a clear/victory state
+
+### Requirement: Time magic heart penalty at level 11
+
+During level 11 only, the system SHALL start a **10-second** penalty countdown shown as a **circular gauge** in the **top-left** of the blackboard (`time-attack-board`). This countdown is **independent of the time-bonus window** used for scoring (the player may still earn time bonus on fast answers while the penalty countdown is already running). When the countdown reaches zero, the player SHALL lose **exactly one heart** (mistake count +1). **At most one heart** SHALL be lost per question from time magic, even if the player remains on the same question. Time magic heart loss SHALL NOT use the evil-orb attack animation; instead the teacher mascot SHALL show a **purple skull poison effect**. Wrong-answer heart loss SHALL continue to use the evil-orb sequence unchanged.
+
+#### Scenario: Time magic countdown appears on boss entrance
+- **WHEN** 閻魔大王 appears at level 11 after defeating level 10
+- **THEN** a clock phantom starts together with the boss enter animation
+- **AND** after the phantom reaches the top-left of the blackboard, the 10-second circular countdown gauge appears and begins ticking
+- **AND** the countdown does not decrease until the gauge is visible
+- **AND** this sequence is not triggered by the time-bonus window expiring
+
+#### Scenario: Time magic countdown appears on each Lv11 question
+- **WHEN** a new question begins at level 11 (after the previous question is answered or the wave advances)
+- **THEN** the question is shown at the same time as a clock phantom starts from 閻魔大王
+- **AND** after the phantom reaches the top-left of the blackboard, a fresh 10-second circular countdown gauge appears and begins ticking
+- **AND** the countdown is not tied to the time-bonus window for that question
+
+#### Scenario: One heart lost after countdown
+- **WHEN** the 10-second time-magic countdown reaches zero before the question is answered
+- **THEN** exactly one heart is removed
+- **AND** no additional time-magic hearts are removed for the same question
+
+#### Scenario: Poison effect on time magic heart loss
+- **WHEN** a heart is removed by time magic
+- **THEN** the teacher mascot displays a purple skull poison effect
+- **AND** the evil-orb attack is not used for that heart loss
 
 ### Requirement: Wave score progress bar
 
@@ -315,7 +361,7 @@ When a non-defeat wave completes, the wave attack sequence (gauge drain overlay 
 
 ### Requirement: Oni score display
 
-The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–8 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 9 閻魔 SHALL use **`/enma.png`** as-is. Level 10 閻魔 SHALL use **`/enma-lv10.png`** as-is. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score in the center, and the boss image on the right. Question progress (e.g. `問題 N / 5`) SHALL NOT appear in the header. The player name and level label SHALL NOT appear in the header.
+The session total score SHALL be shown together with boss artwork in the quiz header. Levels 1–8 SHALL use `/oni.png` (transparent background) with a **distinct CSS color tint per level**. Level 9 閻魔 SHALL use **`/enma.png`** as-is. Levels 10 and 11 閻魔 SHALL use **`/enma-lv10.png`** as-is. The header SHALL display **three items in one horizontal row**: the teacher mascot on the left, the total score in the center, and the boss image on the right. Question progress (e.g. `問題 N / 5`) SHALL NOT appear in the header. The player name and level label SHALL NOT appear in the header.
 
 #### Scenario: Header row layout
 - **WHEN** a player is in time attack
@@ -329,8 +375,8 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 - **WHEN** the player faces 閻魔 at level 9
 - **THEN** the header shows `/enma.png` without CSS color filters
 
-#### Scenario: Final Enma at level 10
-- **WHEN** the player faces 閻魔 at level 10
+#### Scenario: Final Enma at levels 10 and 11
+- **WHEN** the player faces 閻魔 at level 10 or 11
 - **THEN** the header shows `/enma-lv10.png` without CSS color filters
 
 #### Scenario: No name or level in header
@@ -350,7 +396,7 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 
 When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th-question result** SHALL be reflected in the **攻撃ゲージ** (including the usual correct-answer light charge when applicable), (2) after a brief beat the gauge animates back to **0** while white sparkling light orbs travel from the gauge toward the **teacher mascot** at the same time, (3) the mascot launches a **light orb** toward the oni once the light reaches the mascot. On impact, the oni SHALL play a **shake animation** and the **鬼 HP** gauge SHALL decrease to reflect damage.
 
-**Non-defeat waves SHALL NOT show an attack popup** (no 「鬼へ攻撃！」). **Boss defeat SHALL pause question progression** and show a **「鬼撃破！」** popup until dismissed, then proceed to the next boss entrance and next wave. **While question input is blocked and before the defeat popup appears**, a **full-screen loading overlay with a spinning indicator and 「読み込み中...」** SHALL be shown (same pattern as route loading). **Level 10 閻魔 defeat (game clear) SHALL use a longer defeat effect sequence** and display **「鬼、すべて撃破！」** instead of the standard defeat popup text, then navigate to the clear result screen.
+**Non-defeat waves SHALL NOT show an attack popup** (no 「鬼へ攻撃！」). **Boss defeat SHALL pause question progression** and show a **「鬼撃破！」** popup until dismissed, then proceed to the next boss entrance and next wave. **While question input is blocked and before the defeat popup appears**, a **full-screen loading overlay with a spinning indicator and 「読み込み中...」** SHALL be shown (same pattern as route loading). **Level 11 閻魔 defeat (game clear) SHALL use a longer defeat effect sequence** and display **「鬼、すべて撃破！」** instead of the standard defeat popup text, then navigate to the clear result screen.
 
 #### Scenario: No attack popup on non-defeat wave
 - **WHEN** a wave ends without defeating the boss
@@ -364,14 +410,14 @@ When a wave completes, the attack sequence SHALL proceed in order: (1) the **5th
 - **AND** the oni HP gauge updates when each queued attack's light orb hits
 
 #### Scenario: Defeat popup on boss defeat
-- **WHEN** a boss is defeated by wave damage (except level 10 final clear)
+- **WHEN** a boss is defeated by wave damage (except level 11 final clear)
 - **THEN** question input is blocked
 - **AND** a loading overlay with a spinner and **「読み込み中...」** is shown until the attack preamble completes
 - **AND** a **「鬼撃破！」** popup is shown
 - **AND** the popup remains until the defeat sequence (explosion, next boss entrance) completes
 
 #### Scenario: Final Enma defeat celebration
-- **WHEN** 閻魔大王 at level 10 is defeated
+- **WHEN** 閻魔大王 at level 11 is defeated
 - **THEN** question input is blocked
 - **AND** a longer defeat effect sequence plays (extended explosion / celebration versus normal boss defeat)
 - **AND** a **「鬼、すべて撃破！」** popup is shown
@@ -469,7 +515,7 @@ Star rating from standard mode SHALL NOT be applied to time attack sessions.
 - **THEN** the result screen shows game over with accumulated stats
 
 #### Scenario: Clear result
-- **WHEN** a session ends by defeating 閻魔大王 at level 10
+- **WHEN** a session ends by defeating 閻魔大王 at level 11
 - **THEN** the result screen shows clear with accumulated stats
 
 ### Requirement: Reuse standard quiz input UX
@@ -492,7 +538,7 @@ Time attack SHALL reuse the standard quiz input experience: inline `?` answer di
 
 ### Requirement: Time attack boss BGM rotation
 
-During an active time attack session, the system SHALL play looping background music. Background music for each boss SHALL begin **1 second** after the boss becomes active (session entry, resume, or next boss enter). When the boss identity changes after a boss defeat (`currentLevel` and/or `enmaNumber` advances), the system SHALL switch to a different track chosen randomly from the configured boss BGM pool, **except level 10 閻魔 (`10-2`) which SHALL always use `/sounds/bgm/enma-lv10.mp3`**. Within the same session, a track SHALL NOT repeat until every other track in the pool has already played once. Resuming the same in-progress session SHALL continue the same non-repeating queue. Background music SHALL stop when the session ends or the player leaves time attack.
+During an active time attack session, the system SHALL play looping background music. Background music for each boss SHALL begin **1 second** after the boss becomes active (session entry, resume, or next boss enter). When the boss identity changes after a boss defeat (`currentLevel` and/or `enmaNumber` advances), the system SHALL switch to a different track chosen randomly from the configured boss BGM pool, **except level 10–11 閻魔 (`10-2`, `11-2`) which SHALL always use `/sounds/bgm/enma-lv10.mp3`**. Within the same session, a track SHALL NOT repeat until every other track in the pool has already played once. Resuming the same in-progress session SHALL continue the same non-repeating queue. Background music SHALL stop when the session ends or the player leaves time attack.
 
 #### Scenario: BGM starts on session entry
 - **WHEN** a player enters an active time attack session
@@ -502,8 +548,8 @@ During an active time attack session, the system SHALL play looping background m
 - **WHEN** a player defeats a boss and the next boss enters
 - **THEN** the background music switches to a different unused track from the pool after a 1 second delay
 
-#### Scenario: Level 10 Enma dedicated BGM
-- **WHEN** the player faces level 10 閻魔 (`10-2`)
+#### Scenario: Level 10–11 Enma dedicated BGM
+- **WHEN** the player faces level 10 or 11 閻魔 (`10-2` or `11-2`)
 - **THEN** the background music is `/sounds/bgm/enma-lv10.mp3`
 
 #### Scenario: No duplicate track within one cycle

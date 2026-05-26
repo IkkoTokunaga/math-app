@@ -25,8 +25,10 @@ import {
   applyWaveDamage,
   createInitialTimeAttackState,
   getBossLabel,
+  isTimeMagicLevel,
   type TimeAttackState,
 } from "@/lib/time-attack";
+import { shouldApplyTimeMagicPenaltyFromGauge } from "@/lib/time-attack-magic";
 import {
   calculateTimeAttackQuestionScore,
   MAX_MISTAKES,
@@ -52,7 +54,13 @@ function parseTimeAttackState(raw: DbTimeAttackState | null): TimeAttackState {
     bossesDefeated: raw.bossesDefeated,
     phase: raw.phase,
     failReason: raw.failReason === "mistakes" ? "mistakes" : undefined,
+    timeMagicPenaltyAtQuestionIndex: raw.timeMagicPenaltyAtQuestionIndex,
   };
+}
+
+function clearTimeMagicPenalty(state: TimeAttackState): TimeAttackState {
+  const { timeMagicPenaltyAtQuestionIndex: _removed, ...rest } = state;
+  return rest;
 }
 
 function serializeTimeAttackState(state: TimeAttackState): DbTimeAttackState {
@@ -452,12 +460,12 @@ export async function submitTimeAttackAnswerAction(
       };
     }
 
-    const updatedState: TimeAttackState = {
+    const updatedState: TimeAttackState = clearTimeMagicPenalty({
       ...state,
       mistakeCount,
       waveQuestionIndex: nextWaveIndex,
       globalQuestionIndex: nextGlobalIndex,
-    };
+    });
 
     if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
       const waveResult = await completeWave(
@@ -515,13 +523,13 @@ export async function submitTimeAttackAnswerAction(
   const nextWaveIndex = waveQuestionIndex + 1;
   const nextGlobalIndex = globalQuestionIndex + 1;
 
-  const updatedState: TimeAttackState = {
+  const updatedState: TimeAttackState = clearTimeMagicPenalty({
     ...state,
     waveScoreAccumulated,
     totalScore,
     waveQuestionIndex: nextWaveIndex,
     globalQuestionIndex: nextGlobalIndex,
-  };
+  });
 
   if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
     const waveResult = await completeWave(
@@ -555,6 +563,71 @@ export async function submitTimeAttackAnswerAction(
     sessionEnded: false as const,
     waveComplete: false as const,
     timeAttackState: updatedState,
+  };
+}
+
+export async function applyTimeMagicHeartLossAction(
+  sessionId: string,
+  gaugeElapsedSeconds: number,
+) {
+  const [session] = await getDb()
+    .select()
+    .from(sessions)
+    .where(eq(sessions.id, sessionId))
+    .limit(1);
+
+  if (!session || session.status !== "in_progress" || session.mode !== "time_attack") {
+    throw new Error("セッションが見つかりません");
+  }
+
+  const state = parseTimeAttackState(session.timeAttackState ?? null);
+
+  if (state.phase !== "wave_active" || !isTimeMagicLevel(state.currentLevel)) {
+    return { applied: false as const };
+  }
+
+  const globalQuestionIndex = state.globalQuestionIndex;
+
+  if (
+    !shouldApplyTimeMagicPenaltyFromGauge(
+      state.currentLevel,
+      gaugeElapsedSeconds,
+      state.timeMagicPenaltyAtQuestionIndex,
+      globalQuestionIndex,
+    )
+  ) {
+    return { applied: false as const };
+  }
+
+  const mistakeCount = state.mistakeCount + 1;
+  const penalizedState: TimeAttackState = {
+    ...state,
+    mistakeCount,
+    timeMagicPenaltyAtQuestionIndex: globalQuestionIndex,
+  };
+
+  if (mistakeCount >= MAX_MISTAKES) {
+    const failedState = await finalizeTimeAttackFailure(sessionId, penalizedState);
+    return {
+      applied: true as const,
+      sessionEnded: true as const,
+      mistakeCount,
+      timeAttackState: failedState,
+    };
+  }
+
+  await getDb()
+    .update(sessions)
+    .set({
+      timeAttackState: serializeTimeAttackState(penalizedState),
+    })
+    .where(eq(sessions.id, sessionId));
+
+  return {
+    applied: true as const,
+    sessionEnded: false as const,
+    mistakeCount,
+    timeAttackState: penalizedState,
   };
 }
 

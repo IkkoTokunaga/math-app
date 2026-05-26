@@ -7,7 +7,7 @@ import {
 
 export { getOniHpRatio, WAVE_QUESTION_COUNT } from "@/lib/time-attack-scoring";
 
-/** Lv9 = 閻魔、Lv10 = 閻魔（HP倍率×4） */
+/** Lv9 = 閻魔、Lv10/Lv11 = 黒閻魔（HP倍率×4、同一ビジュアル） */
 export const ENMA_STAGE_NORMAL = 1;
 export const ENMA_STAGE_DOUBLE_HP = 2;
 
@@ -28,6 +28,8 @@ export type TimeAttackState = {
   bossesDefeated: number;
   phase: TimeAttackPhase;
   failReason?: "mistakes";
+  /** 時間の魔法でハートを失った問題（1問1回まで） */
+  timeMagicPenaltyAtQuestionIndex?: number;
 };
 
 export type EnmaParams = {
@@ -42,10 +44,14 @@ export function getBossParams(level: Level, enmaNumber: number): EnmaParams {
   if (level === 9) {
     return { timeLimitSeconds: 10, timeBonusMultiplier: 1 };
   }
-  if (enmaNumber === ENMA_STAGE_DOUBLE_HP) {
+  if (level >= 10 && enmaNumber === ENMA_STAGE_DOUBLE_HP) {
     return { timeLimitSeconds: 7, timeBonusMultiplier: 10 };
   }
   return { timeLimitSeconds: 10, timeBonusMultiplier: 1 };
+}
+
+export function isTimeMagicLevel(level: Level): boolean {
+  return level >= 11;
 }
 
 export function createInitialTimeAttackState(): TimeAttackState {
@@ -128,6 +134,7 @@ function buildBossState(
     oniHpMax,
     timeLimitSeconds: params.timeLimitSeconds,
     timeBonusMultiplier: params.timeBonusMultiplier,
+    timeMagicPenaltyAtQuestionIndex: undefined,
   };
 }
 
@@ -181,13 +188,22 @@ export function applyWaveDamage(state: TimeAttackState, waveScore: number): Wave
     };
   }
 
+  if (state.currentLevel === 10) {
+    return {
+      kind: "defeated",
+      defeatBonus,
+      cleared: false,
+      state: buildBossState(afterBonus, 11, ENMA_STAGE_DOUBLE_HP),
+    };
+  }
+
   return {
     kind: "defeated",
     defeatBonus,
     cleared: true,
     state: {
       ...afterBonus,
-      currentLevel: 10,
+      currentLevel: 11,
       enmaNumber: ENMA_STAGE_DOUBLE_HP,
       phase: "cleared",
     },

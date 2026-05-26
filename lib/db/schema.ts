@@ -38,6 +38,7 @@ export type TimeAttackState = {
   bossesDefeated: number;
   phase: TimeAttackPhase;
   failReason?: "timeout" | "mistakes";
+  timeMagicPenaltyAtQuestionIndex?: number;
 };
 
 export const users = pgTable("users", {

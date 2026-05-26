@@ -54,6 +54,7 @@ const timeAttackGenerators: Partial<Record<Level, () => Question>> = {
   8: generateMixedRangePair,
   9: generateUpTo999Pair,
   10: generateUpTo999Pair,
+  11: generateUpTo999Pair,
 };
 
 export function getTimeAttackMaxAnswerDigits(level: Level): number {

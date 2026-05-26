@@ -14,11 +14,13 @@ describe("time-attack-boss-visual", () => {
     assert.equal(getBossImageSrc(8, "subtraction"), "/oni-subtraction.png");
   });
 
-  it("uses enma.png at level 9 and enma-lv10.png at level 10 for both operations", () => {
+  it("uses enma.png at level 9 and enma-lv10.png at levels 10-11 for both operations", () => {
     assert.equal(getBossImageSrc(9, "addition"), "/enma.png");
     assert.equal(getBossImageSrc(9, "subtraction"), "/enma.png");
     assert.equal(getBossImageSrc(10, "addition"), "/enma-lv10.png");
     assert.equal(getBossImageSrc(10, "subtraction"), "/enma-lv10.png");
+    assert.equal(getBossImageSrc(11, "addition"), "/enma-lv10.png");
+    assert.equal(getBossImageSrc(11, "subtraction"), "/enma-lv10.png");
   });
 
   it("returns CSS classes for addition oni and inline filters for subtraction", () => {

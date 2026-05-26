@@ -2508,6 +2508,158 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: mascot-evil-hit 0.48s ease;
 }
 
+.quiz-header-mascot--poison-hit {
+  filter: drop-shadow(0 0 14px rgb(168 85 247 / 0.95)) drop-shadow(0 0 24px rgb(88 28 135 / 0.85));
+  animation: mascot-poison-hit 0.72s ease;
+}
+
+.mascot-poison-layer {
+  pointer-events: none;
+  position: absolute;
+  inset: -12% -18%;
+  z-index: 3;
+  overflow: visible;
+}
+
+.mascot-poison-mist {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(168 85 247 / 0.55) 0%, rgb(88 28 135 / 0.15) 55%, transparent 72%);
+  animation: mascot-poison-mist-pulse 0.9s ease-in-out infinite alternate;
+}
+
+.mascot-poison-mist--a {
+  inset: 8% 10%;
+}
+
+.mascot-poison-mist--b {
+  inset: 20% 18%;
+  animation-delay: 0.35s;
+  opacity: 0.75;
+}
+
+.mascot-poison-skull {
+  position: absolute;
+  font-size: clamp(1.1rem, 3vw, 1.65rem);
+  line-height: 1;
+  color: #c084fc;
+  text-shadow:
+    0 0 8px rgb(168 85 247 / 0.95),
+    0 0 16px rgb(88 28 135 / 0.8);
+  animation: mascot-poison-skull-float 0.72s ease-out forwards;
+}
+
+.mascot-poison-skull--1 {
+  top: 6%;
+  left: 4%;
+}
+
+.mascot-poison-skull--2 {
+  top: 14%;
+  right: 2%;
+  animation-delay: 0.08s;
+}
+
+.mascot-poison-skull--3 {
+  bottom: 22%;
+  left: 0;
+  animation-delay: 0.14s;
+}
+
+.mascot-poison-skull--4 {
+  bottom: 10%;
+  right: 6%;
+  animation-delay: 0.2s;
+}
+
+.mascot-poison-bubble {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid rgb(192 132 252 / 0.65);
+  background: rgb(88 28 135 / 0.35);
+  animation: mascot-poison-bubble-rise 0.72s ease-out forwards;
+}
+
+.mascot-poison-bubble--1 {
+  width: 0.55rem;
+  height: 0.55rem;
+  left: 28%;
+  bottom: 8%;
+}
+
+.mascot-poison-bubble--2 {
+  width: 0.75rem;
+  height: 0.75rem;
+  right: 24%;
+  bottom: 18%;
+  animation-delay: 0.1s;
+}
+
+.mascot-poison-bubble--3 {
+  width: 0.45rem;
+  height: 0.45rem;
+  left: 52%;
+  top: 12%;
+  animation-delay: 0.18s;
+}
+
+@keyframes mascot-poison-hit {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgb(168 85 247 / 0.5));
+  }
+  35% {
+    transform: scale(1.04) rotate(-2deg);
+    filter: drop-shadow(0 0 18px rgb(168 85 247 / 1)) drop-shadow(0 0 28px rgb(88 28 135 / 0.9));
+  }
+  70% {
+    transform: scale(0.98) rotate(1deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes mascot-poison-mist-pulse {
+  from {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes mascot-poison-skull-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.6) rotate(-12deg);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.05) rotate(6deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.85) rotate(14deg);
+  }
+}
+
+@keyframes mascot-poison-bubble-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.5);
+  }
+  35% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-22px) scale(1.1);
+  }
+}
+
 .question-timer {
   display: flex;
   align-items: baseline;
@@ -2536,6 +2688,220 @@ button.keypad-btn-submit:active:not(:disabled) {
   top: 0.65rem;
   left: 0.65rem;
   z-index: 2;
+}
+
+.time-magic-timer-anchor {
+  position: absolute;
+  top: 0.65rem;
+  left: 0.65rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Lv11 登場演出の着地点（10秒ペナルティゲージの左上アンカーとは別） */
+.lv11-entrance-clock-anchor {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.time-magic-countdown--enter {
+  animation: time-magic-countdown-pop 0.42s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+.time-magic-clock-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 36;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.time-magic-clock-wrap {
+  position: fixed;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  animation: time-magic-clock-fly var(--clock-fly-duration, 750ms) cubic-bezier(0.35, 0, 0.2, 1)
+    var(--clock-wobble-duration, 1100ms) forwards;
+}
+
+.time-magic-clock-body {
+  position: relative;
+  width: 0;
+  height: 0;
+  animation: time-magic-clock-enma-wobble var(--clock-wobble-duration, 1100ms) ease-in-out forwards;
+}
+
+.time-magic-clock__trail {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6.5rem;
+  height: 0.5rem;
+  margin: -0.25rem 0 0 -3.25rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(125 249 255 / 0.15) 30%,
+    rgb(200 180 255 / 0.55) 70%,
+    rgb(168 85 247 / 0.35) 100%
+  );
+  transform-origin: right center;
+  animation: time-magic-clock-trail var(--clock-fly-duration, 750ms) cubic-bezier(0.35, 0, 0.2, 1)
+    var(--clock-wobble-duration, 1100ms) forwards;
+}
+
+.time-magic-clock__glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6rem;
+  height: 6rem;
+  margin: -3rem 0 0 -3rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgb(200 180 255 / 0.55) 0%, rgb(125 249 255 / 0.22) 45%, transparent 70%);
+}
+
+.time-magic-clock__face {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: -2.25rem 0 0 -2.25rem;
+  border-radius: 999px;
+  border: 3px solid rgb(220 210 255 / 0.9);
+  background: rgb(40 30 70 / 0.55);
+  box-shadow:
+    0 0 22px rgb(168 85 247 / 0.8),
+    inset 0 0 18px rgb(125 249 255 / 0.28);
+  opacity: 0.9;
+}
+
+.time-magic-clock__hand {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 3px;
+  border-radius: 999px;
+  background: rgb(240 235 255 / 0.95);
+  transform-origin: bottom center;
+}
+
+.time-magic-clock__hand--hour {
+  height: 1.15rem;
+  margin-left: -1.5px;
+  transform: rotate(35deg);
+}
+
+.time-magic-clock__hand--minute {
+  height: 1.6rem;
+  margin-left: -1.5px;
+  transform: rotate(140deg);
+}
+
+.time-magic-clock__center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin: -0.275rem 0 0 -0.275rem;
+  border-radius: 999px;
+  background: rgb(255 244 163 / 0.95);
+  box-shadow: 0 0 10px rgb(255 244 163 / 0.85);
+}
+
+@keyframes time-magic-countdown-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes time-magic-clock-enma-wobble {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) rotate(-10deg);
+  }
+
+  12% {
+    opacity: 1;
+    transform: scale(1.02) rotate(5deg);
+  }
+
+  28% {
+    transform: scale(1.1) rotate(-8deg) translate(0.32rem, -0.22rem);
+  }
+
+  44% {
+    transform: scale(1.12) rotate(7deg) translate(-0.28rem, 0.24rem);
+  }
+
+  60% {
+    transform: scale(1.1) rotate(-6deg) translate(0.26rem, 0.28rem);
+  }
+
+  76% {
+    transform: scale(1.08) rotate(5deg) translate(-0.2rem, -0.18rem);
+  }
+
+  92% {
+    transform: scale(1.06) rotate(-3deg) translate(0.1rem, 0.08rem);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.05) rotate(0deg) translate(0, 0);
+  }
+}
+
+@keyframes time-magic-clock-fly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05) rotate(calc(var(--fly-angle, 0deg) - 6deg));
+  }
+
+  14% {
+    transform: translate(-50%, -50%) scale(1.08) rotate(var(--fly-angle, 0deg));
+  }
+
+  100% {
+    opacity: 0.9;
+    transform: translate(calc(-50% + var(--fly-dx, 0px)), calc(-50% + var(--fly-dy, 0px))) scale(0.72)
+      rotate(calc(var(--fly-angle, 0deg) + 4deg));
+  }
+}
+
+@keyframes time-magic-clock-trail {
+  0%,
+  18% {
+    opacity: 0;
+    transform: scaleX(0.15);
+  }
+
+  32% {
+    opacity: 0.9;
+    transform: scaleX(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--fly-dx, 0px) * 0.45), calc(var(--fly-dy, 0px) * 0.45)) scaleX(0.55);
+  }
 }
 
 .question-timer__ring-svg {
@@ -3208,6 +3574,16 @@ html.app-loading body {
   .quiz-header-mascot--firing,
   .quiz-header-mascot--charging,
   .quiz-header-mascot--evil-hit,
+  .quiz-header-mascot--poison-hit,
+  .time-magic-clock-wrap,
+  .time-magic-clock-body,
+  .time-magic-clock__trail,
+  .time-magic-clock__glow,
+  .time-magic-clock__face,
+  .time-magic-countdown--enter,
+  .mascot-poison-mist,
+  .mascot-poison-skull,
+  .mascot-poison-bubble,
   .oni-evil-orb-wrap,
   .oni-evil-orb-body,
   .oni-evil-orb,

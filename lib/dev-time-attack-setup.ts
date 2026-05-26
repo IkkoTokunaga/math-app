@@ -10,6 +10,8 @@ import { calculateOniMaxHp } from "@/lib/time-attack-scoring";
 export type DevTimeAttackStart = {
   level: Level;
   enmaNumber: number;
+  /** 開発用: ボス HP を 1 にして撃破→次ボス遷移をすぐ試す */
+  nearDefeat?: boolean;
 };
 
 function toSearchParams(
@@ -49,12 +51,14 @@ export function createDevTimeAttackState(start: DevTimeAttackStart): TimeAttackS
     params.timeBonusMultiplier,
     enmaNumber,
   );
-  const bossesDefeated = level < 9 ? level - 1 : 8 + (enmaNumber - 1);
+  const bossesDefeated = level - 1;
+
+  const oniHpRemaining = start.nearDefeat ? 1 : oniHpMax;
 
   return {
     currentLevel: level,
     enmaNumber,
-    oniHpRemaining: oniHpMax,
+    oniHpRemaining,
     oniHpMax,
     mistakeCount: 0,
     waveQuestionIndex: 0,
@@ -82,9 +86,15 @@ export function parseDevTimeAttackStart(
   }
 
   const level = Number.parseInt(devStart, 10);
-  if (!Number.isFinite(level) || level < 1 || level > 10) {
+  if (!Number.isFinite(level) || level < 1 || level > 11) {
     return null;
   }
 
-  return { level: level as Level, enmaNumber: resolveEnmaNumber(level as Level) };
+  const nearDefeat = search.get("devNearDefeat") === "1";
+
+  return {
+    level: level as Level,
+    enmaNumber: resolveEnmaNumber(level as Level),
+    nearDefeat,
+  };
 }

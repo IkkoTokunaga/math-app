@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import { MascotPoisonSkull } from "@/components/MascotPoisonSkull";
 import type { Operation } from "@/lib/operations";
 import { DEFAULT_OPERATION, getMascotSrc } from "@/lib/operations";
 
@@ -14,6 +15,8 @@ type QuizMascotProps = {
   chargeActive?: boolean;
   /** 邪気玉ヒット演出 */
   hitActive?: boolean;
+  /** 時間の魔法でハートを失ったときの毒々しい演出 */
+  poisonActive?: boolean;
   className?: string;
 };
 
@@ -26,12 +29,14 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
       lightOrbActive = false,
       chargeActive = false,
       hitActive = false,
+      poisonActive = false,
       className = "",
     },
     ref,
   ) {
     return (
       <div className={`quiz-mascot-wrap relative shrink-0 ${className}`.trim()}>
+        <MascotPoisonSkull active={poisonActive} />
         {comment != null && (
           <p
             className="mascot-speech-bubble min-w-[8.5rem] w-max max-w-[14rem] whitespace-nowrap px-5 py-2"
@@ -45,7 +50,7 @@ export const QuizMascot = forwardRef<HTMLButtonElement, QuizMascotProps>(
           ref={ref}
           type="button"
           onClick={onHomeClick}
-          className={`quiz-header-mascot rounded-md transition-opacity hover:opacity-85 active:opacity-70 ${chargeActive ? "quiz-header-mascot--charging" : ""} ${hitActive ? "quiz-header-mascot--evil-hit" : ""} ${lightOrbActive ? "quiz-header-mascot--firing" : ""}`}
+          className={`quiz-header-mascot rounded-md transition-opacity hover:opacity-85 active:opacity-70 ${chargeActive ? "quiz-header-mascot--charging" : ""} ${hitActive ? "quiz-header-mascot--evil-hit" : ""} ${poisonActive ? "quiz-header-mascot--poison-hit" : ""} ${lightOrbActive ? "quiz-header-mascot--firing" : ""}`}
           aria-label="ホームにもどる"
         >
           <img

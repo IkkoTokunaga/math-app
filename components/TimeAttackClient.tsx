@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  applyTimeMagicHeartLossAction,
   submitTimeAttackAnswerAction,
 } from "@/app/actions/time-attack";
 import { GaugeLightCharge, ATTACK_GATHER_MS, ATTACK_CLUSTER_HOLD_MS, ATTACK_FLY_MS } from "@/components/GaugeLightCharge";
@@ -18,7 +19,16 @@ import { TimeAttackScoreBar } from "@/components/TimeAttackScoreBar";
 import type { HeartRecoveryAnim } from "@/components/TimeAttackLives";
 import type { AuthState } from "@/lib/auth/state";
 import type { Question } from "@/lib/db/schema";
-import { getWaveMaxScoreForState, isEnmaBoss, type TimeAttackState } from "@/lib/time-attack";
+import {
+  getLv11IntroQuestionRevealMs,
+  Lv11EntranceClockPhantom,
+} from "@/components/Lv11EntranceClockPhantom";
+import { TimeMagicCountdown } from "@/components/TimeMagicCountdown";
+import {
+  getTimeMagicSecondsRemainingFromGaugeElapsed,
+  TIME_MAGIC_COUNTDOWN_SECONDS,
+} from "@/lib/time-attack-magic";
+import { getWaveMaxScoreForState, isEnmaBoss, isTimeMagicLevel, type TimeAttackState } from "@/lib/time-attack";
 import { MAX_MISTAKES } from "@/lib/time-attack-scoring";
 import {
   formatExpression,
@@ -63,6 +73,7 @@ function getMaxAnswerDigits(operation: Operation, level: TimeAttackState["curren
 
 const CORRECT_POPUP_MS = 1000;
 const HEART_LOSS_PAUSE_MS = 220;
+const POISON_HEART_PAUSE_MS = 480;
 const HEART_RECOVER_EXPAND_MS = 320;
 const HEART_RECOVER_FILL_MS = 360;
 const DARK_FADE_MS = 950;
@@ -193,6 +204,12 @@ export function TimeAttackClient({
   const [heartRecovery, setHeartRecovery] = useState<HeartRecoveryAnim | null>(null);
   const [evilOrbAnimId, setEvilOrbAnimId] = useState(0);
   const [mascotHit, setMascotHit] = useState(false);
+  const [mascotPoison, setMascotPoison] = useState(false);
+  const [timeMagicSecondsLeft, setTimeMagicSecondsLeft] = useState<number | null>(null);
+  const [timeMagicGaugeVisible, setTimeMagicGaugeVisible] = useState(false);
+  const [lv11EntrancePhantomAnimId, setLv11EntrancePhantomAnimId] = useState(0);
+  const [lv11EntrancePlaying, setLv11EntrancePlaying] = useState(false);
+  const [lv11QuestionRevealed, setLv11QuestionRevealed] = useState(true);
   const [screenDarkening, setScreenDarkening] = useState(false);
   const [defeatLoading, setDefeatLoading] = useState(false);
   const [pendingDefeatBonusPoints, setPendingDefeatBonusPoints] = useState<number | null>(null);
@@ -202,6 +219,7 @@ export function TimeAttackClient({
   const questionStartedAtRef = useRef<number>(0);
   const submitLockRef = useRef(false);
   const quizPanelRef = useRef<HTMLDivElement>(null);
+  const timeMagicTimerAnchorRef = useRef<HTMLDivElement>(null);
   const mascotRef = useRef<HTMLButtonElement>(null);
   const oniRef = useRef<HTMLDivElement>(null);
   const feedbackPopupRef = useRef<HTMLDivElement>(null);
@@ -221,6 +239,12 @@ export function TimeAttackClient({
   const oniEnterDoneRef = useRef<(() => void) | null>(null);
   const attackQueueRef = useRef<QueuedWaveAttack[]>([]);
   const processingAttackRef = useRef(false);
+  const timeMagicPenaltyLockRef = useRef(false);
+  const timeMagicGaugeStartedAtRef = useRef<number | null>(null);
+  const lv11IntroRevealTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lv11IntroRevealResolveRef = useRef<(() => void) | null>(null);
+  const lv11PhantomLaunchRequestedRef = useRef(false);
+  const lv11InitialPhantomStartedRef = useRef(false);
 
   useEffect(() => {
     questionStartedAtRef.current = Date.now();
@@ -242,6 +266,97 @@ export function TimeAttackClient({
 
   const getElapsedSeconds = () => (Date.now() - questionStartedAtRef.current) / 1000;
 
+  const waveQuestion = questions[timeAttackState.waveQuestionIndex] ?? null;
+  const activeQuestion =
+    awaitingNextOni && !lv11EntrancePlaying ? null : waveQuestion;
+
+  const showQuestionBoard =
+    Boolean(activeQuestion) &&
+    (!awaitingNextOni || lv11EntrancePlaying) &&
+    (lv11QuestionRevealed || lv11EntrancePlaying);
+  const showQuestionContent = lv11QuestionRevealed;
+
+  const resetTimeMagicPenalty = useCallback(() => {
+    timeMagicPenaltyLockRef.current = false;
+    timeMagicGaugeStartedAtRef.current = null;
+    setTimeMagicSecondsLeft(null);
+    setTimeMagicGaugeVisible(false);
+  }, []);
+
+  const resetLv11EntranceIntro = useCallback(() => {
+    setLv11EntrancePlaying(false);
+    lv11PhantomLaunchRequestedRef.current = false;
+    setLv11QuestionRevealed(true);
+    if (lv11IntroRevealTimerRef.current != null) {
+      clearTimeout(lv11IntroRevealTimerRef.current);
+      lv11IntroRevealTimerRef.current = null;
+    }
+    lv11IntroRevealResolveRef.current?.();
+    lv11IntroRevealResolveRef.current = null;
+  }, []);
+
+  const startLv11PenaltyCountdown = useCallback(() => {
+    timeMagicGaugeStartedAtRef.current = Date.now();
+    setTimeMagicGaugeVisible(true);
+    setTimeMagicSecondsLeft(TIME_MAGIC_COUNTDOWN_SECONDS);
+  }, []);
+
+  const handleLv11EntranceClockComplete = useCallback(() => {
+    startLv11PenaltyCountdown();
+  }, [startLv11PenaltyCountdown]);
+
+  const scheduleLv11QuestionReveal = useCallback(() => {
+    if (lv11IntroRevealTimerRef.current != null) {
+      clearTimeout(lv11IntroRevealTimerRef.current);
+      lv11IntroRevealTimerRef.current = null;
+    }
+
+    lv11IntroRevealTimerRef.current = setTimeout(() => {
+      lv11IntroRevealTimerRef.current = null;
+      const resolve = lv11IntroRevealResolveRef.current;
+      lv11IntroRevealResolveRef.current = null;
+      setLv11QuestionRevealed(true);
+      resolve?.();
+    }, motionMs(getLv11IntroQuestionRevealMs(), 500));
+  }, []);
+
+  const beginLv11QuestionClockPhantom = useCallback(
+    (options?: { revealQuestionDuringFlight?: boolean }) => {
+      if (prefersReducedMotion()) {
+        if (options?.revealQuestionDuringFlight) {
+          setLv11QuestionRevealed(true);
+        }
+        startLv11PenaltyCountdown();
+        return;
+      }
+
+      if (options?.revealQuestionDuringFlight) {
+        scheduleLv11QuestionReveal();
+      } else {
+        setLv11QuestionRevealed(true);
+      }
+
+      lv11PhantomLaunchRequestedRef.current = true;
+    },
+    [scheduleLv11QuestionReveal, startLv11PenaltyCountdown],
+  );
+
+  const beginLv11EntranceAtBossEnter = useCallback(() => {
+    beginLv11QuestionClockPhantom({ revealQuestionDuringFlight: true });
+  }, [beginLv11QuestionClockPhantom]);
+
+  const waitForLv11QuestionReveal = useCallback(async () => {
+    if (prefersReducedMotion() || lv11QuestionRevealed) {
+      return;
+    }
+
+    await new Promise<void>((resolve) => {
+      lv11IntroRevealResolveRef.current = resolve;
+    });
+  }, [lv11QuestionRevealed]);
+
+  const getDefeatBonusFlyFromElement = useCallback(() => defeatBonusRef.current, []);
+
   const redirectToResult = useCallback(
     (id: string) => {
       endTimeAttackBgmSession(sessionId);
@@ -249,6 +364,123 @@ export function TimeAttackClient({
     },
     [router, sessionId],
   );
+
+  const playPoisonHeartLoss = async () => {
+    setMascotPoison(true);
+    await new Promise((resolve) => setTimeout(resolve, motionMs(POISON_HEART_PAUSE_MS, 180)));
+    setMascotPoison(false);
+  };
+
+  const applyTimeMagicPenalty = useCallback(
+    async (gaugeElapsedSeconds: number) => {
+      try {
+        const result = await applyTimeMagicHeartLossAction(sessionId, gaugeElapsedSeconds);
+        if (!result.applied) {
+          timeMagicPenaltyLockRef.current = false;
+          return;
+        }
+
+        await playPoisonHeartLoss();
+        setDisplayMistakeCount(result.mistakeCount);
+        if (result.timeAttackState) {
+          setTimeAttackState(result.timeAttackState);
+          pendingQuestionStateRef.current = result.timeAttackState;
+        }
+
+        if (result.sessionEnded) {
+          setScreenDarkening(true);
+          await new Promise((resolve) => setTimeout(resolve, motionMs(DARK_FADE_MS, 400)));
+          redirectToResult(sessionId);
+        }
+      } catch (err) {
+        timeMagicPenaltyLockRef.current = false;
+        setError(err instanceof Error ? err.message : "時間の魔法の処理に失敗しました");
+      }
+    },
+    [redirectToResult, sessionId],
+  );
+
+  // 問題が進んだときだけペナルティゲージをリセット（登場イントロ状態は unlock で片付ける）
+  useEffect(() => {
+    resetTimeMagicPenalty();
+  }, [timeAttackState.globalQuestionIndex, resetTimeMagicPenalty]);
+
+  // 黒板 DOM が出たあとで時計幻影を飛ばす（マウント前だと即 onComplete になり何も見えない）
+  useEffect(() => {
+    if (!lv11PhantomLaunchRequestedRef.current || !showQuestionBoard || !activeQuestion) {
+      return;
+    }
+
+    const fromEl = oniRef.current;
+    const toEl = timeMagicTimerAnchorRef.current;
+    if (!fromEl || !toEl) {
+      return;
+    }
+
+    lv11PhantomLaunchRequestedRef.current = false;
+    setLv11EntrancePhantomAnimId((id) => id + 1);
+  }, [activeQuestion, showQuestionBoard, oniPhase, awaitingNextOni, lv11EntrancePlaying]);
+
+  // Lv11 から直接開始した場合も 1 問目から幻影→ゲージ（マウント1回のみ）
+  useEffect(() => {
+    if (
+      !isTimeMagicLevel(initialSession.timeAttackState.currentLevel) ||
+      lv11InitialPhantomStartedRef.current
+    ) {
+      return;
+    }
+    lv11InitialPhantomStartedRef.current = true;
+    beginLv11QuestionClockPhantom();
+  }, [beginLv11QuestionClockPhantom, initialSession.timeAttackState.currentLevel]);
+
+  useEffect(() => {
+    const canTickGauge =
+      (Boolean(activeQuestion) || lv11EntrancePlaying) &&
+      !submitting &&
+      timeMagicGaugeVisible &&
+      timeMagicGaugeStartedAtRef.current != null &&
+      (!timerPaused || lv11EntrancePlaying);
+
+    if (!canTickGauge) {
+      if (!timeMagicGaugeVisible) {
+        setTimeMagicSecondsLeft(null);
+      }
+      return;
+    }
+
+    let frameId = 0;
+    const tick = () => {
+      const gaugeElapsed =
+        (Date.now() - (timeMagicGaugeStartedAtRef.current ?? Date.now())) / 1000;
+      const secondsLeft = getTimeMagicSecondsRemainingFromGaugeElapsed(gaugeElapsed);
+      setTimeMagicSecondsLeft(secondsLeft);
+
+      if (
+        secondsLeft <= 0 &&
+        timeAttackState.timeMagicPenaltyAtQuestionIndex !==
+          timeAttackState.globalQuestionIndex &&
+        !timeMagicPenaltyLockRef.current &&
+        !submitLockRef.current
+      ) {
+        timeMagicPenaltyLockRef.current = true;
+        void applyTimeMagicPenalty(gaugeElapsed);
+      }
+
+      frameId = requestAnimationFrame(tick);
+    };
+
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
+  }, [
+    activeQuestion,
+    timerPaused,
+    submitting,
+    timeMagicGaugeVisible,
+    lv11EntrancePlaying,
+    timeAttackState.globalQuestionIndex,
+    timeAttackState.timeMagicPenaltyAtQuestionIndex,
+    applyTimeMagicPenalty,
+  ]);
 
   useTimeAttackBgm(sessionId, arenaState);
 
@@ -340,28 +572,46 @@ export function TimeAttackClient({
 
     setWaveMessage(`ボス撃破！ +${defeatBonus}点ボーナス`);
 
-    if (prefersReducedMotion()) {
-      setRunningScore((score) => score + defeatBonus);
+    try {
+      if (prefersReducedMotion()) {
+        setRunningScore((score) => score + defeatBonus);
+        await delay(motionMs(DEFEAT_MSG_MS, 400));
+        return;
+      }
+
+      pendingDefeatBonusAmountRef.current = defeatBonus;
+      setDefeatBonusFlyLabel(`+${defeatBonus}点ボーナス`);
+      setPendingDefeatBonusPoints(defeatBonus);
+
+      const flyTimeoutMs = motionMs(
+        SCORE_FLY_DELAY_MS + SCORE_FLY_DURATION_MS + 120,
+        900,
+      );
+
+      await Promise.race([
+        new Promise<void>((resolve) => {
+          defeatBonusFlyDoneRef.current = resolve;
+          requestAnimationFrame(() => {
+            setDefeatBonusAnimId((id) => id + 1);
+          });
+        }),
+        delay(flyTimeoutMs),
+      ]);
+
+      if (pendingDefeatBonusAmountRef.current > 0) {
+        applyDefeatBonus();
+      }
+
+      await delay(getCountUpDurationMs(defeatBonus));
       await delay(motionMs(DEFEAT_MSG_MS, 400));
+    } finally {
       setWaveMessage(null);
-      return;
+      setDefeatBonusFlyLabel(null);
+      setPendingDefeatBonusPoints(null);
+      pendingDefeatBonusAmountRef.current = 0;
+      defeatBonusFlyDoneRef.current = null;
     }
-
-    pendingDefeatBonusAmountRef.current = defeatBonus;
-    setDefeatBonusFlyLabel(`+${defeatBonus}点ボーナス`);
-    setPendingDefeatBonusPoints(defeatBonus);
-
-    await new Promise<void>((resolve) => {
-      defeatBonusFlyDoneRef.current = resolve;
-      requestAnimationFrame(() => {
-        setDefeatBonusAnimId((id) => id + 1);
-      });
-    });
-
-    await delay(getCountUpDurationMs(defeatBonus));
-    await delay(motionMs(DEFEAT_MSG_MS, 400));
-    setWaveMessage(null);
-  }, []);
+  }, [applyDefeatBonus]);
 
   const playHeartRecovery = async (prevMistakeCount: number, nextMistakeCount: number) => {
     if (nextMistakeCount >= prevMistakeCount) {
@@ -381,12 +631,30 @@ export function TimeAttackClient({
     setHeartRecovery(null);
   };
 
-  const unlockQuestionInput = () => {
+  const unlockQuestionInput = (options?: { keepPenaltyCountdown?: boolean }) => {
+    const keepPenaltyCountdown = options?.keepPenaltyCountdown ?? false;
+    const savedGaugeStartedAt = keepPenaltyCountdown
+      ? timeMagicGaugeStartedAtRef.current
+      : null;
+
     setAnswer("");
     questionStartedAtRef.current = Date.now();
+    resetTimeMagicPenalty();
+    resetLv11EntranceIntro();
     setTimerPaused(false);
     submitLockRef.current = false;
     setSubmitting(false);
+
+    if (isTimeMagicLevel(timeAttackState.currentLevel)) {
+      if (keepPenaltyCountdown && savedGaugeStartedAt != null) {
+        timeMagicGaugeStartedAtRef.current = savedGaugeStartedAt;
+        setTimeMagicGaugeVisible(true);
+        const elapsed = (Date.now() - savedGaugeStartedAt) / 1000;
+        setTimeMagicSecondsLeft(getTimeMagicSecondsRemainingFromGaugeElapsed(elapsed));
+      } else {
+        beginLv11QuestionClockPhantom();
+      }
+    }
   };
 
   const playBackgroundWaveAttack = async (attack: QueuedWaveAttack) => {
@@ -506,14 +774,34 @@ export function TimeAttackClient({
       return;
     }
 
+    const isLv11Entrance = result.timeAttackState.currentLevel === 11;
+    const defeatBonus = result.defeatBonus ?? 0;
+
+    if (isLv11Entrance) {
+      applyWaveAdvanceState(result.timeAttackState, result.questions, { skipScoreUpdate: true });
+      setLv11QuestionRevealed(false);
+      setLv11EntrancePlaying(true);
+    }
+
     setAwaitingNextOni(true);
 
     await delay(motionMs(80, 40));
+
     syncBossDisplay(result.timeAttackState);
+    clearFeedbackPopup();
+    if (result.timeAttackState) {
+      setRunningScore(result.timeAttackState.totalScore - defeatBonus);
+    }
+    const defeatBonusPromise = playDefeatBonusAward(defeatBonus);
+
     if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
       playTimeAttackOniRoarSound();
     }
+
     setOniPhase("entering");
+    if (isLv11Entrance) {
+      beginLv11EntranceAtBossEnter();
+    }
     await Promise.race([
       waitForOniEnterComplete(),
       delay(motionMs(ONI_ENTER_MS + 80, 320)),
@@ -523,17 +811,20 @@ export function TimeAttackClient({
     await delay(motionMs(ONI_SETTLE_MS, 80));
     setAwaitingNextOni(false);
 
-    applyWaveAdvanceState(result.timeAttackState, result.questions, { skipScoreUpdate: true });
+    if (!isLv11Entrance) {
+      applyWaveAdvanceState(result.timeAttackState, result.questions, { skipScoreUpdate: true });
+    }
     setAttackDrain(null);
 
-    clearFeedbackPopup();
-    if (result.timeAttackState) {
-      const defeatBonus = result.defeatBonus ?? 0;
-      setRunningScore(result.timeAttackState.totalScore - defeatBonus);
+    if (isLv11Entrance) {
+      setDefeatLoading(false);
+      await waitForLv11QuestionReveal();
+      unlockQuestionInput({ keepPenaltyCountdown: true });
+      await defeatBonusPromise;
+    } else {
+      await defeatBonusPromise;
+      unlockQuestionInput();
     }
-    await playDefeatBonusAward(result.defeatBonus ?? 0);
-
-    unlockQuestionInput();
   };
 
   const processAttackQueue = async () => {
@@ -687,11 +978,7 @@ export function TimeAttackClient({
     }
 
     applyPendingQuestionState();
-    setAnswer("");
-    questionStartedAtRef.current = Date.now();
-    setTimerPaused(false);
-    submitLockRef.current = false;
-    setSubmitting(false);
+    unlockQuestionInput();
   };
 
   const handleWrongAnswer = async (result: WrongAnswerResult) => {
@@ -846,9 +1133,7 @@ export function TimeAttackClient({
     );
   }
 
-  const question = awaitingNextOni
-    ? null
-    : questions[timeAttackState.waveQuestionIndex];
+  const question = showQuestionContent ? activeQuestion : null;
 
   return (
     <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-3">
@@ -872,6 +1157,7 @@ export function TimeAttackClient({
           operation={operation}
           chargeActive={mascotCharging}
           hitActive={mascotHit}
+          poisonActive={mascotPoison}
           lightOrbActive={lightOrbFiring}
         />
         <TimeAttackOniScore
@@ -881,7 +1167,7 @@ export function TimeAttackClient({
           flyLabel={defeatBonusFlyLabel}
           flyClassName="score-fly-badge--streak"
           animId={defeatBonusAnimId}
-          getFlyFromElement={() => defeatBonusRef.current}
+          getFlyFromElement={getDefeatBonusFlyFromElement}
           onPointsApplied={applyDefeatBonus}
           oniPhase={oniPhase}
           oniRef={oniRef}
@@ -938,6 +1224,13 @@ export function TimeAttackClient({
         onComplete={handleEvilOrbComplete}
       />
 
+      <Lv11EntranceClockPhantom
+        animId={lv11EntrancePhantomAnimId}
+        fromRef={oniRef}
+        toRef={timeMagicTimerAnchorRef}
+        onComplete={handleLv11EntranceClockComplete}
+      />
+
       {screenDarkening && <div className="time-attack-dark-overlay" aria-hidden="true" />}
 
       {defeatLoading && (
@@ -947,16 +1240,26 @@ export function TimeAttackClient({
         </div>
       )}
 
-      {question && (
+      {showQuestionBoard && activeQuestion && (
         <section
-          className={`time-attack-board card relative z-20 text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "wrong" ? "animate-retry" : ""}`}
+          className={`time-attack-board card relative z-20 text-center transition-transform ${showQuestionContent && feedbackType === "success" ? "animate-success" : showQuestionContent && feedbackType === "wrong" ? "animate-retry" : ""}`}
         >
-          <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
-            <span className="whitespace-nowrap">
-              {formatExpression(operation, question)} =
-            </span>
-            <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
-          </div>
+          <div
+            ref={timeMagicTimerAnchorRef}
+            className="time-magic-timer-anchor"
+            aria-hidden="true"
+          />
+          {timeMagicGaugeVisible && timeMagicSecondsLeft !== null && (
+            <TimeMagicCountdown secondsRemaining={timeMagicSecondsLeft} />
+          )}
+          {showQuestionContent && (
+            <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
+              <span className="whitespace-nowrap">
+                {formatExpression(operation, activeQuestion)} =
+              </span>
+              <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
+            </div>
+          )}
         </section>
       )}
 
@@ -1002,7 +1305,7 @@ export function TimeAttackClient({
         </div>
       )}
 
-      {!awaitingNextOni && (
+      {showQuestionContent && !awaitingNextOni && (
         <div className="time-attack-keypad relative z-20">
           <Keypad
             value={answer}

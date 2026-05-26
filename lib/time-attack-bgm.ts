@@ -40,7 +40,7 @@ export function getTimeAttackBossKey(state: {
 }
 
 export function isEnmaLv10BossKey(bossKey: string): boolean {
-  return bossKey === "10-2";
+  return bossKey === "10-2" || bossKey === "11-2";
 }
 
 export function getTimeAttackBgmTrackForBoss(

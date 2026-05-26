@@ -50,8 +50,9 @@ describe("time-attack-bgm queue", () => {
     assert.equal(new Set(["a", "b", "c"]).has(third), true);
   });
 
-  it("uses dedicated BGM for level 10 Enma", () => {
+  it("uses dedicated BGM for level 10 and 11 Enma", () => {
     assert.equal(isEnmaLv10BossKey("10-2"), true);
+    assert.equal(isEnmaLv10BossKey("11-2"), true);
     assert.equal(isEnmaLv10BossKey("10-1"), false);
     assert.equal(isEnmaLv10BossKey("9-1"), false);
 

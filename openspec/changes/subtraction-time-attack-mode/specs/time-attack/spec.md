@@ -52,6 +52,7 @@ Subtraction time attack SHALL use **two-operand** questions only (no three-term 
 | 8 | 3-digit − 3-digit, no borrow |
 | 9 | 3-digit − 3-digit, with borrow (閻魔) |
 | 10 | 3-digit − 3-digit, with borrow (黒い閻魔) |
+| 11 | 3-digit − 3-digit, with borrow (黒い閻魔・Lv10と同一ビジュアル) |
 
 Answer input SHALL accept at most **3 digits** at all subtraction time attack levels.
 
@@ -73,7 +74,7 @@ Answer input SHALL accept at most **3 digits** at all subtraction time attack le
 
 ### Requirement: Subtraction time attack oni boss art
 
-During subtraction time attack at levels 1–8, the boss SHALL use `/oni-subtraction.png` with level-specific inline CSS filters. Addition time attack SHALL continue to use the original `/oni.png` with level-specific CSS class tints unchanged. Level 9 閻魔 SHALL use `/enma.png`; level 10 閻魔 SHALL use `/enma-lv10.png`. Both are shared between addition and subtraction time attack.
+During subtraction time attack at levels 1–8, the boss SHALL use `/oni-subtraction.png` with level-specific inline CSS filters. Addition time attack SHALL continue to use the original `/oni.png` with level-specific CSS class tints unchanged. Level 9 閻魔 SHALL use `/enma.png`; levels 10–11 閻魔 SHALL use `/enma-lv10.png`. Both are shared between addition and subtraction time attack.
 
 #### Scenario: Subtraction oni sprite
 - **WHEN** the player faces an oni boss during subtraction time attack at level N (1–8)
@@ -85,7 +86,7 @@ During subtraction time attack at levels 1–8, the boss SHALL use `/oni-subtrac
 
 #### Scenario: Shared Enma art
 - **WHEN** the player faces 閻魔 at level 9 or 10 in either operation
-- **THEN** the header shows `/enma.png` at level 9 and `/enma-lv10.png` at level 10 without CSS color filters
+- **THEN** the header shows `/enma.png` at level 9 and `/enma-lv10.png` at levels 10–11 without CSS color filters
 
 ### Requirement: Subtraction time attack mascot
 

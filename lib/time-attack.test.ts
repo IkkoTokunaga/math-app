@@ -142,8 +142,19 @@ describe("time-attack state", () => {
     }
   });
 
-  it("clears after level 10 Enma double HP defeat", () => {
+  it("advances from level 10 Enma to level 11 with same enma stage", () => {
     const state = createDevTimeAttackState({ level: 10, enmaNumber: ENMA_STAGE_DOUBLE_HP });
+    const result = applyWaveDamage(state, state.oniHpMax);
+    assert.equal(result.kind, "defeated");
+    if (result.kind === "defeated") {
+      assert.equal(result.state.currentLevel, 11);
+      assert.equal(result.state.enmaNumber, ENMA_STAGE_DOUBLE_HP);
+      assert.equal(result.cleared, false);
+    }
+  });
+
+  it("clears after level 11 Enma defeat", () => {
+    const state = createDevTimeAttackState({ level: 11, enmaNumber: ENMA_STAGE_DOUBLE_HP });
     const result = applyWaveDamage(state, state.oniHpMax);
     assert.equal(result.kind, "defeated");
     if (result.kind === "defeated") {
@@ -195,5 +206,12 @@ describe("dev-time-attack-setup", () => {
     assert.equal(state.bossesDefeated, 9);
     assert.equal(state.timeLimitSeconds, 7);
     assert.equal(state.timeBonusMultiplier, 10);
+  });
+
+  it("starts at requested Enma level 11", () => {
+    const state = createDevTimeAttackState({ level: 11, enmaNumber: 0 });
+    assert.equal(state.currentLevel, 11);
+    assert.equal(state.enmaNumber, ENMA_STAGE_DOUBLE_HP);
+    assert.equal(state.bossesDefeated, 10);
   });
 });

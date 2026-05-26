@@ -14,7 +14,7 @@ describe("time-attack-questions", () => {
     assert.equal(getTimeAttackMaxAnswerDigits(7), 3);
   });
 
-  it("uses 4 digits for levels 8-10", () => {
+  it("uses 4 digits for levels 8-11", () => {
     assert.equal(getTimeAttackMaxAnswerDigits(8), 4);
     assert.equal(getTimeAttackMaxAnswerDigits(10), 4);
   });

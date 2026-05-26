@@ -73,6 +73,7 @@ const timeAttackGenerators: Partial<Record<Level, () => Question>> = {
   8: () => generateThreeDigitPair(false),
   9: () => generateThreeDigitPair(true),
   10: () => generateThreeDigitPair(true),
+  11: () => generateThreeDigitPair(true),
 };
 
 export function getSubtractionTimeAttackMaxAnswerDigits(level: Level): number {

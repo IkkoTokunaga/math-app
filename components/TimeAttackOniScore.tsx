@@ -6,6 +6,7 @@ import {
   SCORE_FLY_DELAY_MS,
   SCORE_FLY_DURATION_MS,
 } from "@/components/RunningScore";
+import { useAnimatedScore } from "@/lib/use-animated-score";
 import type { Level } from "@/lib/questions";
 import { DEFAULT_OPERATION, type Operation } from "@/lib/operations";
 import { getBossImagePresentation } from "@/lib/time-attack-boss-visual";
@@ -71,6 +72,7 @@ export function TimeAttackOniScore({
   const [flying, setFlying] = useState(false);
   const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
   const [popping, setPopping] = useState(false);
+  const displayScore = useAnimatedScore(score);
 
   const showOni = oniPhase !== "hidden";
   const phaseClass = oniPhaseClass(oniPhase);
@@ -177,7 +179,7 @@ export function TimeAttackOniScore({
       className={`time-attack-oni-score__points ${popping ? "time-attack-oni-score__points--pop" : ""}`}
       aria-live="polite"
     >
-      {score}点
+      {displayScore}点
     </p>
   );
 

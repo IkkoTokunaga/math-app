@@ -205,6 +205,14 @@ When the app moves to the background (e.g. the player switches to another app on
 - **WHEN** a player taps any button that plays a sound or starts a mode
 - **THEN** the system unlocks browser audio playback once and does not simultaneously play multiple BGM tracks for unlock
 
+### Requirement: Mobile BGM volume
+
+On viewports that match touch-primary mobile devices (`pointer: coarse` and `max-width: 768px`), background music volume SHALL be lower than on desktop while sound effect volume SHALL remain unchanged.
+
+#### Scenario: Quieter BGM on smartphone
+- **WHEN** a player listens on a smartphone-sized touch viewport
+- **THEN** home, quiz, and time attack background music play at reduced volume and button/quiz/time attack sound effects keep their existing volume
+
 ### Requirement: Home screen BGM
 
 The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3` after the initial loading gate completes. If the browser blocks audible autoplay, the system SHALL start muted playback when possible and unmute after the player's first interaction. Background music SHALL stop when the player starts a standard quiz or opens time attack.

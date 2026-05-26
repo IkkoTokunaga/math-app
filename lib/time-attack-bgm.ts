@@ -2,7 +2,7 @@
 
 import { isPageHidden } from "@/lib/page-visibility";
 import { primeTimeAttackSounds } from "@/lib/time-attack-sounds";
-import { BGM_VOLUME } from "@/lib/bgm-volume";
+import { getBgmVolume } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
 
 export const TIME_ATTACK_BGM_TRACKS = [
@@ -255,7 +255,7 @@ export function playTimeAttackBgm(src: string): boolean {
 
   const audio = getPreloadAudio(src);
   audio.loop = true;
-  audio.volume = BGM_VOLUME;
+  audio.volume = getBgmVolume();
   audio.currentTime = 0;
   bgmAudio = audio;
   currentTrack = src;

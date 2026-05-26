@@ -337,6 +337,11 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 - **WHEN** the quiz header is displayed
 - **THEN** the player name and level/boss label are not shown in the header area
 
+#### Scenario: Session total counts up
+- **WHEN** the session total score increases after a wave attack resolves
+- **THEN** the header total counts up numerically with a brief easing animation
+- **AND** a soft tick sound plays on each increment while sound is enabled
+
 #### Scenario: Boss image in front of gauges on mobile
 - **WHEN** the boss image overlaps the attack or HP gauge row on a narrow viewport
 - **THEN** the boss image (including its feet) is rendered in front of the gauges

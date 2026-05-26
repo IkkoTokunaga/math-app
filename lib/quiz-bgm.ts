@@ -2,7 +2,7 @@
 
 import { isPageHidden } from "@/lib/page-visibility";
 import { waitForAudioReady } from "@/lib/audio-ready";
-import { BGM_VOLUME } from "@/lib/bgm-volume";
+import { getBgmVolume } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
 
 export const QUIZ_BGM_SRC = "/sounds/bgm/quiz-bgm.mp3";
@@ -91,7 +91,7 @@ export function playQuizBgm(): void {
 
   const audio = getPreloadAudio();
   audio.loop = true;
-  audio.volume = BGM_VOLUME;
+  audio.volume = getBgmVolume();
   audio.currentTime = 0;
   bgmAudio = audio;
   pendingPlay = true;

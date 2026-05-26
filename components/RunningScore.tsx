@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useAnimatedScore } from "@/lib/use-animated-score";
 
 export const SCORE_FLY_DELAY_MS = 400;
 export const SCORE_FLY_DURATION_MS = 700;
@@ -40,6 +41,7 @@ export function RunningScore({
   const [flying, setFlying] = useState(false);
   const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
   const [popping, setPopping] = useState(false);
+  const displayScore = useAnimatedScore(score);
 
   useEffect(() => {
     if (pointsEarned == null || pointsEarned <= 0 || animId === 0) {
@@ -108,7 +110,7 @@ export function RunningScore({
         className={`text-accent shrink-0 text-2xl font-bold ${popping ? "score-total-pop" : ""}`}
         aria-live="polite"
       >
-        {score}点
+        {displayScore}点
       </p>
       {flying && flyLabel != null && (
         <span

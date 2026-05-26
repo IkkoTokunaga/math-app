@@ -1,6 +1,7 @@
 "use client";
 
 import { isSoundEnabled } from "@/lib/sound-settings";
+import { SFX_VOLUME } from "@/lib/bgm-volume";
 
 export const TIME_ATTACK_BEAM_SOUND_SRC = "/sounds/time-attack-beam.mp3";
 export const TIME_ATTACK_ONI_ATTACK_SOUND_SRC = "/sounds/time-attack-oni-attack.mp3";
@@ -29,6 +30,7 @@ function getAudio(src: string): HTMLAudioElement {
 
   const audio = new Audio(src);
   audio.preload = "auto";
+  audio.volume = SFX_VOLUME;
   pool.push(audio);
   audioPools.set(src, pool);
   return audio;
@@ -42,6 +44,7 @@ function playTimeAttackSound(src: string): void {
   primeTimeAttackSounds();
 
   const audio = getAudio(src);
+  audio.volume = SFX_VOLUME;
   audio.currentTime = 0;
   void audio.play().catch(() => undefined);
 }

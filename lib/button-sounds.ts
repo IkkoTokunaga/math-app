@@ -1,6 +1,7 @@
 "use client";
 
 import { isSoundEnabled } from "@/lib/sound-settings";
+import { SFX_VOLUME } from "@/lib/bgm-volume";
 import { unlockAudioPlayback } from "@/lib/audio-unlock";
 
 export const BUTTON_SOUND_SRC = "/sounds/button.mp3";
@@ -30,6 +31,7 @@ function getAudio(src: string): HTMLAudioElement {
 
   const audio = new Audio(src);
   audio.preload = "auto";
+  audio.volume = SFX_VOLUME;
   pool.push(audio);
   audioPools.set(src, pool);
   return audio;
@@ -43,6 +45,7 @@ function playSound(src: string) {
   primeButtonSounds();
 
   const audio = getAudio(src);
+  audio.volume = SFX_VOLUME;
   audio.currentTime = 0;
   void audio.play().catch(() => undefined);
 }

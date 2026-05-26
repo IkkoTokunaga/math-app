@@ -1,6 +1,7 @@
 "use client";
 
 import { isSoundEnabled } from "@/lib/sound-settings";
+import { SFX_VOLUME } from "@/lib/bgm-volume";
 
 export const KEYPAD_BACKSPACE_SOUND_SRC = "/sounds/keypad-backspace.wav";
 
@@ -20,7 +21,7 @@ function getOrCreateContext(): AudioContext | null {
   if (audioContext == null) {
     audioContext = new AudioContext({ latencyHint: "interactive" });
     outputGain = audioContext.createGain();
-    outputGain.gain.value = 1;
+    outputGain.gain.value = SFX_VOLUME;
     outputGain.connect(audioContext.destination);
   }
 
@@ -30,7 +31,7 @@ function getOrCreateContext(): AudioContext | null {
 function getOutputGain(ctx: AudioContext): GainNode {
   if (outputGain == null || outputGain.context !== ctx) {
     outputGain = ctx.createGain();
-    outputGain.gain.value = 1;
+    outputGain.gain.value = SFX_VOLUME;
     outputGain.connect(ctx.destination);
   }
 

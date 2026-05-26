@@ -1,11 +1,13 @@
 "use client";
 
+import { waitForAudioReady } from "@/lib/audio-ready";
 import { BGM_VOLUME } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
 
 export const HOME_BGM_SRC = "/sounds/bgm/uchuyuei.mp3";
 
 let preloadAudio: HTMLAudioElement | null = null;
+let unlockAudio: HTMLAudioElement | null = null;
 let bgmAudio: HTMLAudioElement | null = null;
 let bgmPrimed = false;
 let bgmUnlocked = false;
@@ -19,6 +21,15 @@ function getPreloadAudio(): HTMLAudioElement {
   }
 
   return preloadAudio;
+}
+
+function getUnlockAudio(): HTMLAudioElement {
+  if (unlockAudio == null) {
+    unlockAudio = new Audio(HOME_BGM_SRC);
+    unlockAudio.preload = "auto";
+  }
+
+  return unlockAudio;
 }
 
 function finishHomeBgmUnlock(): void {
@@ -38,6 +49,11 @@ export function primeHomeBgm(): void {
   getPreloadAudio().load();
 }
 
+export function waitForHomeBgmReady(timeoutMs = 5000): Promise<void> {
+  primeHomeBgm();
+  return waitForAudioReady(getPreloadAudio(), timeoutMs);
+}
+
 export function unlockHomeBgm(): void {
   if (typeof window === "undefined") {
     return;
@@ -51,7 +67,12 @@ export function unlockHomeBgm(): void {
   bgmUnlocked = true;
   primeHomeBgm();
 
-  const audio = getPreloadAudio();
+  if (bgmAudio != null && !bgmAudio.paused) {
+    finishHomeBgmUnlock();
+    return;
+  }
+
+  const audio = getUnlockAudio();
   const previousVolume = audio.volume;
   audio.volume = 0;
   void audio
@@ -81,7 +102,7 @@ export function tryUnmuteHomeBgm(): boolean {
 }
 
 export function isHomeBgmPlaying(): boolean {
-  return bgmAudio != null && !bgmAudio.paused && !awaitingUnmute;
+  return bgmAudio != null && !bgmAudio.paused;
 }
 
 export function stopHomeBgm(): void {
@@ -122,7 +143,7 @@ export function playHomeBgm(): void {
 
   primeHomeBgm();
 
-  if (isHomeBgmPlaying()) {
+  if (isHomeBgmPlaying() || awaitingUnmute) {
     return;
   }
 
@@ -148,11 +169,19 @@ export function playHomeBgm(): void {
 }
 
 export function resumePendingHomeBgm(): boolean {
-  if (!pendingPlay && !awaitingUnmute) {
+  if (awaitingUnmute) {
+    return tryUnmuteHomeBgm();
+  }
+
+  if (!pendingPlay) {
     return isHomeBgmPlaying();
   }
 
   if (tryUnmuteHomeBgm()) {
+    return true;
+  }
+
+  if (isHomeBgmPlaying()) {
     return true;
   }
 

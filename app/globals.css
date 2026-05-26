@@ -2428,6 +2428,48 @@ button.keypad-btn-submit:active:not(:disabled) {
   pointer-events: none;
 }
 
+html.app-loading,
+html.app-loading body {
+  overflow: hidden;
+}
+
+.app-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgb(52 88 72 / 0.35) 0%, transparent 55%),
+    linear-gradient(175deg, #152820 0%, #1a2e24 40%, #1f352a 100%);
+}
+
+.app-loading-overlay__spinner {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 3px solid rgb(0 0 0 / 0.12);
+  border-top-color: var(--chalk-yellow);
+  border-radius: 999px;
+  animation: app-loading-spin 0.8s linear infinite;
+}
+
+.app-loading-overlay__label {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--chalk-muted);
+}
+
+@keyframes app-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .time-attack-defeat-loading {
   position: fixed;
   inset: 0;

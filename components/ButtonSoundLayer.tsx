@@ -4,29 +4,24 @@ import { useEffect } from "react";
 import {
   didPointerTapMove,
   playButtonSoundForTarget,
-  primeButtonSounds,
   resolveButtonSoundSrc,
   shouldPlayButtonSound,
   TIME_ATTACK_RESUME_SOUND_SRC,
   TIME_ATTACK_START_SOUND_SRC,
   unlockButtonSounds,
 } from "@/lib/button-sounds";
-import { prepareTimeAttackBgmEntry, primeTimeAttackBgm } from "@/lib/time-attack-bgm";
-import { primeHomeBgm, unlockHomeBgm } from "@/lib/home-bgm";
-import { primeQuizBgm, unlockQuizBgm } from "@/lib/quiz-bgm";
-import { primeQuizSounds } from "@/lib/quiz-sounds";
-import { primeTimeAttackSounds } from "@/lib/time-attack-sounds";
-import { initSoundSettings } from "@/lib/sound-settings";
+import { prepareTimeAttackBgmEntry } from "@/lib/time-attack-bgm";
+import { unlockHomeBgm } from "@/lib/home-bgm";
+import { unlockQuizBgm } from "@/lib/quiz-bgm";
+import { useAppReady } from "@/lib/use-app-ready";
 
 export function ButtonSoundLayer() {
+  const appReady = useAppReady();
+
   useEffect(() => {
-    initSoundSettings();
-    primeButtonSounds();
-    primeTimeAttackBgm();
-    primeTimeAttackSounds();
-    primeQuizSounds();
-    primeHomeBgm();
-    primeQuizBgm();
+    if (!appReady) {
+      return;
+    }
 
     let tapStartX = 0;
     let tapStartY = 0;
@@ -109,7 +104,7 @@ export function ButtonSoundLayer() {
       document.removeEventListener("pointerup", onPointerUp, { capture: true });
       document.removeEventListener("click", onClick, { capture: true });
     };
-  }, []);
+  }, [appReady]);
 
   return null;
 }

@@ -4,24 +4,23 @@ import { useLayoutEffect } from "react";
 import {
   isQuizBgmPlaying,
   playQuizBgm,
-  primeQuizBgm,
   resumePendingQuizBgm,
   stopQuizBgm,
 } from "@/lib/quiz-bgm";
+import { useAppReady } from "@/lib/use-app-ready";
 import { useSoundEnabled } from "@/lib/use-sound-enabled";
 
 export function useQuizBgm(active: boolean): void {
   const soundEnabled = useSoundEnabled();
+  const appReady = useAppReady();
 
   useLayoutEffect(() => {
-    if (!active || !soundEnabled) {
+    if (!active || !soundEnabled || !appReady) {
       stopQuizBgm();
       return;
     }
 
-    primeQuizBgm();
     playQuizBgm();
-    resumePendingQuizBgm();
 
     const unlockUntilPlaying = () => {
       if (isQuizBgmPlaying()) {
@@ -39,5 +38,5 @@ export function useQuizBgm(active: boolean): void {
       document.removeEventListener("keydown", unlockUntilPlaying, { capture: true });
       stopQuizBgm();
     };
-  }, [active, soundEnabled]);
+  }, [active, soundEnabled, appReady]);
 }

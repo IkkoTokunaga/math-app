@@ -3,28 +3,28 @@
 import { useLayoutEffect } from "react";
 import {
   playHomeBgm,
-  primeHomeBgm,
   resumePendingHomeBgm,
   stopHomeBgm,
   unlockHomeBgm,
 } from "@/lib/home-bgm";
+import { useAppReady } from "@/lib/use-app-ready";
 import { useSoundEnabled } from "@/lib/use-sound-enabled";
 
 export function useHomeBgm(active: boolean): void {
   const soundEnabled = useSoundEnabled();
+  const appReady = useAppReady();
 
   useLayoutEffect(() => {
-    if (!active || !soundEnabled) {
+    if (!active || !soundEnabled || !appReady) {
       stopHomeBgm();
       return;
     }
 
-    primeHomeBgm();
     playHomeBgm();
-    resumePendingHomeBgm();
 
     const unlockUntilPlaying = () => {
       unlockHomeBgm();
+      resumePendingHomeBgm();
     };
 
     document.addEventListener("pointerdown", unlockUntilPlaying, { capture: true });
@@ -35,5 +35,5 @@ export function useHomeBgm(active: boolean): void {
       document.removeEventListener("keydown", unlockUntilPlaying, { capture: true });
       stopHomeBgm();
     };
-  }, [active, soundEnabled]);
+  }, [active, soundEnabled, appReady]);
 }

@@ -169,9 +169,21 @@ During standard quiz play, the system SHALL play short sound effects when an ans
 - **WHEN** a player submits an incorrect answer during time attack
 - **THEN** the system does not play the quiz wrong answer sound effect
 
+### Requirement: Initial app loading gate
+
+On first load, the system SHALL show a full-screen loading overlay with a spinner and the label 「読み込み中...」 until essential audio assets (home BGM and quiz BGM) are preloaded. While the overlay is visible, the player SHALL NOT be able to interact with the app. Background music and button sounds SHALL NOT start until loading completes.
+
+#### Scenario: Full-screen loading on first visit
+- **WHEN** a player opens the app for the first time in a session
+- **THEN** a full-screen loading overlay is shown and blocks interaction until preloading finishes
+
+#### Scenario: BGM starts after loading
+- **WHEN** the loading overlay is dismissed
+- **THEN** at most one background music track plays according to the current screen (home or quiz)
+
 ### Requirement: Home screen BGM
 
-The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3`. If the browser blocks audible autoplay, the system SHALL start muted playback when possible and unmute after the player's first interaction. Background music SHALL stop when the player starts a standard quiz or opens time attack.
+The home screen (`/play` mode and level selection, when not in an active quiz) and the progress dashboard (`/progress`) SHALL play looping background music using `/sounds/bgm/uchuyuei.mp3` after the initial loading gate completes. If the browser blocks audible autoplay, the system SHALL start muted playback when possible and unmute after the player's first interaction. Background music SHALL stop when the player starts a standard quiz or opens time attack.
 
 #### Scenario: Home BGM on mode select
 - **WHEN** a player opens the home screen and is not in an active quiz

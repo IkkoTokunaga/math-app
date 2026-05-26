@@ -9,6 +9,9 @@ export const ONI_ROAR_SOUND_SRCS = [
   "/sounds/oni-roar-1.mp3",
   "/sounds/oni-roar-2.mp3",
   "/sounds/oni-roar-3.mp3",
+  "/sounds/oni-roar-goblin-1.mp3",
+  "/sounds/oni-roar-goblin-2.mp3",
+  "/sounds/oni-roar-goblin-3.mp3",
 ] as const;
 
 const TIME_ATTACK_SOUND_SRCS = [

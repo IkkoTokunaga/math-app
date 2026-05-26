@@ -58,6 +58,7 @@ export function useAnimatedScore(score: number): number {
     const durationMs = getCountUpDurationMs(delta);
     let startTime: number | null = null;
     let lastTickValue = from;
+    let tickIndex = 0;
 
     const tick = (now: number) => {
       if (startTime == null) {
@@ -70,7 +71,8 @@ export function useAnimatedScore(score: number): number {
       const current = Math.round(from + delta * eased);
 
       if (current !== lastTickValue) {
-        playScoreCountTick();
+        playScoreCountTick(tickIndex);
+        tickIndex += 1;
         lastTickValue = current;
       }
 

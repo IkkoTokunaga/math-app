@@ -340,7 +340,7 @@ The session total score SHALL be shown together with boss artwork in the quiz he
 #### Scenario: Session total counts up
 - **WHEN** the session total score increases after a wave attack resolves
 - **THEN** the header total counts up numerically with a brief easing animation
-- **AND** a soft tick sound plays on each increment while sound is enabled
+- **AND** a coin-like pickup sound plays on each increment while sound is enabled
 
 #### Scenario: Boss image in front of gauges on mobile
 - **WHEN** the boss image overlaps the attack or HP gauge row on a narrow viewport

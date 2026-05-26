@@ -232,23 +232,68 @@ export function playKeypadBackspaceSound(): void {
   });
 }
 
-/** Short coin-like tick while the total score counts up. */
-export function playScoreCountTick(): void {
-  playPreparedSound((ctx) => {
-    const t = ctx.currentTime;
-    const duration = 0.032;
+/** Light coin pickup — short bright plink while the total score counts up. */
+function playScoreCoinTick(ctx: AudioContext, stepIndex: number): void {
+  const t = ctx.currentTime;
+  const duration = 0.042;
+  const baseFreq = 1680 + (stepIndex % 6) * 55 + Math.random() * 35;
 
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(760 + Math.random() * 60, t);
-    osc.frequency.exponentialRampToValueAtTime(1180, t + duration * 0.45);
-    gain.gain.setValueAtTime(0.12, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-    osc.connect(gain);
-    gain.connect(getOutputGain(ctx));
-    osc.start(t);
-    osc.stop(t + duration + 0.01);
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.09, t);
+  master.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+  master.connect(getOutputGain(ctx));
+
+  const plink = ctx.createOscillator();
+  plink.type = "sine";
+  plink.frequency.setValueAtTime(baseFreq * 0.88, t);
+  plink.frequency.exponentialRampToValueAtTime(baseFreq * 1.22, t + 0.01);
+  plink.frequency.exponentialRampToValueAtTime(baseFreq * 0.98, t + duration);
+
+  const plinkGain = ctx.createGain();
+  plinkGain.gain.setValueAtTime(0.72, t);
+  plinkGain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+  plink.connect(plinkGain);
+  plinkGain.connect(master);
+  plink.start(t);
+  plink.stop(t + duration + 0.01);
+
+  const ping = ctx.createOscillator();
+  ping.type = "triangle";
+  ping.frequency.setValueAtTime(baseFreq * 2.15, t);
+  const pingGain = ctx.createGain();
+  pingGain.gain.setValueAtTime(0.14, t);
+  pingGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.026);
+  ping.connect(pingGain);
+  pingGain.connect(master);
+  ping.start(t);
+  ping.stop(t + 0.028);
+
+  const clickSize = Math.max(1, Math.ceil(ctx.sampleRate * 0.008));
+  const clickBuf = ctx.createBuffer(1, clickSize, ctx.sampleRate);
+  const clickData = clickBuf.getChannelData(0);
+  for (let i = 0; i < clickSize; i++) {
+    clickData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (clickSize * 0.18));
+  }
+
+  const click = ctx.createBufferSource();
+  click.buffer = clickBuf;
+  const hpf = ctx.createBiquadFilter();
+  hpf.type = "highpass";
+  hpf.frequency.value = 4200;
+  const clickGain = ctx.createGain();
+  clickGain.gain.setValueAtTime(0.05, t);
+  clickGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.008);
+  click.connect(hpf);
+  hpf.connect(clickGain);
+  clickGain.connect(master);
+  click.start(t);
+  click.stop(t + 0.01);
+}
+
+/** Coin pickup tick while the total score counts up. */
+export function playScoreCountTick(stepIndex = 0): void {
+  playPreparedSound((ctx) => {
+    playScoreCoinTick(ctx, stepIndex);
   });
 }
 

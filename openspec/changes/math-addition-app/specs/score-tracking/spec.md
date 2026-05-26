@@ -64,7 +64,7 @@ During an active quiz session, the system SHALL display the player's accumulated
 #### Scenario: Score updates on correct answer
 - **WHEN** a player submits a correct answer during a quiz
 - **THEN** the top-right score increases by that question's `pointsEarned` and any streak milestone bonus awarded on that answer
-- **AND** the displayed total counts up numerically with a brief easing animation and a soft tick sound on each increment while sound is enabled
+- **AND** the displayed total counts up numerically with a brief easing animation and a coin-like pickup sound on each increment while sound is enabled
 - **AND** the progress bar fill and milestone stars update to reflect the new running total
 - **AND** the bar fill animates smoothly from its current position to the new fill level after each score increment lands in the total
 - **AND** while the bar is filling, its color transitions from light blue toward orange based on fill progress
@@ -91,7 +91,7 @@ During an active quiz session, the system SHALL display the player's accumulated
 - **THEN** the success feedback shows how many points were earned (e.g. "+15点")
 - **AND** when a streak milestone bonus applies, the feedback also shows a streak bonus line (e.g. "+5 連続ボーナス!") that pops in immediately below the question points in a quick chained animation
 - **AND** the question points and any streak bonus line animate sequentially into the top-right total score
-- **AND** the total counts up numerically after each merge animation completes, with a soft tick sound on each increment while sound is enabled
+- **AND** the total counts up numerically after each merge animation completes, with a coin-like pickup sound on each increment while sound is enabled
 - **AND** the total updates only after each merge animation completes
 
 #### Scenario: Reduced motion for score animation

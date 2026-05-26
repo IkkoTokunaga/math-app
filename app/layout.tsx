@@ -10,6 +10,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
+  themeColor: "#1a2e24",
 };
 
 export const metadata: Metadata = {
@@ -20,6 +21,11 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
+  appleWebApp: {
+    capable: true,
+    title: "けいさん",
+    statusBarStyle: "black-translucent",
+  },
   openGraph: {
     type: "website",
     locale: "ja_JP",

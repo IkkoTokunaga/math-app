@@ -1458,7 +1458,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 
 .time-attack-top {
   display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr) min(46%, 15.5rem);
+  grid-template-columns: 4.5rem minmax(0, 1fr) min(50%, 18.5rem);
   grid-template-rows: auto auto;
   column-gap: 0.65rem;
   row-gap: 0.5rem;
@@ -1499,7 +1499,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   z-index: 6;
   pointer-events: none;
   line-height: 0;
-  margin-bottom: -1.75rem;
+  margin-bottom: -2.75rem;
   position: relative;
 }
 
@@ -1582,7 +1582,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 
 .time-attack-oni-score__image {
   width: auto;
-  height: clamp(8.5rem, 28vw, 11rem);
+  height: clamp(11rem, 34vw, 14rem);
   max-width: 100%;
   background: transparent;
   object-fit: contain;
@@ -2923,8 +2923,12 @@ html.app-loading body {
 
 @media (max-width: 420px) {
   .time-attack-top {
-    grid-template-columns: 3.75rem minmax(0, 1fr) min(44%, 12.75rem);
+    grid-template-columns: 3.75rem minmax(0, 1fr) min(48%, 15rem);
     column-gap: 0.45rem;
+  }
+
+  .time-attack-top__oni {
+    margin-bottom: -2rem;
   }
 
   .time-attack-top__meta {
@@ -2932,7 +2936,7 @@ html.app-loading body {
   }
 
   .time-attack-oni-score__image {
-    height: clamp(7rem, 25vw, 9rem);
+    height: clamp(9.5rem, 30vw, 11.5rem);
   }
 }
 

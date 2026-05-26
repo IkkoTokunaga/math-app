@@ -130,7 +130,11 @@ export function ProgressClient({ auth }: ProgressClientProps) {
 
   const guestStore = isClient && !auth.loggedIn ? readGuestStore() : null;
   const guestData = guestStore
-    ? computeGuestProgress(guestStore.completedSessions, operation)
+    ? computeGuestProgress(
+        guestStore.completedSessions,
+        operation,
+        guestStore.completedTimeAttackSessions ?? [],
+      )
     : null;
 
   const displayData = auth.loggedIn ? (progressByOperation[operation] ?? null) : guestData;
@@ -247,22 +251,20 @@ export function ProgressClient({ auth }: ProgressClientProps) {
             </section>
           )}
 
-          {auth.loggedIn && (
-            <section className="progress-panel-section">
-              <h2 className="chalk-heading mb-2 text-2xl font-bold">タイムアタック</h2>
-              <div>
-                <p className="text-sm text-muted">過去最高得点</p>
-                <p className="text-2xl font-bold">
-                  {displayData.timeAttackBestScore != null
-                    ? `${formatPoints(displayData.timeAttackBestScore)}点`
-                    : "—"}
-                </p>
-                {displayData.timeAttackBestScore == null && auth.loggedIn && (
-                  <p className="text-sm text-muted">まだプレイしていません</p>
-                )}
-              </div>
-            </section>
-          )}
+          <section className="progress-panel-section">
+            <h2 className="chalk-heading mb-2 text-2xl font-bold">タイムアタック</h2>
+            <div>
+              <p className="text-sm text-muted">過去最高得点</p>
+              <p className="text-2xl font-bold">
+                {displayData.timeAttackBestScore != null
+                  ? `${formatPoints(displayData.timeAttackBestScore)}点`
+                  : "—"}
+              </p>
+              {displayData.timeAttackBestScore == null && (
+                <p className="text-sm text-muted">まだプレイしていません</p>
+              )}
+            </div>
+          </section>
 
           <section className="progress-panel-section">
             <h2 className="chalk-heading mb-4 text-2xl font-bold">最近の結果</h2>

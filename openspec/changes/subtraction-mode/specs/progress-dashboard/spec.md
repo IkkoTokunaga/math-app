@@ -24,7 +24,7 @@ The system SHALL display the 5 most recent sessions for the selected player **an
 
 The dashboard SHALL also show **タイムアタック** **過去最高得点** (highest total score across all completed time attack sessions for the selected operation). When the player has no completed time attack sessions for that operation, the dashboard SHALL show `—` and a brief message that they have not played yet.
 
-Weekly average accuracy, level unlock progress, and weak spots SHALL continue to use **standard sessions only**.
+Weekly average accuracy, level unlock progress, and weak spots SHALL continue to use **standard sessions only**. Guest time attack results SHALL be stored in localStorage and shown on the progress dashboard for the matching operation tab.
 
 #### Scenario: View recent subtraction history
 - **WHEN** a player opens the progress dashboard with 引き算 selected

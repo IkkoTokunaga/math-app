@@ -26,6 +26,7 @@ import {
   startGuestSession,
   submitGuestAnswer,
 } from "@/lib/guest-session";
+import { getGuestTimeAttackResumeInfo } from "@/lib/guest-time-attack";
 import { useIsClient } from "@/lib/use-is-client";
 import { useHomeBgm } from "@/lib/use-home-bgm";
 import { useQuizBgm } from "@/lib/use-quiz-bgm";
@@ -745,8 +746,17 @@ export function PlayClient({
 
   if (!sessionId && !localId) {
     const pageTitle = operation === "subtraction" ? "ひきざん" : "たしざん";
-    const timeAttackResume =
+    const memberTimeAttackResume =
       operation === "addition" ? additionTimeAttackResume : subtractionTimeAttackResume;
+    const guestTimeAttackResume = !auth.loggedIn
+      ? getGuestTimeAttackResumeInfo(operation)
+      : null;
+    const timeAttackResumeLabel =
+      memberTimeAttackResume?.bossLabel ?? guestTimeAttackResume?.bossLabel ?? null;
+    const canTimeAttackResume = auth.loggedIn && memberTimeAttackResume != null;
+    const timeAttackResumeText = timeAttackResumeLabel
+      ? `続きから（${timeAttackResumeLabel}）`
+      : "続きから";
     const timeAttackHref =
       operation === "addition" ? "/play/time-attack" : "/play/time-attack?operation=subtraction";
     const timeAttackNewHref =
@@ -793,42 +803,50 @@ export function PlayClient({
               >
                 通常モード（10問チャレンジ）
               </button>
-              {auth.loggedIn ? (
-                timeAttackResume ? (
-                  <div className="grid gap-3">
-                    <Link
-                      href={timeAttackHref}
-                      data-button-sound="time-attack-resume"
-                      className="big-btn big-btn-primary text-center"
-                    >
-                      続きから（{timeAttackResume.bossLabel}）
-                    </Link>
-                    <Link
-                      href={timeAttackNewHref}
-                      data-button-sound="time-attack-start"
-                      className="big-btn big-btn-secondary text-center"
-                    >
-                      タイムアタックを新しく始める
-                    </Link>
-                  </div>
-                ) : (
+              <div className="grid gap-3">
+                {canTimeAttackResume ? (
                   <Link
-                    href={timeAttackNewHref}
-                    data-button-sound="time-attack-start"
-                    className="big-btn big-btn-secondary text-center"
+                    href={timeAttackHref}
+                    data-button-sound="time-attack-resume"
+                    className="big-btn big-btn-primary text-center"
                   >
-                    タイムアタック（鬼退治）
+                    {timeAttackResumeText}
                   </Link>
-                )
-              ) : (
-                <div className="mode-select-locked">
-                  <button type="button" disabled className="big-btn w-full opacity-50">
-                    🔒 タイムアタック（鬼退治）
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="big-btn big-btn-primary w-full opacity-50"
+                    aria-label={
+                      auth.loggedIn
+                        ? "続きから（進行中のセッションがありません）"
+                        : timeAttackResumeLabel
+                          ? `${timeAttackResumeText}（ログインが必要）`
+                          : "続きから（ログインが必要）"
+                    }
+                  >
+                    {!auth.loggedIn && (
+                      <span className="time-attack-resume-lock" aria-hidden="true">
+                        🔒
+                      </span>
+                    )}
+                    {timeAttackResumeText}
                   </button>
-                  <p className="mt-2 text-center text-sm text-muted">
-                    タイムアタックはログインすると遊べます
-                  </p>
-                </div>
+                )}
+                <Link
+                  href={timeAttackNewHref}
+                  data-button-sound="time-attack-start"
+                  className="big-btn big-btn-secondary text-center"
+                >
+                  {canTimeAttackResume || guestTimeAttackResume
+                    ? "タイムアタックを新しく始める"
+                    : "タイムアタック（鬼退治）"}
+                </Link>
+              </div>
+              {!auth.loggedIn && (
+                <p className="text-center text-sm text-muted">
+                  続きはユーザ登録後に選択できます
+                </p>
               )}
               {standardLevelSelectOpen && (
                 <div ref={standardModeSectionRef} id="standard-mode-section">

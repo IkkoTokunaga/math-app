@@ -1,10 +1,21 @@
 import { getDb } from "@/lib/db";
 import { players, questionLogs, sessions, users } from "@/lib/db/schema";
+import type {
+  AttemptCounts,
+  Question,
+  TimeAttackState as DbTimeAttackState,
+} from "@/lib/db/schema";
 import { hashPassword } from "@/lib/auth/password";
-import type { GuestStoreSnapshot } from "@/lib/guest/types";
+import type {
+  GuestCompletedTimeAttackSession,
+  GuestQuestionLog,
+  GuestStoreSnapshot,
+  GuestTimeAttackInProgress,
+} from "@/lib/guest/types";
 import type { Operation } from "@/lib/operations";
-import type { AttemptCounts, Question } from "@/lib/db/schema";
 import { importMemberCelebratedLevels } from "@/lib/unlock-celebration-db";
+import { MAX_MISTAKES, WAVE_QUESTION_COUNT } from "@/lib/time-attack-scoring";
+import type { TimeAttackState } from "@/lib/time-attack";
 
 export type CelebratedLevelsByOperation = Partial<Record<Operation, readonly number[]>>;
 
@@ -12,6 +23,121 @@ function validateGuestSnapshot(snapshot: GuestStoreSnapshot): void {
   if (snapshot.version !== 1) {
     throw new Error("データ形式が正しくありません");
   }
+}
+
+function questionsFromLogs(logs: GuestQuestionLog[]): Question[] {
+  return logs.map((log) => ({
+    operandA: log.operandA,
+    operandB: log.operandB,
+    ...(log.operandC != null ? { operandC: log.operandC } : {}),
+  }));
+}
+
+function serializeTimeAttackState(state: TimeAttackState): DbTimeAttackState {
+  return { ...state };
+}
+
+function isResumableTimeAttack(state: TimeAttackState): boolean {
+  return state.phase === "wave_active" && state.mistakeCount < MAX_MISTAKES;
+}
+
+async function insertQuestionLogs(
+  tx: Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0],
+  sessionId: string,
+  logs: GuestQuestionLog[],
+  answeredAt: Date,
+) {
+  if (logs.length === 0) {
+    return;
+  }
+
+  await tx.insert(questionLogs).values(
+    logs.map((log) => ({
+      sessionId,
+      questionIndex: log.questionIndex,
+      operandA: log.operandA,
+      operandB: log.operandB,
+      operandC: log.operandC ?? null,
+      userAnswer: log.userAnswer,
+      correctAnswer: log.correctAnswer,
+      incorrectCount: log.incorrectCount,
+      pointsEarned: log.pointsEarned,
+      isFirstAttemptCorrect: log.isFirstAttemptCorrect,
+      answeredAt,
+    })),
+  );
+}
+
+async function importCompletedTimeAttackSession(
+  tx: Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0],
+  playerId: string,
+  completed: GuestCompletedTimeAttackSession,
+) {
+  const playedAt = new Date(completed.playedAt);
+  const [session] = await tx
+    .insert(sessions)
+    .values({
+      playerId,
+      level: completed.level,
+      operation: completed.operation,
+      mode: "time_attack",
+      status: "completed",
+      questions: questionsFromLogs(completed.questionLogs),
+      attemptCounts: {} as AttemptCounts,
+      totalQuestions: WAVE_QUESTION_COUNT,
+      totalScore: completed.totalScore,
+      timeAttackState: serializeTimeAttackState(completed.timeAttackState),
+      playedAt,
+      completedAt: playedAt,
+      stars: null,
+      correctAnswers: null,
+      accuracy: null,
+      baseScore: null,
+      bonusScore: null,
+      bestStreak: null,
+    })
+    .returning();
+
+  await insertQuestionLogs(tx, session.id, completed.questionLogs, playedAt);
+}
+
+async function importInProgressTimeAttackSession(
+  tx: Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0],
+  playerId: string,
+  inProgress: GuestTimeAttackInProgress,
+) {
+  const state = inProgress.timeAttackState;
+  const resumable = isResumableTimeAttack(state);
+  const playedAt = new Date(inProgress.startedAt);
+  const finalizedState: TimeAttackState = resumable
+    ? state
+    : { ...state, phase: "failed" };
+
+  const [session] = await tx
+    .insert(sessions)
+    .values({
+      playerId,
+      level: finalizedState.currentLevel,
+      operation: inProgress.operation,
+      mode: "time_attack",
+      status: resumable ? "in_progress" : "completed",
+      questions: inProgress.questions,
+      attemptCounts: {} as AttemptCounts,
+      totalQuestions: WAVE_QUESTION_COUNT,
+      totalScore: finalizedState.totalScore,
+      timeAttackState: serializeTimeAttackState(finalizedState),
+      playedAt,
+      completedAt: resumable ? null : playedAt,
+      stars: null,
+      correctAnswers: null,
+      accuracy: null,
+      baseScore: null,
+      bonusScore: null,
+      bestStreak: null,
+    })
+    .returning();
+
+  await insertQuestionLogs(tx, session.id, inProgress.questionLogs, playedAt);
 }
 
 export async function importGuestData(
@@ -92,6 +218,16 @@ export async function importGuestData(
             answeredAt: new Date(completed.playedAt),
           })),
         );
+      }
+    }
+
+    for (const completed of snapshot.completedTimeAttackSessions ?? []) {
+      await importCompletedTimeAttackSession(tx, player.id, completed);
+    }
+
+    for (const inProgress of Object.values(snapshot.timeAttackInProgress ?? {})) {
+      if (inProgress) {
+        await importInProgressTimeAttackSession(tx, player.id, inProgress);
       }
     }
 

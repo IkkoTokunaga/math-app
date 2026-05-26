@@ -3131,6 +3131,11 @@ html.app-loading body {
   padding: 0.25rem;
 }
 
+.time-attack-resume-lock {
+  margin-right: 0.35rem;
+  letter-spacing: 0.05em;
+}
+
 @keyframes mascot-light-orb-fly {
   0% {
     opacity: 0;

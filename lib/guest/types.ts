@@ -1,6 +1,7 @@
 import type { Question } from "@/lib/db/schema";
 import type { Operation } from "@/lib/operations";
 import type { Level } from "@/lib/questions";
+import type { TimeAttackState } from "@/lib/time-attack";
 
 export type GuestQuestionLog = {
   questionIndex: number;
@@ -40,10 +41,31 @@ export type GuestInProgressSession = {
   startedAt: string;
 };
 
+export type GuestTimeAttackInProgress = {
+  localId: string;
+  operation: Operation;
+  questions: Question[];
+  questionLogs: GuestQuestionLog[];
+  timeAttackState: TimeAttackState;
+  startedAt: string;
+};
+
+export type GuestCompletedTimeAttackSession = {
+  localId: string;
+  operation: Operation;
+  playedAt: string;
+  totalScore: number;
+  level: Level;
+  timeAttackState: TimeAttackState;
+  questionLogs: GuestQuestionLog[];
+};
+
 export type GuestStore = {
   version: 1;
   completedSessions: GuestCompletedSession[];
   inProgress?: GuestInProgressSession;
+  timeAttackInProgress?: Partial<Record<Operation, GuestTimeAttackInProgress>>;
+  completedTimeAttackSessions?: GuestCompletedTimeAttackSession[];
 };
 
 export type GuestStoreSnapshot = GuestStore;

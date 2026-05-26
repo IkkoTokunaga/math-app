@@ -1,9 +1,15 @@
+"use client";
+
 import { getUnlockProgress, getUnlockedLevel } from "@/lib/levels";
-import type { GuestCompletedSession } from "@/lib/guest/types";
+import type {
+  GuestCompletedSession,
+  GuestCompletedTimeAttackSession,
+} from "@/lib/guest/types";
 import { formatExpression } from "@/lib/operations";
 import type { Operation } from "@/lib/operations";
 import { DEFAULT_OPERATION } from "@/lib/operations";
 import type { ProgressData, RecentSession } from "@/lib/progress";
+import { getBossLabel } from "@/lib/time-attack";
 
 function getWeekStart(date: Date): Date {
   const result = new Date(date);
@@ -38,9 +44,26 @@ function calculateLearningStreak(dates: Date[]): number {
   return streak;
 }
 
+function mapGuestTimeAttackRecent(
+  session: GuestCompletedTimeAttackSession,
+): RecentSession {
+  return {
+    id: session.localId,
+    mode: "time_attack",
+    level: session.level,
+    totalScore: session.totalScore,
+    playedAt: session.playedAt,
+    bossLabel: getBossLabel(session.timeAttackState),
+    bossesDefeated: session.timeAttackState.bossesDefeated,
+    cleared: session.timeAttackState.phase === "cleared",
+    failReason: session.timeAttackState.failReason,
+  };
+}
+
 export function computeGuestProgress(
   completedSessions: GuestCompletedSession[],
   operation: Operation = DEFAULT_OPERATION,
+  completedTimeAttackSessions: GuestCompletedTimeAttackSession[] = [],
 ): ProgressData {
   const scoped = completedSessions.filter(
     (session) => (session.operation ?? DEFAULT_OPERATION) === operation,
@@ -49,17 +72,32 @@ export function computeGuestProgress(
     (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
   );
 
-  const recentSessions: RecentSession[] = sorted.slice(0, 5).map((session) => ({
-    id: session.localId,
-    mode: "standard" as const,
-    level: session.level,
-    correctAnswers: session.correctAnswers,
-    accuracy: session.accuracy,
-    totalQuestions: session.questionLogs.length,
-    stars: session.stars,
-    totalScore: session.totalScore,
-    playedAt: session.playedAt,
-  }));
+  const scopedTimeAttack = completedTimeAttackSessions.filter(
+    (session) => session.operation === operation,
+  );
+
+  const recentSessions: RecentSession[] = [
+    ...sorted.slice(0, 5).map((session) => ({
+      id: session.localId,
+      mode: "standard" as const,
+      level: session.level,
+      correctAnswers: session.correctAnswers,
+      accuracy: session.accuracy,
+      totalQuestions: session.questionLogs.length,
+      stars: session.stars,
+      totalScore: session.totalScore,
+      playedAt: session.playedAt,
+    })),
+    ...scopedTimeAttack.map(mapGuestTimeAttackRecent),
+  ]
+    .sort(
+      (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
+    )
+    .slice(0, 5);
+
+  const timeAttackBestScore = scopedTimeAttack.reduce<number | null>((best, session) => {
+    return best === null ? session.totalScore : Math.max(best, session.totalScore);
+  }, null);
 
   const weekStart = getWeekStart(new Date());
   const weeklySessions = sorted.filter(
@@ -109,7 +147,7 @@ export function computeGuestProgress(
   return {
     operation,
     recentSessions,
-    timeAttackBestScore: null,
+    timeAttackBestScore,
     weeklyAverage,
     learningStreak,
     unlockedLevel,

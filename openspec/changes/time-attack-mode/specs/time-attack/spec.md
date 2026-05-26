@@ -2,7 +2,7 @@
 
 ### Requirement: Time attack mode entry
 
-The system SHALL offer a **タイムアタック** mode separate from the standard 10-question quiz. Time attack SHALL be playable only by **authenticated (logged-in) members**. The entry point SHALL remain **visible** to guests but SHALL be **locked** (disabled) with a brief message that login is required.
+The system SHALL offer a **タイムアタック** mode separate from the standard 10-question quiz. Time attack SHALL be playable by both **guests** and **logged-in members**. The play screen SHALL show the same time attack control layout for guests and members: **続きから** and a start button (**タイムアタック（鬼退治）** or **タイムアタックを新しく始める**). **続きから** SHALL be enabled only for logged-in members with an in-progress session; for guests it SHALL be visible but disabled with a **padlock** indicator (🔒).
 
 When a logged-in player has an in-progress time attack session (`time_attack_state.status = 'wave_active'`), the play screen SHALL offer **続きから** to resume that session before starting a new run.
 
@@ -15,10 +15,17 @@ When a logged-in player has an in-progress time attack session (`time_attack_sta
 - **THEN** the play screen offers 続きから
 - **AND** selecting it restores the same boss, HP, wave index, and question batch
 
-#### Scenario: Guest sees locked time attack
+#### Scenario: Guest starts time attack
+- **WHEN** a guest selects タイムアタック（鬼退治） from the play screen
+- **THEN** the system starts a new time attack session at level 1
+- **AND** session progress is saved to localStorage
+
+#### Scenario: Guest resume disabled
 - **WHEN** a guest opens the play screen
-- **THEN** the タイムアタック option is visible but not selectable
-- **AND** the UI indicates that login is required to play
+- **THEN** **続きから** is visible but disabled with a padlock indicator
+- **AND** if a resumable guest time attack exists for the selected operation, the label includes the boss reached (e.g. **続きから（おに Lv3）**)
+- **AND** **タイムアタック（鬼退治）** is available to start a new run
+- **AND** a message below the buttons reads **続きはユーザ登録後に選択できます**
 
 #### Scenario: Time attack does not affect standard unlock
 - **WHEN** a player completes or clears a time attack session

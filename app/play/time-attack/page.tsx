@@ -21,13 +21,18 @@ type TimeAttackPlayPageProps = {
 
 export default async function TimeAttackPlayPage({ searchParams }: TimeAttackPlayPageProps) {
   const auth = await getAuthState();
-
-  if (!auth.loggedIn) {
-    redirect("/play");
-  }
-
   const params = await searchParams;
   const operation = parseOperation(params.operation);
+  const playHref = operation === "subtraction" ? "/play?operation=subtraction" : "/play";
+
+  if (!auth.loggedIn) {
+    return (
+      <main className="page-shell page-shell--quiz">
+        <TimeAttackClient auth={auth} operation={operation} />
+      </main>
+    );
+  }
+
   const forceNew = params.new === "1";
   const devStart = parseDevTimeAttackStart(params);
 
@@ -44,12 +49,12 @@ export default async function TimeAttackPlayPage({ searchParams }: TimeAttackPla
   } else {
     initialSession = await resumeTimeAttackSessionAction(auth.playerId, operation);
     if (!initialSession) {
-      redirect(operation === "subtraction" ? "/play?operation=subtraction" : "/play");
+      redirect(playHref);
     }
   }
 
   if ("needsConfirm" in initialSession) {
-    redirect(operation === "subtraction" ? "/play?operation=subtraction" : "/play");
+    redirect(playHref);
   }
 
   return (

@@ -7,6 +7,11 @@ import {
   applyTimeMagicHeartLossAction,
   submitTimeAttackAnswerAction,
 } from "@/app/actions/time-attack";
+import {
+  applyGuestTimeMagicHeartLoss,
+  startGuestTimeAttackSession,
+  submitGuestTimeAttackAnswer,
+} from "@/lib/guest-time-attack";
 import { GaugeLightCharge, ATTACK_GATHER_MS, ATTACK_CLUSTER_HOLD_MS, ATTACK_FLY_MS } from "@/components/GaugeLightCharge";
 import { Keypad } from "@/components/Keypad";
 import { MascotLightOrb, LIGHT_ORB_FLY_MS, type OniPhase } from "@/components/MascotLightOrb";
@@ -61,6 +66,12 @@ type InitialSession = {
 
 type TimeAttackClientProps = {
   auth: AuthState;
+  initialSession?: InitialSession;
+  operation?: Operation;
+};
+
+type TimeAttackClientInnerProps = {
+  isGuest: boolean;
   initialSession: InitialSession;
   operation?: Operation;
 };
@@ -157,9 +168,81 @@ function getGaugeWaveScore(result: {
 }
 
 export function TimeAttackClient({
+  auth,
   initialSession,
   operation = DEFAULT_OPERATION,
 }: TimeAttackClientProps) {
+  const isGuest = !auth.loggedIn;
+  const isClient = useIsClient();
+  const [guestSession, setGuestSession] = useState<InitialSession | null>(null);
+  const [guestBootError, setGuestBootError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isGuest) {
+      return;
+    }
+
+    try {
+      const started = startGuestTimeAttackSession(operation, true);
+      setGuestSession({
+        sessionId: started.localId,
+        questions: started.questions,
+        timeAttackState: started.timeAttackState,
+      });
+    } catch (err) {
+      setGuestBootError(
+        err instanceof Error ? err.message : "タイムアタックの開始に失敗しました",
+      );
+    }
+  }, [isGuest, operation]);
+
+  if (!isClient) {
+    return <p className="text-center text-lg text-muted">読み込み中...</p>;
+  }
+
+  if (guestBootError) {
+    return (
+      <div className="mx-auto max-w-xl text-center">
+        <p className="feedback-error">{guestBootError}</p>
+        <Link
+          href={operation === "subtraction" ? "/play?operation=subtraction" : "/play"}
+          className="big-btn big-btn-secondary mt-4 inline-block"
+        >
+          モード選択へ
+        </Link>
+      </div>
+    );
+  }
+
+  if (isGuest && !guestSession) {
+    return <p className="text-center text-lg text-muted">読み込み中...</p>;
+  }
+
+  if (!isGuest && !initialSession) {
+    return (
+      <div className="mx-auto max-w-xl text-center">
+        <p className="feedback-error">セッションを開始できませんでした</p>
+        <Link href="/play" className="big-btn big-btn-secondary mt-4 inline-block">
+          モード選択へ
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <TimeAttackClientInner
+      isGuest={isGuest}
+      initialSession={isGuest ? guestSession! : initialSession!}
+      operation={operation}
+    />
+  );
+}
+
+function TimeAttackClientInner({
+  isGuest,
+  initialSession,
+  operation = DEFAULT_OPERATION,
+}: TimeAttackClientInnerProps) {
   const router = useRouter();
   const isClient = useIsClient();
   const sessionId = initialSession.sessionId;
@@ -360,9 +443,11 @@ export function TimeAttackClient({
   const redirectToResult = useCallback(
     (id: string) => {
       endTimeAttackBgmSession(sessionId);
-      router.push(`/result/time-attack/${id}`);
+      router.push(
+        isGuest ? `/result/time-attack/guest/${id}` : `/result/time-attack/${id}`,
+      );
     },
-    [router, sessionId],
+    [router, sessionId, isGuest],
   );
 
   const playPoisonHeartLoss = async () => {
@@ -374,7 +459,9 @@ export function TimeAttackClient({
   const applyTimeMagicPenalty = useCallback(
     async (gaugeElapsedSeconds: number) => {
       try {
-        const result = await applyTimeMagicHeartLossAction(sessionId, gaugeElapsedSeconds);
+        const result = isGuest
+          ? applyGuestTimeMagicHeartLoss(sessionId, gaugeElapsedSeconds)
+          : await applyTimeMagicHeartLossAction(sessionId, gaugeElapsedSeconds);
         if (!result.applied) {
           timeMagicPenaltyLockRef.current = false;
           return;
@@ -397,7 +484,7 @@ export function TimeAttackClient({
         setError(err instanceof Error ? err.message : "時間の魔法の処理に失敗しました");
       }
     },
-    [redirectToResult, sessionId],
+    [redirectToResult, sessionId, isGuest],
   );
 
   // 問題が進んだときだけペナルティゲージをリセット（登場イントロ状態は unlock で片付ける）
@@ -1059,11 +1146,9 @@ export function TimeAttackClient({
     }
 
     try {
-      const result = await submitTimeAttackAnswerAction(
-        sessionId,
-        numericAnswer,
-        elapsedSeconds,
-      );
+      const result = isGuest
+        ? submitGuestTimeAttackAnswer(sessionId, numericAnswer, elapsedSeconds)
+        : await submitTimeAttackAnswerAction(sessionId, numericAnswer, elapsedSeconds);
 
       if (result.correct) {
         const waveComplete = "waveComplete" in result && result.waveComplete;

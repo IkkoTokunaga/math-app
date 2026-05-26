@@ -2,13 +2,19 @@
 
 ### Requirement: Guest time attack visibility
 
-Guests SHALL see **タイムアタック（鬼退治）** under both **足し算** and **引き算** tabs. Both entries SHALL be locked with a message that login is required.
+Guests SHALL see the same time attack controls as members under both **足し算** and **引き算** tabs: **続きから** and **タイムアタック（鬼退治）**. Guests MAY start a new time attack; **続きから** SHALL remain disabled with a padlock indicator (🔒).
 
-#### Scenario: Guest sees locked subtraction time attack
+#### Scenario: Guest starts subtraction time attack
+- **WHEN** a guest selects 引き算 and then タイムアタック（鬼退治）
+- **THEN** a new subtraction time attack session starts at level 1
+- **AND** results are saved to localStorage
+
+#### Scenario: Guest resume disabled for subtraction
 - **WHEN** a guest selects 引き算 on the play screen
-- **THEN** タイムアタック is visible but not selectable
-- **AND** a brief login-required message is shown
+- **THEN** **続きから** is visible but disabled with a padlock indicator
+- **AND** if a resumable subtraction time attack exists, the label includes the boss reached
+- **AND** a message below the buttons reads **続きはユーザ登録後に選択できます**
 
-#### Scenario: Guest cannot play subtraction time attack
-- **WHEN** a guest attempts to open `/play/time-attack?operation=subtraction`
-- **THEN** the system redirects or blocks play and directs the user to log in
+#### Scenario: Guest can open subtraction time attack route
+- **WHEN** a guest opens `/play/time-attack?operation=subtraction&new=1`
+- **THEN** a new subtraction time attack session starts

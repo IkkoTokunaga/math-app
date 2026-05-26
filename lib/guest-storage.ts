@@ -30,6 +30,8 @@ export function readGuestStore(): GuestStore {
       version: 1,
       completedSessions: parsed.completedSessions ?? [],
       inProgress: parsed.inProgress,
+      timeAttackInProgress: parsed.timeAttackInProgress,
+      completedTimeAttackSessions: parsed.completedTimeAttackSessions ?? [],
     };
   } catch {
     return emptyStore();

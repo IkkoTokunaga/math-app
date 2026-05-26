@@ -26,7 +26,16 @@ Each user account SHALL map to exactly one player profile (one child). Registrat
 
 #### Scenario: Register from result footer link
 - **WHEN** a guest opens the de-emphasized registration link on the result screen and submits email and password
-- **THEN** the system creates a user, creates a player with the guest display name, imports all localStorage session data into PostgreSQL, issues a login session, and clears guest localStorage
+- **THEN** the system creates a user, creates a player with the guest display name, imports all localStorage session data into PostgreSQL (including standard sessions, completed time attack sessions, and resumable in-progress time attack sessions), issues a login session, and clears guest localStorage
+
+#### Scenario: Time attack resume after signup
+- **WHEN** a guest had a resumable in-progress time attack in localStorage and completes sign up
+- **THEN** the in-progress session is imported to the database
+- **AND** **続きから** is available on the play screen after login
+
+#### Scenario: Time attack history after signup
+- **WHEN** a guest had completed time attack sessions in localStorage and completes sign up
+- **THEN** those sessions appear in the member progress dashboard
 
 #### Scenario: Sign up from home
 - **WHEN** a guest completes sign up from the home サインアップ button

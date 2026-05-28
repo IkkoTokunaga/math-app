@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
+import { useIsClient } from "@/lib/use-is-client";
 
 export const GATHER_MS = 1100;
 export const CLUSTER_HOLD_MS = 160;
@@ -55,6 +57,36 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function isLandscapeViewport(): boolean {
+  return window.matchMedia("(min-aspect-ratio: 1/1)").matches;
+}
+
+/** Keep sparkle/glow inside the visible viewport (landscape HUD hugs the edges). */
+function clampGlowPoint(x: number, y: number, margin = 32): { x: number; y: number } {
+  const maxX = window.innerWidth - margin;
+  const maxY = window.innerHeight - margin;
+  return {
+    x: Math.min(maxX, Math.max(margin, x)),
+    y: Math.min(maxY, Math.max(margin, y)),
+  };
+}
+
+function resolveMascotTarget(toRect: DOMRect): { x: number; y: number } {
+  let toX = toRect.left + toRect.width / 2;
+  let toY = toRect.top + toRect.height * 0.55;
+
+  if (isLandscapeViewport()) {
+    if (toRect.left < window.innerWidth * 0.42) {
+      toX = toRect.left + toRect.width * 0.72;
+    }
+    if (toRect.top < window.innerHeight * 0.42) {
+      toY = toRect.top + toRect.height * 0.68;
+    }
+  }
+
+  return clampGlowPoint(toX, toY, isLandscapeViewport() ? 40 : 28);
+}
+
 function createFeedbackParticles(centerX: number, centerY: number): Particle[] {
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => {
     const angle = Math.random() * Math.PI * 2;
@@ -74,6 +106,8 @@ function createFeedbackParticles(centerX: number, centerY: number): Particle[] {
 }
 
 function createGaugeDischargeParticles(fromRect: DOMRect, centerX: number, centerY: number): Particle[] {
+  const glowMargin = isLandscapeViewport() ? 36 : 28;
+
   return Array.from({ length: PARTICLE_COUNT }, (_, i) => {
     const useOrbit = i % 3 === 0;
     let startX: number;
@@ -88,6 +122,10 @@ function createGaugeDischargeParticles(fromRect: DOMRect, centerX: number, cente
       startX = fromRect.left + fromRect.width * Math.random();
       startY = fromRect.top + fromRect.height / 2 + (Math.random() - 0.5) * 18;
     }
+
+    const clamped = clampGlowPoint(startX, startY, glowMargin);
+    startX = clamped.x;
+    startY = clamped.y;
 
     return {
       id: i,
@@ -116,6 +154,7 @@ export function GaugeLightCharge({
   const onCompleteRef = useRef(onComplete);
   const [particles, setParticles] = useState<Particle[]>([]);
   const [cluster, setCluster] = useState<Cluster | null>(null);
+  const isClient = useIsClient();
 
   useEffect(() => {
     onReachTargetRef.current = onReachTarget;
@@ -145,18 +184,24 @@ export function GaugeLightCharge({
 
     const fromRect = fromEl.getBoundingClientRect();
     const toRect = toEl.getBoundingClientRect();
-    const centerX = fromRect.left + fromRect.width / 2;
-    const centerY = fromRect.top + fromRect.height / 2;
+    let centerX = fromRect.left + fromRect.width / 2;
+    let centerY = fromRect.top + fromRect.height / 2;
 
     let toX: number;
     let toY: number;
     if (mode === "gaugeToMascot") {
-      toX = toRect.left + toRect.width / 2;
-      toY = toRect.top + toRect.height * 0.55;
+      ({ x: toX, y: toY } = resolveMascotTarget(toRect));
     } else {
       const clampedRatio = Math.max(0.04, Math.min(1, fillRatio));
       toX = toRect.left + toRect.width * clampedRatio;
       toY = toRect.top + toRect.height / 2;
+      ({ x: toX, y: toY } = clampGlowPoint(toX, toY));
+    }
+
+    if (mode === "gaugeToMascot") {
+      const clampedCenter = clampGlowPoint(centerX, centerY, isLandscapeViewport() ? 36 : 28);
+      centerX = clampedCenter.x;
+      centerY = clampedCenter.y;
     }
 
     const gatherMs = attackStream ? ATTACK_GATHER_MS : GATHER_MS;
@@ -205,7 +250,7 @@ export function GaugeLightCharge({
   const flyMs = attackStream ? ATTACK_FLY_MS : FLY_MS;
   const clusterDelay = gatherMs + clusterHoldMs;
 
-  return (
+  const layer = (
     <div
       className={`gauge-light-charge ${mode === "gaugeToMascot" ? "gauge-light-charge--attack" : ""}`.trim()}
       style={
@@ -251,4 +296,6 @@ export function GaugeLightCharge({
       )}
     </div>
   );
+
+  return isClient ? createPortal(layer, document.body) : null;
 }

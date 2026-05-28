@@ -1257,18 +1257,8 @@ function TimeAttackClientInner({
   const question = showQuestionContent ? activeQuestion : null;
 
   return (
-    <div ref={quizPanelRef} className="time-attack-client quiz-panel mx-auto flex w-full max-w-xl flex-col gap-3">
-      <MascotLightOrb
-        animId={lightOrbAnimId}
-        fromRef={mascotRef}
-        toRef={oniRef}
-        onComplete={handleLightOrbComplete}
-      />
-
-      {alertType === "yellow" && (
-        <div className="time-attack-alert time-attack-alert--yellow" aria-hidden="true" />
-      )}
-
+    <div className="time-attack-client quiz-panel mx-auto flex w-full min-h-0 max-w-xl flex-1 flex-col">
+      <div ref={quizPanelRef} className="quiz-panel__fit flex w-full flex-1 flex-col gap-3">
       <div className="time-attack-top relative z-20">
         <QuizMascot
           ref={mascotRef}
@@ -1318,6 +1308,60 @@ function TimeAttackClientInner({
         />
       </div>
 
+      {(showQuestionBoard && activeQuestion) ||
+      (showQuestionContent && !awaitingNextOni) ? (
+        <div className="quiz-play-area">
+          {showQuestionBoard && activeQuestion && (
+            <section
+              className={`time-attack-board quiz-play-area__question card relative z-20 text-center transition-transform ${showQuestionContent && feedbackType === "success" ? "animate-success" : showQuestionContent && feedbackType === "wrong" ? "animate-retry" : ""}`}
+            >
+              <div
+                ref={timeMagicTimerAnchorRef}
+                className="time-magic-timer-anchor"
+                aria-hidden="true"
+              />
+              {timeMagicGaugeVisible && timeMagicSecondsLeft !== null && (
+                <TimeMagicCountdown secondsRemaining={timeMagicSecondsLeft} />
+              )}
+              {showQuestionContent && (
+                <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
+                  <span className="whitespace-nowrap">
+                    {formatExpression(operation, activeQuestion)} =
+                  </span>
+                  <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
+                </div>
+              )}
+            </section>
+          )}
+
+          {showQuestionContent && !awaitingNextOni && (
+            <div className="time-attack-keypad quiz-play-area__keypad relative z-20">
+              <Keypad
+                value={answer}
+                onChange={setAnswer}
+                onSubmit={() => void submitAnswer()}
+                disabled={submitting || timerPaused}
+                maxDigits={getMaxAnswerDigits(operation, timeAttackState.currentLevel)}
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {error && <p className="feedback-error">{error}</p>}
+      </div>
+
+      <MascotLightOrb
+        animId={lightOrbAnimId}
+        fromRef={mascotRef}
+        toRef={oniRef}
+        onComplete={handleLightOrbComplete}
+      />
+
+      {alertType === "yellow" && (
+        <div className="time-attack-alert time-attack-alert--yellow" aria-hidden="true" />
+      )}
+
       <GaugeLightCharge
         animId={gaugeLightAnimId}
         fromRef={feedbackPopupRef}
@@ -1363,46 +1407,6 @@ function TimeAttackClientInner({
 
       {recoveringHome && <SessionRecoveryLoading />}
 
-      {(showQuestionBoard && activeQuestion) ||
-      (showQuestionContent && !awaitingNextOni) ? (
-        <div className="quiz-play-area">
-          {showQuestionBoard && activeQuestion && (
-            <section
-              className={`time-attack-board quiz-play-area__question card relative z-20 text-center transition-transform ${showQuestionContent && feedbackType === "success" ? "animate-success" : showQuestionContent && feedbackType === "wrong" ? "animate-retry" : ""}`}
-            >
-              <div
-                ref={timeMagicTimerAnchorRef}
-                className="time-magic-timer-anchor"
-                aria-hidden="true"
-              />
-              {timeMagicGaugeVisible && timeMagicSecondsLeft !== null && (
-                <TimeMagicCountdown secondsRemaining={timeMagicSecondsLeft} />
-              )}
-              {showQuestionContent && (
-                <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
-                  <span className="whitespace-nowrap">
-                    {formatExpression(operation, activeQuestion)} =
-                  </span>
-                  <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
-                </div>
-              )}
-            </section>
-          )}
-
-          {showQuestionContent && !awaitingNextOni && (
-            <div className="time-attack-keypad quiz-play-area__keypad relative z-20">
-              <Keypad
-                value={answer}
-                onChange={setAnswer}
-                onSubmit={() => void submitAnswer()}
-                disabled={submitting || timerPaused}
-                maxDigits={getMaxAnswerDigits(operation, timeAttackState.currentLevel)}
-              />
-            </div>
-          )}
-        </div>
-      ) : null}
-
       {defeatBonusFlyLabel && (
         <div
           className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-6"
@@ -1444,8 +1448,6 @@ function TimeAttackClientInner({
           </div>
         </div>
       )}
-
-      {error && <p className="feedback-error">{error}</p>}
     </div>
   );
 }

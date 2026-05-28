@@ -14,17 +14,54 @@
     gap: clamp(0.4rem, 1vh, 0.75rem);
     max-width: 100%;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
     width: 100%;
   }
 
-  .page-shell--quiz .quiz-panel > :not(.quiz-play-area) {
+  .page-shell--quiz .quiz-panel > .quiz-panel__fit {
+    gap: clamp(0.4rem, 1vh, 0.75rem);
+  }
+
+  .page-shell--quiz .quiz-panel__fit > :not(.quiz-play-area) {
     flex-shrink: 0;
   }
 
   .page-shell--quiz .quiz-header {
     min-height: 3.25rem;
-    overflow: hidden;
+    overflow: visible;
+  }
+
+  /* Mascot is top-left in landscape — keep attack light FX inside the screen */
+  .time-attack-client .time-attack-top__mascot,
+  .time-attack-client .time-attack-top__mascot .quiz-mascot-wrap,
+  .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
+    overflow: visible;
+  }
+
+  .gauge-light-charge--attack .gauge-light-charge__cluster::before {
+    inset: -40%;
+  }
+
+  .gauge-light-charge--attack .gauge-light-charge__cluster::after {
+    inset: -70%;
+  }
+
+  .gauge-light-charge--attack .gauge-light-charge__cluster {
+    box-shadow:
+      0 0 8px rgb(255 255 255 / 1),
+      0 0 18px rgb(255 255 255 / 0.92),
+      0 0 30px rgb(255 255 255 / 0.5);
+  }
+
+  .gauge-light-charge--attack .gauge-light-charge__particle {
+    box-shadow:
+      0 0 5px rgb(255 255 255 / 1),
+      0 0 12px rgb(255 255 255 / 0.85),
+      0 0 20px rgb(255 255 255 / 0.4);
+  }
+
+  .gauge-light-charge--attack .gauge-light-charge__particle::after {
+    inset: -28%;
   }
 
   .page-shell--quiz .quiz-header__meta {

@@ -940,10 +940,11 @@ export function PlayClient({
   const question = questions[currentIndex];
 
   return (
-    <div
-      ref={quizPanelRef}
-      className="quiz-panel mx-auto flex w-full max-w-xl flex-col gap-6"
-    >
+    <div className="quiz-panel mx-auto flex w-full min-h-0 max-w-xl flex-1 flex-col">
+      <div
+        ref={quizPanelRef}
+        className="quiz-panel__fit flex w-full flex-1 flex-col gap-6"
+      >
       <header className="quiz-header relative flex min-h-[4.5rem] items-start">
         <QuizMascot comment={mascotComment} onHomeClick={backToLevels} operation={operation} />
         <div className="quiz-header__meta pointer-events-none absolute inset-x-0 top-0 px-14 text-center text-lg text-muted sm:px-16">
@@ -1007,6 +1008,7 @@ export function PlayClient({
             }
           />
         </div>
+      </div>
       </div>
 
       {feedback && (

@@ -69,7 +69,7 @@ body {
   max-height: 100dvh;
   min-height: 100svh;
   min-height: 100dvh;
-  overflow: hidden;
+  overflow: visible;
   padding-top: calc(clamp(0.75rem, 2vh, 1.25rem) + env(safe-area-inset-top, 0px));
   padding-right: calc(clamp(0.75rem, 3vw, 1.5rem) + env(safe-area-inset-right, 0px));
   padding-bottom: calc(clamp(0.5rem, 1.2vh, 1.5rem) + env(safe-area-inset-bottom, 0px));
@@ -122,17 +122,26 @@ body.quiz-active {
   flex-direction: column;
   gap: clamp(0.75rem, 2vh, 1.25rem);
   min-height: 0;
+  overflow: visible;
 }
 
 .page-shell--quiz > .quiz-panel {
   flex: 1 1 0;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  width: 100%;
+}
+
+/* Viewport-fit scale target — keep fixed overlays outside this wrapper */
+.page-shell--quiz > .quiz-panel > .quiz-panel__fit {
+  flex: 1 1 0;
+  min-height: 0;
   width: 100%;
 }
 
 .quiz-play-area__question.card {
   flex-shrink: 0;
+  overflow: visible;
 }
 
 /* Grow keypad into spare space below (portrait stack); cap button height */

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { createPortal } from "react-dom";
+import { useIsClient } from "@/lib/use-is-client";
 
 export const LIGHT_ORB_FLY_MS = 720;
 
@@ -55,6 +57,7 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete }: MascotLig
   const processedAnimIdRef = useRef(0);
   const onCompleteRef = useRef(onComplete);
   const [flight, setFlight] = useState<OrbFlight | null>(null);
+  const isClient = useIsClient();
 
   useEffect(() => {
     onCompleteRef.current = onComplete;
@@ -119,7 +122,7 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete }: MascotLig
     ["--fly-angle" as string]: `${flight.flyAngle}deg`,
   };
 
-  return (
+  const layer = (
     <div
       className="mascot-light-orb-layer"
       style={{ ["--light-fly-duration" as string]: `${LIGHT_ORB_FLY_MS}ms` }}
@@ -163,4 +166,6 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete }: MascotLig
       </div>
     </div>
   );
+
+  return isClient ? createPortal(layer, document.body) : null;
 }

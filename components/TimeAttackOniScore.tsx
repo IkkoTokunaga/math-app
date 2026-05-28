@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
+import { useIsClient } from "@/lib/use-is-client";
 import type { OniPhase } from "@/components/MascotLightOrb";
 import {
   SCORE_FLY_DELAY_MS,
@@ -76,6 +78,26 @@ export function TimeAttackOniScore({
   const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
   const [popping, setPopping] = useState(false);
   const displayScore = useAnimatedScore(score);
+  const isClient = useIsClient();
+
+  const flyBadge =
+    isClient && flying && flyLabel != null
+      ? createPortal(
+          <span
+            className={`score-fly-badge ${flyClassName}`.trim()}
+            style={
+              {
+                ...flyStyle,
+                ["--fly-duration" as string]: `${flyDurationMs}ms`,
+              } as React.CSSProperties
+            }
+            aria-hidden="true"
+          >
+            {flyLabel}
+          </span>,
+          document.body,
+        )
+      : null;
 
   const showOni = oniPhase !== "hidden";
   const phaseClass = oniPhaseClass(oniPhase);
@@ -227,20 +249,7 @@ export function TimeAttackOniScore({
           {meta}
         </div>
         {oniWrap}
-        {flying && flyLabel != null && (
-          <span
-            className={`score-fly-badge ${flyClassName}`.trim()}
-            style={
-              {
-                ...flyStyle,
-                ["--fly-duration" as string]: `${flyDurationMs}ms`,
-              } as React.CSSProperties
-            }
-            aria-hidden="true"
-          >
-            {flyLabel}
-          </span>
-        )}
+        {flyBadge}
       </>
     );
   }
@@ -251,20 +260,7 @@ export function TimeAttackOniScore({
         {oniBody}
         {scoreEl}
       </div>
-      {flying && flyLabel != null && (
-        <span
-          className={`score-fly-badge ${flyClassName}`.trim()}
-          style={
-            {
-              ...flyStyle,
-              ["--fly-duration" as string]: `${flyDurationMs}ms`,
-            } as React.CSSProperties
-          }
-          aria-hidden="true"
-        >
-          {flyLabel}
-        </span>
-      )}
+      {flyBadge}
     </>
   );
 }

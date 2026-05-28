@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useIsClient } from "@/lib/use-is-client";
 import { useAnimatedScore } from "@/lib/use-animated-score";
 
 export const SCORE_FLY_DELAY_MS = 400;
@@ -42,6 +44,7 @@ export function RunningScore({
   const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
   const [popping, setPopping] = useState(false);
   const displayScore = useAnimatedScore(score);
+  const isClient = useIsClient();
 
   useEffect(() => {
     if (pointsEarned == null || pointsEarned <= 0 || animId === 0) {
@@ -112,20 +115,24 @@ export function RunningScore({
       >
         {displayScore}点
       </p>
-      {flying && flyLabel != null && (
-        <span
-          className={`score-fly-badge ${flyClassName}`.trim()}
-          style={
-            {
-              ...flyStyle,
-              ["--fly-duration" as string]: `${flyDurationMs}ms`,
-            } as React.CSSProperties
-          }
-          aria-hidden="true"
-        >
-          {flyLabel}
-        </span>
-      )}
+      {isClient &&
+        flying &&
+        flyLabel != null &&
+        createPortal(
+          <span
+            className={`score-fly-badge ${flyClassName}`.trim()}
+            style={
+              {
+                ...flyStyle,
+                ["--fly-duration" as string]: `${flyDurationMs}ms`,
+              } as React.CSSProperties
+            }
+            aria-hidden="true"
+          >
+            {flyLabel}
+          </span>,
+          document.body,
+        )}
     </>
   );
 }

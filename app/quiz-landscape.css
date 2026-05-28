@@ -72,12 +72,12 @@
 
   .page-shell--quiz .quiz-mascot-wrap,
   .page-shell--quiz .quiz-header-mascot {
-    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
-    width: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    height: clamp(3.5rem, 13vh + 1.25vw, 5rem);
+    width: clamp(3.5rem, 13vh + 1.25vw, 5rem);
   }
 
   .page-shell--quiz .quiz-mascot-img {
-    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    height: clamp(4.75rem, 18vh + 1.5vw, 6.75rem);
   }
 
   .page-shell--quiz .mascot-speech-bubble {
@@ -205,8 +205,8 @@
 
   .time-attack-client .time-attack-top__mascot,
   .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
-    height: clamp(4.5rem, 16vh + 1.5vw, 8rem);
-    width: clamp(4.5rem, 16vh + 1.5vw, 8rem);
+    height: clamp(5.5rem, 19vh + 2vw, 9rem);
+    width: clamp(5.5rem, 19vh + 2vw, 9rem);
     position: relative;
   }
 
@@ -359,12 +359,12 @@
 
   .page-shell--quiz .quiz-mascot-wrap,
   .page-shell--quiz .quiz-header-mascot {
-    height: clamp(3rem, 11vh + 1vw, 4.25rem);
-    width: clamp(3rem, 11vh + 1vw, 4.25rem);
+    height: clamp(3.25rem, 12vh + 1vw, 4.5rem);
+    width: clamp(3.25rem, 12vh + 1vw, 4.5rem);
   }
 
   .page-shell--quiz .quiz-mascot-img {
-    height: clamp(3rem, 11vh + 1vw, 4.25rem);
+    height: clamp(4.25rem, 16vh + 1.2vw, 5.75rem);
   }
 
   .page-shell--quiz .quiz-header__meta {
@@ -425,8 +425,8 @@
 
   .time-attack-client .time-attack-top__mascot,
   .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
-    height: clamp(3.75rem, 13vh + 1.2vw, 6rem);
-    width: clamp(3.75rem, 13vh + 1.2vw, 6rem);
+    height: clamp(4.5rem, 16vh + 1.5vw, 7.5rem);
+    width: clamp(4.5rem, 16vh + 1.5vw, 7.5rem);
   }
 
   .time-attack-client .time-attack-top__mascot .quiz-mascot-img {

@@ -1,0 +1,20 @@
+---
+description: Ensure all git commit messages are written in Japanese
+alwaysApply: true
+---
+
+# Git Commit Message Language Rule
+
+When generating, suggesting, or writing git commit messages, the AI agent MUST write them in Japanese (日本語).
+
+## Rules
+
+1. **Language**: Always write the commit message body and headers in Japanese.
+2. **Format**: Follow standard commit message guidelines (such as Conventional Commits), with the description in Japanese:
+   - `feat: ○○機能の追加`
+   - `fix: ○○のバグ修正`
+   - `docs: ○○ドキュメントの更新`
+   - `refactor: ○○のリファクタリング`
+   - `style: ○○のコードスタイル調整`
+   - `chore: ○○のメンテナンスタスク`
+3. **Template**: Align with the project's local template defined in `.gitmessage`.

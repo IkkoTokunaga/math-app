@@ -61,6 +61,8 @@ body {
 
 .page-shell--quiz {
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   height: 100svh;
   height: 100dvh;
   max-height: 100svh;
@@ -122,10 +124,11 @@ body.quiz-active {
   min-height: 0;
 }
 
-.page-shell--quiz .quiz-panel {
+.page-shell--quiz > .quiz-panel {
   flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
+  width: 100%;
 }
 
 .quiz-play-area__question.card {
@@ -152,7 +155,7 @@ body.quiz-active {
   margin-inline: auto;
   max-height: min(100%, clamp(17rem, 44dvh, 26rem));
   max-width: 24rem;
-  min-height: 0;
+  min-height: 11rem;
   width: 100%;
 }
 

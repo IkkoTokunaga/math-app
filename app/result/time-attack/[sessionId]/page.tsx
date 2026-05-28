@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTimeAttackResultAction } from "@/app/actions/time-attack";
+import { logAccess } from "@/lib/log";
 
 type TimeAttackResultPageProps = {
   params: Promise<{ sessionId: string }>;
@@ -13,6 +14,10 @@ export default async function TimeAttackResultPage({ params }: TimeAttackResultP
   if (!result) {
     notFound();
   }
+
+  // アクセスログを記録
+  await logAccess(`/result/time-attack/${sessionId}`, sessionId);
+
 
   const isClear = result.cleared;
   const failLabel = result.failReason === "mistakes" ? "3回ミス" : null;

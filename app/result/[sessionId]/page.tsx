@@ -5,6 +5,7 @@ import { SessionScoreBreakdown } from "@/components/SessionScoreBreakdown";
 import { StarProgressBar } from "@/components/StarProgressBar";
 import { getAuthState } from "@/lib/auth";
 import { type Level } from "@/lib/questions";
+import { logAccess } from "@/lib/log";
 
 type ResultPageProps = {
   params: Promise<{ sessionId: string }>;
@@ -19,7 +20,11 @@ export default async function ResultPage({ params }: ResultPageProps) {
     notFound();
   }
 
+  // アクセスログを記録
+  await logAccess(`/result/${sessionId}`, sessionId);
+
   return (
+
     <main className="page-shell">
       <section className="card mx-auto max-w-xl text-center">
         <p className="text-lg text-muted">

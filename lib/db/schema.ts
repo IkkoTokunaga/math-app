@@ -132,3 +132,14 @@ export const questionLogs = pgTable("question_logs", {
   isFirstAttemptCorrect: boolean("is_first_attempt_correct").notNull(),
   answeredAt: timestamp("answered_at").defaultNow().notNull(),
 });
+
+export const accessLogs = pgTable("access_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: varchar("user_agent", { length: 1024 }),
+  path: varchar("path", { length: 255 }).notNull(),
+  sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "set null" }),
+  guestSessionId: varchar("guest_session_id", { length: 64 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+

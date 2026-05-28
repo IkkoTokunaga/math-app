@@ -555,6 +555,22 @@ Time attack SHALL reuse the standard quiz input experience: inline `?` answer di
 - **WHEN** the play layout fits within the viewport with room to spare
 - **THEN** the question board and keypad appear with consistent tight spacing
 - **AND** excess vertical space is not inserted between the question board and keypad
+- **AND** spare vertical space below the keypad grows the keypad button rows up to a capped maximum height (portrait stack and landscape right column)
+
+#### Scenario: Landscape layout
+- **WHEN** a player is answering during time attack in landscape orientation (including PC browsers with a wide viewport)
+- **THEN** the question board appears on the left and the numeric keypad appears on the right within the same row below the HUD
+- **AND** the HUD shows the teacher mascot above the attack gauge block (left column) and the boss image above the HP gauge block (right column)
+- **AND** the attack gauge block and oni HP gauge block appear in one row with matching frame heights and moderate spacing between HUD blocks
+- **AND** the teacher mascot and boss image are bottom-aligned in the HUD character row (feet/tail baseline)
+- **AND** the question board left edge aligns vertically with the attack gauge block left edge
+- **AND** the question board uses moderate padding and is top-aligned with the keypad block
+- **AND** the play content width is capped so the layout does not stretch excessively on very wide screens
+- **AND** the play content still fits within the visible area without vertical scrolling
+
+#### Scenario: Smartphone landscape compact layout
+- **WHEN** a player is answering during time attack on a smartphone in landscape orientation
+- **THEN** the question board and keypad use the same left-right layout with compact sizing so content fits the short viewport height
 
 ### Requirement: Time attack boss BGM rotation
 

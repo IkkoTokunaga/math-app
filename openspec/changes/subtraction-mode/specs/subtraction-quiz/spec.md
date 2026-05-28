@@ -45,9 +45,18 @@ During an active subtraction quiz session, the problem screen SHALL NOT cause ve
 - **WHEN** a player is answering a subtraction question on a viewport shorter than the default layout height
 - **THEN** the quiz content fits within the visible area without vertical scrolling
 
+#### Scenario: Landscape layout
+- **WHEN** a player is answering a subtraction question in landscape orientation (including PC browsers with a wide viewport)
+- **THEN** the equation appears on the left and the numeric keypad appears on the right, matching the addition standard quiz layout
+- **AND** the quiz content width is capped so the layout does not stretch excessively on very wide screens
+
+#### Scenario: Smartphone landscape compact layout
+- **WHEN** a player is answering a subtraction question on a smartphone in landscape orientation
+- **THEN** the equation and keypad use the same left-right layout with compact sizing so content fits the short viewport height
+
 ### Requirement: Numeric keypad input
 
-The system SHALL use the same on-screen numeric keypad, 「答える」 button, and backspace behavior as the addition standard quiz. Input SHALL accept at most **4 digits** per answer. Levels 1–9 SHALL only generate questions whose correct difference fits in **3 digits** (≤ 999). Level 10 MAY generate differences up to **999** (three digits).
+The system SHALL use the same on-screen numeric keypad, 「答える」 button, and backspace behavior as the addition standard quiz (including keypad button rows growing into spare vertical space below the keypad up to a capped maximum, without inserting gap between the question board and keypad). Input SHALL accept at most **4 digits** per answer. Levels 1–9 SHALL only generate questions whose correct difference fits in **3 digits** (≤ 999). Level 10 MAY generate differences up to **999** (three digits).
 
 #### Scenario: Enter subtraction answer on tablet
 - **WHEN** a player taps number buttons and then 「答える」

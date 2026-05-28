@@ -51,11 +51,27 @@ During an active quiz session, the problem screen SHALL NOT cause vertical page 
 - **WHEN** a player is answering a question on a viewport shorter than the default layout height
 - **THEN** the quiz content fits within the visible area without vertical scrolling
 
+#### Scenario: Landscape layout
+- **WHEN** a player is answering a question in landscape orientation (including PC browsers with a wide viewport)
+- **THEN** the equation appears on the left and the numeric keypad appears on the right within the same row below the header and progress bar
+- **AND** the quiz content width is capped so the layout does not stretch excessively on very wide screens
+- **AND** header, progress bar, equation, and keypad do not overlap each other
+- **AND** the quiz content still fits within the visible area without vertical scrolling
+
+#### Scenario: Smartphone landscape compact layout
+- **WHEN** a player is answering a question on a smartphone in landscape orientation
+- **THEN** the equation and keypad use the same left-right layout with compact sizing so content fits the short viewport height
+
 ### Requirement: Numeric keypad input
 
-The system SHALL provide an on-screen numeric keypad (0–9) with large touch-friendly buttons for entering answers. The keypad layout SHALL follow a calculator-style arrangement (7–8–9 / 4–5–6 / 1–2–3). The player SHALL submit their answer via an 「答える」 button. The system SHALL provide an on-screen backspace button that removes the last entered digit.
+The system SHALL provide an on-screen numeric keypad (0–9) with large touch-friendly buttons for entering answers. The keypad layout SHALL follow a calculator-style arrangement (7–8–9 / 4–5–6 / 1–2–3). The player SHALL submit their answer via an 「答える」 button. The system SHALL provide an on-screen backspace button that removes the last entered digit. When spare vertical space remains in the play area below the keypad, the keypad button rows SHALL grow taller up to a reasonable maximum; spare space SHALL NOT appear as empty gap between the question board and keypad.
 
 Input SHALL accept at most **4 digits** per answer. Levels 1–9 SHALL only generate questions whose correct sum fits in **3 digits** (≤ 999). Level 10 MAY generate sums up to **2997** (four digits).
+
+#### Scenario: Keypad height uses spare viewport space
+- **WHEN** the play area has vertical room below the keypad after the question board is laid out
+- **THEN** the keypad button rows expand up to a capped maximum height
+- **AND** no extra empty gap is inserted between the question board and keypad
 
 #### Scenario: Enter answer on tablet
 - **WHEN** a player taps number buttons and then 「答える」

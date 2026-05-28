@@ -1,0 +1,406 @@
+@media (min-aspect-ratio: 1 / 1) {
+  .page-shell--quiz {
+    display: flex;
+    flex-direction: column;
+    margin-inline: auto;
+    max-width: min(100%, 52rem);
+    width: 100%;
+  }
+
+  .page-shell--quiz .quiz-panel {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1vh, 0.75rem);
+    max-width: 100%;
+    min-height: 0;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .page-shell--quiz .quiz-panel > :not(.quiz-play-area) {
+    flex-shrink: 0;
+  }
+
+  .page-shell--quiz .quiz-header {
+    min-height: 3.25rem;
+    overflow: hidden;
+  }
+
+  .page-shell--quiz .quiz-header__meta {
+    font-size: 0.95rem;
+    line-height: 1.25;
+    padding-inline: 3.5rem;
+  }
+
+  .page-shell--quiz .quiz-mascot-wrap,
+  .page-shell--quiz .quiz-header-mascot {
+    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    width: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+  }
+
+  .page-shell--quiz .quiz-mascot-img {
+    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+  }
+
+  .page-shell--quiz .mascot-speech-bubble {
+    display: none;
+  }
+
+  .page-shell--quiz .live-score-progress-bar {
+    margin-top: 0;
+  }
+
+  /* Play area: board left, keypad right (keypad stretches vertically) */
+  .quiz-play-area {
+    align-items: stretch;
+    flex: 1 1 0;
+    flex-direction: row;
+    gap: clamp(0.75rem, 2vw, 1.25rem);
+    min-height: 0;
+  }
+
+  /* Time Attack: 2-column grid — board left, keypad right */
+  .time-attack-client .quiz-play-area {
+    align-items: stretch;
+    display: grid;
+    flex-direction: unset;
+    gap: clamp(0.65rem, 1.6vw, 1rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .quiz-play-area__question.card {
+    align-self: flex-start;
+    box-sizing: border-box;
+    flex: 1 1 0;
+    max-height: 100%;
+    min-width: 0;
+    padding: 0.75rem 1rem;
+    width: auto;
+  }
+
+  .time-attack-client .time-attack-board.quiz-play-area__question.card {
+    flex: none;
+    grid-column: 1;
+    padding: 0.85rem 1.1rem;
+    width: 100%;
+  }
+
+  .quiz-play-area__question .equation-display {
+    font-size: clamp(1rem, 4.5vh, 2.25rem) !important;
+    margin-bottom: 0;
+  }
+
+  .quiz-play-area__question .answer-slot {
+    padding: 0.35rem 0.6rem;
+  }
+
+  /*
+   * Keypad (landscape): compact rows — do not stretch to full play-area height
+   * (1fr rows made gaps like 4↔1 look too wide on tall narrow columns).
+   */
+  .quiz-play-area__keypad {
+    align-self: start;
+    box-sizing: border-box;
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 0;
+    width: min(30vw, 14rem);
+  }
+
+  .time-attack-client .quiz-play-area__keypad {
+    align-self: start;
+    grid-column: 2;
+    height: auto;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .quiz-play-area__keypad > .keypad-grid,
+  .quiz-play-area__keypad > .grid {
+    column-gap: clamp(0.28rem, 0.9vw, 0.45rem);
+    flex: 0 0 auto;
+    grid-template-rows: repeat(4, minmax(2.25rem, min(3.1rem, 12dvh)));
+    height: auto;
+    max-height: 100%;
+    max-width: none;
+    row-gap: clamp(0.12rem, 0.35dvh, 0.28rem);
+    width: 100%;
+  }
+
+  .quiz-play-area__keypad .keypad-btn,
+  .quiz-play-area__keypad button.keypad-btn-submit {
+    box-sizing: border-box;
+    font-size: clamp(1rem, 3.2vh, 1.35rem);
+    height: 100%;
+    min-height: 0;
+  }
+
+  .quiz-play-area__keypad .keypad-btn svg {
+    height: clamp(1rem, 3.5vh, 1.5rem);
+    width: clamp(1rem, 3.5vh, 1.5rem);
+  }
+
+  /*
+   * Time Attack HUD (landscape)
+   * Col 1: mascot (row1) → attack gauge (row2)
+   * Col 2: oni (row1) → HP gauge (row2)
+   */
+  .time-attack-client .time-attack-top {
+    align-items: end;
+    column-gap: clamp(0.55rem, 1.4vw, 0.85rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(5.25rem, auto);
+    overflow: visible;
+    row-gap: clamp(0.35rem, 0.85vh, 0.55rem);
+  }
+
+  .time-attack-client .time-attack-top__mascot {
+    align-self: end;
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: start;
+    z-index: 3;
+  }
+
+  .time-attack-client .time-attack-top__mascot .quiz-mascot-wrap,
+  .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
+    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    width: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+  }
+
+  .time-attack-client .time-attack-top__mascot .quiz-mascot-img {
+    bottom: 0;
+    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    left: 0;
+    object-fit: contain;
+    object-position: bottom left;
+    position: absolute;
+    top: auto;
+  }
+
+  .time-attack-client .time-attack-top__stats {
+    align-self: end;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+    min-width: 0;
+    padding: 0 0.25rem 0.15rem;
+    pointer-events: none;
+    text-align: center;
+    z-index: 2;
+  }
+
+  .time-attack-client .time-attack-top__oni {
+    align-items: flex-end;
+    align-self: end;
+    display: flex;
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-end;
+    justify-self: end;
+    line-height: 0;
+    margin-bottom: 0;
+    width: auto;
+    z-index: 4;
+  }
+
+  .time-attack-client .time-attack-top__oni.time-attack-oni-score--enma-op,
+  .time-attack-client .time-attack-top__oni.time-attack-oni-score--subtraction-op {
+    justify-content: flex-end;
+    justify-self: end;
+    width: auto;
+  }
+
+  .time-attack-client .time-attack-top__attack {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 2;
+    height: 100%;
+    justify-self: stretch;
+    min-width: 0;
+  }
+
+  .time-attack-client .time-attack-top__hp {
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 2;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .time-attack-client .time-attack-top__attack .time-attack-gauge--attack,
+  .time-attack-client .time-attack-top__hp .time-attack-arena__hud {
+    box-sizing: border-box;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100%;
+    justify-content: flex-end;
+    min-height: 5.25rem;
+    padding: 0.45rem 0.55rem 0.4rem;
+  }
+
+  .time-attack-client .time-attack-top__hp .time-attack-arena {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .time-attack-client .time-attack-top__attack .time-attack-gauge,
+  .time-attack-client .time-attack-top__hp .time-attack-gauge--hp {
+    width: 100%;
+  }
+
+  .time-attack-client .time-attack-top__attack .time-attack-gauge__header,
+  .time-attack-client .time-attack-top__hp .time-attack-gauge__header {
+    flex-shrink: 0;
+    margin-bottom: 0.3rem;
+    min-height: 0;
+  }
+
+  .time-attack-client .time-attack-top__attack .time-attack-gauge__track,
+  .time-attack-client .time-attack-top__hp .time-attack-gauge__track {
+    flex-shrink: 0;
+    width: 100%;
+  }
+
+  .time-attack-client .time-attack-top__hp .time-attack-gauge__header {
+    align-items: baseline;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .time-attack-client .time-attack-gauge--attack .time-attack-lives {
+    flex-shrink: 0;
+    margin-top: 0.3rem;
+    min-height: 1.05rem;
+  }
+
+  .time-attack-client .time-attack-lives__heart {
+    font-size: clamp(0.9rem, 2.2vh, 1.1rem);
+  }
+
+  .time-attack-client .time-attack-oni-score__points {
+    font-size: clamp(0.95rem, 2.4vh, 1.2rem);
+  }
+
+  .time-attack-client .time-attack-oni-score__image--addition,
+  .time-attack-client .time-attack-oni-score__image--subtraction {
+    height: clamp(3.5rem, 14vh + 1.75vw, 6.5rem);
+    object-fit: contain;
+    object-position: bottom right;
+  }
+
+  .time-attack-client .time-attack-oni-score__image--enma,
+  .time-attack-client .time-attack-oni-score__image--enma-black {
+    height: clamp(3.5rem, 14vh + 1.75vw, 6.5rem);
+    object-fit: contain;
+    object-position: bottom right;
+  }
+}
+
+@media (min-aspect-ratio: 1 / 1) and (max-height: 520px) and (pointer: coarse) {
+  .page-shell--quiz .quiz-panel {
+    gap: clamp(0.25rem, 0.8vh, 0.5rem);
+  }
+
+  .page-shell--quiz .quiz-header {
+    min-height: 3rem;
+  }
+
+  .page-shell--quiz .quiz-mascot-wrap,
+  .page-shell--quiz .quiz-header-mascot {
+    height: clamp(3rem, 11vh + 1vw, 4.25rem);
+    width: clamp(3rem, 11vh + 1vw, 4.25rem);
+  }
+
+  .page-shell--quiz .quiz-mascot-img {
+    height: clamp(3rem, 11vh + 1vw, 4.25rem);
+  }
+
+  .page-shell--quiz .quiz-header__meta {
+    font-size: 0.8125rem;
+    padding-inline: 3rem;
+  }
+
+  .quiz-play-area {
+    gap: clamp(0.65rem, 1.8vh, 1rem);
+  }
+
+  .quiz-play-area__question.card {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .time-attack-board.quiz-play-area__question.card {
+    padding: 0.7rem 0.95rem;
+  }
+
+  .quiz-play-area__question .equation-display {
+    font-size: clamp(0.95rem, 4vh, 1.75rem) !important;
+  }
+
+  .quiz-play-area__keypad {
+    width: min(36vw, 13rem);
+  }
+
+  .quiz-play-area__keypad > .keypad-grid,
+  .quiz-play-area__keypad > .grid {
+    grid-template-rows: repeat(4, minmax(1.9rem, min(2.65rem, 11dvh)));
+    row-gap: clamp(0.1rem, 0.3dvh, 0.22rem);
+  }
+
+  .quiz-play-area__keypad .keypad-btn,
+  .quiz-play-area__keypad button.keypad-btn-submit {
+    font-size: clamp(0.95rem, 3vh, 1.2rem);
+    height: 100%;
+    min-height: 0;
+  }
+
+  .quiz-play-area__keypad .keypad-btn svg {
+    height: clamp(0.95rem, 3vh, 1.25rem);
+    width: clamp(0.95rem, 3vh, 1.25rem);
+  }
+
+  .time-attack-client .quiz-play-area {
+    gap: clamp(0.55rem, 1.4vw, 0.85rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .time-attack-client .time-attack-top {
+    align-items: end;
+    column-gap: clamp(0.4rem, 1.2vw, 0.65rem);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(4.75rem, auto);
+    row-gap: clamp(0.3rem, 0.75vh, 0.5rem);
+  }
+
+  .time-attack-client .time-attack-top__mascot .quiz-mascot-wrap,
+  .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
+    height: clamp(3rem, 11vh + 1vw, 4.25rem);
+    width: clamp(3rem, 11vh + 1vw, 4.25rem);
+  }
+
+  .time-attack-client .time-attack-top__mascot .quiz-mascot-img {
+    height: clamp(3rem, 11vh + 1vw, 4.25rem);
+  }
+
+  .time-attack-client .time-attack-top__attack .time-attack-gauge--attack,
+  .time-attack-client .time-attack-top__hp .time-attack-arena__hud {
+    min-height: 4.75rem;
+    padding: 0.35rem 0.45rem 0.35rem;
+  }
+
+  .time-attack-client .time-attack-oni-score__image--addition,
+  .time-attack-client .time-attack-oni-score__image--subtraction {
+    height: clamp(3rem, 12vh + 1.25vw, 5rem);
+  }
+}

@@ -1257,7 +1257,7 @@ function TimeAttackClientInner({
   const question = showQuestionContent ? activeQuestion : null;
 
   return (
-    <div ref={quizPanelRef} className="time-attack-client mx-auto flex w-full max-w-xl flex-col gap-3">
+    <div ref={quizPanelRef} className="time-attack-client quiz-panel mx-auto flex w-full max-w-xl flex-col gap-3">
       <MascotLightOrb
         animId={lightOrbAnimId}
         fromRef={mascotRef}
@@ -1363,28 +1363,45 @@ function TimeAttackClientInner({
 
       {recoveringHome && <SessionRecoveryLoading />}
 
-      {showQuestionBoard && activeQuestion && (
-        <section
-          className={`time-attack-board card relative z-20 text-center transition-transform ${showQuestionContent && feedbackType === "success" ? "animate-success" : showQuestionContent && feedbackType === "wrong" ? "animate-retry" : ""}`}
-        >
-          <div
-            ref={timeMagicTimerAnchorRef}
-            className="time-magic-timer-anchor"
-            aria-hidden="true"
-          />
-          {timeMagicGaugeVisible && timeMagicSecondsLeft !== null && (
-            <TimeMagicCountdown secondsRemaining={timeMagicSecondsLeft} />
+      {(showQuestionBoard && activeQuestion) ||
+      (showQuestionContent && !awaitingNextOni) ? (
+        <div className="quiz-play-area">
+          {showQuestionBoard && activeQuestion && (
+            <section
+              className={`time-attack-board quiz-play-area__question card relative z-20 text-center transition-transform ${showQuestionContent && feedbackType === "success" ? "animate-success" : showQuestionContent && feedbackType === "wrong" ? "animate-retry" : ""}`}
+            >
+              <div
+                ref={timeMagicTimerAnchorRef}
+                className="time-magic-timer-anchor"
+                aria-hidden="true"
+              />
+              {timeMagicGaugeVisible && timeMagicSecondsLeft !== null && (
+                <TimeMagicCountdown secondsRemaining={timeMagicSecondsLeft} />
+              )}
+              {showQuestionContent && (
+                <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
+                  <span className="whitespace-nowrap">
+                    {formatExpression(operation, activeQuestion)} =
+                  </span>
+                  <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
+                </div>
+              )}
+            </section>
           )}
-          {showQuestionContent && (
-            <div className="chalk-heading equation-display flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
-              <span className="whitespace-nowrap">
-                {formatExpression(operation, activeQuestion)} =
-              </span>
-              <span className="answer-slot ml-2 shrink-0">{answer || "?"}</span>
+
+          {showQuestionContent && !awaitingNextOni && (
+            <div className="time-attack-keypad quiz-play-area__keypad relative z-20">
+              <Keypad
+                value={answer}
+                onChange={setAnswer}
+                onSubmit={() => void submitAnswer()}
+                disabled={submitting || timerPaused}
+                maxDigits={getMaxAnswerDigits(operation, timeAttackState.currentLevel)}
+              />
             </div>
           )}
-        </section>
-      )}
+        </div>
+      ) : null}
 
       {defeatBonusFlyLabel && (
         <div
@@ -1425,18 +1442,6 @@ function TimeAttackClientInner({
               {feedback}
             </p>
           </div>
-        </div>
-      )}
-
-      {showQuestionContent && !awaitingNextOni && (
-        <div className="time-attack-keypad relative z-20">
-          <Keypad
-            value={answer}
-            onChange={setAnswer}
-            onSubmit={() => void submitAnswer()}
-            disabled={submitting || timerPaused}
-            maxDigits={getMaxAnswerDigits(operation, timeAttackState.currentLevel)}
-          />
         </div>
       )}
 

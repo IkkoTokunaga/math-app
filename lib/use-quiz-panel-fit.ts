@@ -23,6 +23,10 @@ export function useQuizPanelFit(
         panel.style.transform = "none";
         panel.style.marginBottom = "";
 
+        if (window.matchMedia("(min-aspect-ratio: 1/1)").matches) {
+          return;
+        }
+
         const available = shell.clientHeight;
         const needed = panel.offsetHeight;
         if (needed <= available || needed === 0) {

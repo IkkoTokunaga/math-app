@@ -942,11 +942,11 @@ export function PlayClient({
   return (
     <div
       ref={quizPanelRef}
-      className="mx-auto flex w-full max-w-xl flex-col gap-6"
+      className="quiz-panel mx-auto flex w-full max-w-xl flex-col gap-6"
     >
       <header className="quiz-header relative flex min-h-[4.5rem] items-start">
         <QuizMascot comment={mascotComment} onHomeClick={backToLevels} operation={operation} />
-        <div className="pointer-events-none absolute inset-x-0 top-0 px-14 text-center text-lg text-muted sm:px-16">
+        <div className="quiz-header__meta pointer-events-none absolute inset-x-0 top-0 px-14 text-center text-lg text-muted sm:px-16">
           <p>
             <span className="font-bold">{displayName}</span>
           </p>
@@ -978,18 +978,36 @@ export function PlayClient({
         />
       )}
 
-      <section
-        className={`card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}
-      >
-        <div className="chalk-heading equation-display mb-6 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
-          <span className="whitespace-nowrap">
-            {formatExpression(operation, question)} =
-          </span>
-          <span className="answer-slot ml-2 shrink-0">
-            {answer || "?"}
-          </span>
+      <div className="quiz-play-area">
+        <section
+          className={`quiz-play-area__question card text-center transition-transform ${feedbackType === "success" ? "animate-success" : feedbackType === "retry" ? "animate-retry" : ""}`}
+        >
+          <div className="chalk-heading equation-display mb-6 flex flex-nowrap items-center justify-center text-[clamp(1.25rem,6vw,3.75rem)] font-bold">
+            <span className="whitespace-nowrap">
+              {formatExpression(operation, question)} =
+            </span>
+            <span className="answer-slot ml-2 shrink-0">
+              {answer || "?"}
+            </span>
+          </div>
+        </section>
+
+        <div className="quiz-play-area__keypad">
+          <Keypad
+            value={answer}
+            onChange={handleAnswerChange}
+            onSubmit={submitAnswer}
+            disabled={submitting}
+            maxDigits={
+              level != null
+                ? operation === "subtraction"
+                  ? getSubtractionMaxAnswerDigits(level)
+                  : getMaxAnswerDigits(level)
+                : 3
+            }
+          />
         </div>
-      </section>
+      </div>
 
       {feedback && (
         <div
@@ -1038,20 +1056,6 @@ export function PlayClient({
           )}
         </div>
       )}
-
-      <Keypad
-        value={answer}
-        onChange={handleAnswerChange}
-        onSubmit={submitAnswer}
-        disabled={submitting}
-        maxDigits={
-          level != null
-            ? operation === "subtraction"
-              ? getSubtractionMaxAnswerDigits(level)
-              : getMaxAnswerDigits(level)
-            : 3
-        }
-      />
 
       {error && <p className="feedback-error">{error}</p>}
       {recoveringHome && <SessionRecoveryLoading />}

@@ -8,6 +8,7 @@ import { ButtonSoundLayer } from "@/components/ButtonSoundLayer";
 import { KeypadSoundLayer } from "@/components/KeypadSoundLayer";
 import { getSiteUrl, SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
 import "./globals.css";
+import "./quiz-landscape.css";
 
 export const viewport: Viewport = {
   width: "device-width",

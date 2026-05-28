@@ -136,7 +136,7 @@ export function Keypad({ value, onChange, onSubmit, disabled, maxDigits = 3 }: K
   const digits = ["7", "8", "9", "4", "5", "6", "1", "2", "3"];
 
   return (
-    <div ref={keypadRef} className="mx-auto grid w-full max-w-sm grid-cols-3 gap-3">
+    <div ref={keypadRef} className="keypad-grid mx-auto grid w-full max-w-sm grid-cols-3">
       {digits.map((digit) => (
         <button
           key={digit}

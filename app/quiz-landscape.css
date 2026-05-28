@@ -200,17 +200,20 @@
     grid-row: 1;
     justify-self: start;
     z-index: 3;
+    margin-bottom: -0.5rem;
   }
 
-  .time-attack-client .time-attack-top__mascot .quiz-mascot-wrap,
+  .time-attack-client .time-attack-top__mascot,
   .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
-    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
-    width: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    height: clamp(4.5rem, 16vh + 1.5vw, 8rem);
+    width: clamp(4.5rem, 16vh + 1.5vw, 8rem);
+    position: relative;
   }
 
   .time-attack-client .time-attack-top__mascot .quiz-mascot-img {
     bottom: 0;
-    height: clamp(3.25rem, 12vh + 1.25vw, 5rem);
+    height: 100%;
+    width: 100%;
     left: 0;
     object-fit: contain;
     object-position: bottom left;
@@ -239,9 +242,9 @@
     justify-content: flex-end;
     justify-self: end;
     line-height: 0;
-    margin-bottom: 0;
+    margin-bottom: -0.5rem;
     width: auto;
-    z-index: 4;
+    z-index: 10;
   }
 
   .time-attack-client .time-attack-top__oni.time-attack-oni-score--enma-op,
@@ -332,14 +335,14 @@
 
   .time-attack-client .time-attack-oni-score__image--addition,
   .time-attack-client .time-attack-oni-score__image--subtraction {
-    height: clamp(3.5rem, 14vh + 1.75vw, 6.5rem);
+    height: clamp(5.25rem, 20vh + 2vw, 10.5rem);
     object-fit: contain;
     object-position: bottom right;
   }
 
   .time-attack-client .time-attack-oni-score__image--enma,
   .time-attack-client .time-attack-oni-score__image--enma-black {
-    height: clamp(3.5rem, 14vh + 1.75vw, 6.5rem);
+    height: clamp(5.25rem, 20vh + 2vw, 10.5rem);
     object-fit: contain;
     object-position: bottom right;
   }
@@ -420,14 +423,15 @@
     row-gap: clamp(0.3rem, 0.75vh, 0.5rem);
   }
 
-  .time-attack-client .time-attack-top__mascot .quiz-mascot-wrap,
+  .time-attack-client .time-attack-top__mascot,
   .time-attack-client .time-attack-top__mascot .quiz-header-mascot {
-    height: clamp(3rem, 11vh + 1vw, 4.25rem);
-    width: clamp(3rem, 11vh + 1vw, 4.25rem);
+    height: clamp(3.75rem, 13vh + 1.2vw, 6rem);
+    width: clamp(3.75rem, 13vh + 1.2vw, 6rem);
   }
 
   .time-attack-client .time-attack-top__mascot .quiz-mascot-img {
-    height: clamp(3rem, 11vh + 1vw, 4.25rem);
+    height: 100%;
+    width: 100%;
   }
 
   .time-attack-client .time-attack-top__attack .time-attack-gauge--attack,
@@ -437,7 +441,9 @@
   }
 
   .time-attack-client .time-attack-oni-score__image--addition,
-  .time-attack-client .time-attack-oni-score__image--subtraction {
-    height: clamp(3rem, 12vh + 1.25vw, 5rem);
+  .time-attack-client .time-attack-oni-score__image--subtraction,
+  .time-attack-client .time-attack-oni-score__image--enma,
+  .time-attack-client .time-attack-oni-score__image--enma-black {
+    height: clamp(4rem, 15vh + 1.5vw, 7.5rem);
   }
 }

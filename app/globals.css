@@ -162,10 +162,11 @@ body.quiz-active {
   gap: clamp(0.3rem, 0.9vh, 0.55rem);
   grid-template-rows: repeat(4, minmax(2.75rem, 1fr));
   margin-inline: auto;
-  max-height: min(100%, clamp(17rem, 44dvh, 26rem));
+  max-height: min(100%, clamp(19rem, 50dvh, 28rem));
   max-width: 24rem;
-  min-height: 11rem;
+  min-height: 15rem;
   width: 100%;
+  aspect-ratio: 1.15 / 1;
 }
 
 .quiz-play-area__keypad .keypad-btn,

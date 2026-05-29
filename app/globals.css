@@ -2477,6 +2477,121 @@ button.keypad-btn-submit:active:not(:disabled) {
   z-index: 1;
 }
 
+/* 必殺技ヒット時の虹色炸裂エフェクト */
+.oni-special-hit-rainbow {
+  position: absolute;
+  inset: -60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.oni-special-hit-rainbow__flash {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #ff007f 40%, #00ffff 80%, transparent 100%);
+  animation: oni-special-flash-anim 0.45s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+.oni-special-hit-rainbow__ring {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 8px solid #ff007f;
+  box-shadow: 0 0 20px #00ffff, inset 0 0 15px #ff007f;
+  animation: oni-special-ring-anim 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+/* 飛び散る虹色火花 (SVG版) */
+.oni-special-hit-rainbow__sparkle {
+  position: absolute;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #fff;
+  filter: drop-shadow(0 0 6px #ff007f) drop-shadow(0 0 12px #00ffff);
+  animation: oni-special-sparkle-anim var(--sparkle-duration, 0.48s) cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.oni-special-hit-rainbow__sparkle--1 {
+  --sparkle-dx: -110px;
+  --sparkle-dy: -90px;
+  --sparkle-duration: 0.42s;
+  animation-delay: 0s;
+}
+.oni-special-hit-rainbow__sparkle--2 {
+  --sparkle-dx: 120px;
+  --sparkle-dy: -80px;
+  --sparkle-duration: 0.46s;
+  animation-delay: 0.04s;
+}
+.oni-special-hit-rainbow__sparkle--3 {
+  --sparkle-dx: -80px;
+  --sparkle-dy: 100px;
+  --sparkle-duration: 0.44s;
+  animation-delay: 0.02s;
+}
+.oni-special-hit-rainbow__sparkle--4 {
+  --sparkle-dx: 110px;
+  --sparkle-dy: 90px;
+  --sparkle-duration: 0.48s;
+  animation-delay: 0.06s;
+}
+
+/* アニメーションキーフレーム */
+@keyframes oni-special-flash-anim {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+    filter: hue-rotate(0deg);
+  }
+  15% {
+    transform: scale(1.6);
+    opacity: 1;
+    filter: hue-rotate(90deg);
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes oni-special-ring-anim {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+    filter: hue-rotate(0deg);
+    border-width: 12px;
+  }
+  100% {
+    transform: scale(3.5);
+    opacity: 0;
+    filter: hue-rotate(360deg);
+    border-width: 1px;
+  }
+}
+
+@keyframes oni-special-sparkle-anim {
+  0% {
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+    filter: hue-rotate(0deg) saturate(2.5) drop-shadow(0 0 8px #ff007f) drop-shadow(0 0 16px #00ffff);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--sparkle-dx), var(--sparkle-dy)) scale(1.4) rotate(180deg);
+    filter: hue-rotate(360deg) saturate(2.5) drop-shadow(0 0 8px #ff007f) drop-shadow(0 0 16px #00ffff);
+    opacity: 0;
+  }
+}
+
 .oni-evil-orb-layer {
   position: fixed;
   inset: 0;
@@ -3992,116 +4107,3 @@ html.app-loading body {
   }
 }
 
-/* 必殺技ヒット時の虹色炸裂エフェクト */
-.oni-special-hit-rainbow {
-  position: absolute;
-  inset: -60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.oni-special-hit-rainbow__flash {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fff 0%, #ff007f 40%, #00ffff 80%, transparent 100%);
-  animation: oni-special-flash-anim 0.45s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-}
-
-.oni-special-hit-rainbow__ring {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 8px solid #ff007f;
-  box-shadow: 0 0 20px #00ffff, inset 0 0 15px #ff007f;
-  animation: oni-special-ring-anim 0.5s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
-}
-
-/* 飛び散る虹色火花 */
-.oni-special-hit-rainbow__sparkle {
-  position: absolute;
-  font-size: 2.5rem;
-  color: #fff;
-  text-shadow: 0 0 10px #ff007f, 0 0 20px #00ffff;
-  animation: 
-    oni-special-sparkle-anim var(--sparkle-duration, 0.48s) cubic-bezier(0.25, 1, 0.5, 1) forwards,
-    special-rainbow-orb 0.2s linear infinite;
-}
-
-.oni-special-hit-rainbow__sparkle--1 {
-  --sparkle-dx: -110px;
-  --sparkle-dy: -90px;
-  --sparkle-duration: 0.42s;
-  animation-delay: 0s;
-}
-.oni-special-hit-rainbow__sparkle--2 {
-  --sparkle-dx: 120px;
-  --sparkle-dy: -80px;
-  --sparkle-duration: 0.46s;
-  animation-delay: 0.04s;
-}
-.oni-special-hit-rainbow__sparkle--3 {
-  --sparkle-dx: -80px;
-  --sparkle-dy: 100px;
-  --sparkle-duration: 0.44s;
-  animation-delay: 0.02s;
-}
-.oni-special-hit-rainbow__sparkle--4 {
-  --sparkle-dx: 110px;
-  --sparkle-dy: 90px;
-  --sparkle-duration: 0.48s;
-  animation-delay: 0.06s;
-}
-
-/* アニメーションキーフレーム */
-@keyframes oni-special-flash-anim {
-  0% {
-    transform: scale(0.2);
-    opacity: 0;
-    filter: hue-rotate(0deg);
-  }
-  15% {
-    transform: scale(1.6);
-    opacity: 1;
-    filter: hue-rotate(90deg);
-  }
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
-    filter: hue-rotate(360deg);
-  }
-}
-
-@keyframes oni-special-ring-anim {
-  0% {
-    transform: scale(0.5);
-    opacity: 1;
-    filter: hue-rotate(0deg);
-    border-width: 12px;
-  }
-  100% {
-    transform: scale(3.5);
-    opacity: 0;
-    filter: hue-rotate(360deg);
-    border-width: 1px;
-  }
-}
-
-@keyframes oni-special-sparkle-anim {
-  0% {
-    transform: translate(0, 0) scale(0.3) rotate(0deg);
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(var(--sparkle-dx), var(--sparkle-dy)) scale(1.4) rotate(180deg);
-    opacity: 0;
-  }
-}

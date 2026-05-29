@@ -232,10 +232,18 @@ export function TimeAttackOniScore({
         <div className="oni-special-hit-rainbow" aria-hidden="true">
           <span className="oni-special-hit-rainbow__ring" />
           <span className="oni-special-hit-rainbow__flash" />
-          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--1">✦</span>
-          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--2">✦</span>
-          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--3">✦</span>
-          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--4">✦</span>
+          <svg className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--1" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5Z" fill="currentColor" />
+          </svg>
+          <svg className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--2" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5Z" fill="currentColor" />
+          </svg>
+          <svg className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--3" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5Z" fill="currentColor" />
+          </svg>
+          <svg className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--4" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5Z" fill="currentColor" />
+          </svg>
         </div>
       )}
       {oniPhase === "exploding" && (

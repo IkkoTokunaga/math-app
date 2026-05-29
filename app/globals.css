@@ -2326,7 +2326,7 @@ button.keypad-btn-submit:active:not(:disabled) {
 }
 
 .mascot-light-orb-body--special {
-  transform: scale(2.8);
+  transform: scale(4.2);
   animation: 
     light-orb-body-wobble 0.34s ease-in-out infinite alternate,
     special-rainbow-orb 0.2s linear infinite;
@@ -3268,10 +3268,10 @@ html.app-loading body {
 
 @keyframes special-rainbow-orb {
   0% {
-    filter: hue-rotate(0deg) saturate(2.4) drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+    filter: hue-rotate(0deg) saturate(2.5) drop-shadow(0 0 18px #ff007f) drop-shadow(0 0 32px #00ffff);
   }
   100% {
-    filter: hue-rotate(360deg) saturate(2.4) drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+    filter: hue-rotate(360deg) saturate(2.5) drop-shadow(0 0 18px #ff007f) drop-shadow(0 0 32px #00ffff);
   }
 }
 

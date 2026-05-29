@@ -3885,11 +3885,10 @@ html.app-loading body {
 
 .special-eye-cutin__mascot-eye {
   position: absolute;
-  transform: skewX(15deg) scale(1);
-  width: 320px;
+  width: 260px;
   height: auto;
-  top: -40px;
-  left: -20px;
+  top: -80px;
+  left: -100px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9)) brightness(1.25);
   animation: eye-zoom-scroll 0.5s ease-out forwards;
 }
@@ -3947,10 +3946,10 @@ html.app-loading body {
 
 @keyframes eye-zoom-scroll {
   0% {
-    transform: skewX(15deg) scale(1) translateX(-15px);
+    transform: scale(1) translateX(-8px);
   }
   100% {
-    transform: skewX(15deg) scale(1.12) translateX(15px);
+    transform: scale(1.15) translateX(8px);
   }
 }
 

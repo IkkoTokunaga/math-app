@@ -3888,8 +3888,8 @@ html.app-loading body {
   width: 260px;
   height: auto;
   aspect-ratio: 155 / 312;
-  top: -60px;
-  left: -80px;
+  top: -40px;
+  left: -70px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9)) brightness(1.25);
   animation: eye-zoom-scroll 0.5s ease-out forwards;
 }

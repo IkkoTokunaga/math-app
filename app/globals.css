@@ -2329,7 +2329,7 @@ button.keypad-btn-submit:active:not(:disabled) {
   transform: scale(2.8);
   animation: 
     light-orb-body-wobble 0.34s ease-in-out infinite alternate,
-    special-rainbow-orb 0.8s linear infinite;
+    special-rainbow-orb 0.2s linear infinite;
 }
 
 .oni-evil-orb-body {

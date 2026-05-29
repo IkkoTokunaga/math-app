@@ -1219,6 +1219,7 @@ function TimeAttackClientInner({
 
           await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
           setHpHit(false);
+          setOniPhase("idle");
 
           // 4. Update total score
           if (result.timeAttackState) {
@@ -1323,6 +1324,7 @@ function TimeAttackClientInner({
                   setDisplayHp(targetHp);
                   await delay(motionMs(ONI_SHAKE_MS, 150));
                   setHpHit(false);
+                  setOniPhase("idle");
                   setRunningScore(targetScore);
                 } catch (err) {
                   console.error("Background special attack error", err);
@@ -1354,6 +1356,7 @@ function TimeAttackClientInner({
 
                   await delay(motionMs(300, 150));
                   setHpHit(false);
+                  setOniPhase("idle");
 
                   // 4. Update total score after projectile hits
                   setRunningScore(targetScore);

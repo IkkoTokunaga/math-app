@@ -123,13 +123,6 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete, isSpecial =
     ["--fly-angle" as string]: `${flight.flyAngle}deg`,
   };
 
-  const specialStyle: CSSProperties = isSpecial
-    ? {
-        transform: "scale(2.8)",
-        filter: "hue-rotate(240deg) saturate(2) drop-shadow(0 0 12px rgba(255, 244, 163, 0.8))",
-      }
-    : {};
-
   const layer = (
     <div
       className="mascot-light-orb-layer"
@@ -137,7 +130,7 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete, isSpecial =
       aria-hidden="true"
     >
       <div className="mascot-light-orb-wrap" style={wrapStyle}>
-        <div className="mascot-light-orb-body" style={specialStyle}>
+        <div className={`mascot-light-orb-body ${isSpecial ? "mascot-light-orb-body--special" : ""}`}>
           <span className="mascot-light-orb__halo" />
           <span className="mascot-light-orb__halo mascot-light-orb__halo--outer" />
           {STREAKS.map((streak, index) => (

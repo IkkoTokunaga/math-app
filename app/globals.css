@@ -2325,6 +2325,13 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: light-orb-body-wobble 0.34s ease-in-out infinite alternate;
 }
 
+.mascot-light-orb-body--special {
+  transform: scale(2.8);
+  animation: 
+    light-orb-body-wobble 0.34s ease-in-out infinite alternate,
+    special-rainbow-orb 0.8s linear infinite;
+}
+
 .oni-evil-orb-body {
   animation: evil-orb-body-wobble 0.4s ease-in-out infinite alternate;
 }
@@ -3256,6 +3263,15 @@ html.app-loading body {
   100% {
     opacity: 1;
     transform: translate(calc(-50% + var(--fly-dx)), calc(-50% + var(--fly-dy))) scale(0.85);
+  }
+}
+
+@keyframes special-rainbow-orb {
+  0% {
+    filter: hue-rotate(0deg) saturate(2.4) drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+  }
+  100% {
+    filter: hue-rotate(360deg) saturate(2.4) drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
   }
 }
 

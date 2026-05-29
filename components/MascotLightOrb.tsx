@@ -21,6 +21,7 @@ type MascotLightOrbProps = {
   fromRef: RefObject<HTMLElement | null>;
   toRef: RefObject<HTMLElement | null>;
   onComplete: () => void;
+  isSpecial?: boolean;
 };
 
 const SPARKLE_ORBITS = Array.from({ length: 14 }, (_, index) => ({
@@ -53,7 +54,7 @@ function orbitStyle(radius: number, duration: number, delay: number): CSSPropert
   };
 }
 
-export function MascotLightOrb({ animId, fromRef, toRef, onComplete }: MascotLightOrbProps) {
+export function MascotLightOrb({ animId, fromRef, toRef, onComplete, isSpecial = false }: MascotLightOrbProps) {
   const processedAnimIdRef = useRef(0);
   const onCompleteRef = useRef(onComplete);
   const [flight, setFlight] = useState<OrbFlight | null>(null);
@@ -122,6 +123,13 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete }: MascotLig
     ["--fly-angle" as string]: `${flight.flyAngle}deg`,
   };
 
+  const specialStyle: CSSProperties = isSpecial
+    ? {
+        transform: "scale(2.8)",
+        filter: "hue-rotate(240deg) saturate(2) drop-shadow(0 0 12px rgba(255, 244, 163, 0.8))",
+      }
+    : {};
+
   const layer = (
     <div
       className="mascot-light-orb-layer"
@@ -129,7 +137,7 @@ export function MascotLightOrb({ animId, fromRef, toRef, onComplete }: MascotLig
       aria-hidden="true"
     >
       <div className="mascot-light-orb-wrap" style={wrapStyle}>
-        <div className="mascot-light-orb-body">
+        <div className="mascot-light-orb-body" style={specialStyle}>
           <span className="mascot-light-orb__halo" />
           <span className="mascot-light-orb__halo mascot-light-orb__halo--outer" />
           {STREAKS.map((streak, index) => (

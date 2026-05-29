@@ -30,6 +30,7 @@ export type TimeAttackState = {
   failReason?: "mistakes";
   /** 時間の魔法でハートを失った問題（1問1回まで） */
   timeMagicPenaltyAtQuestionIndex?: number;
+  specialGaugeCharge: number;
 };
 
 export type EnmaParams = {
@@ -79,6 +80,7 @@ export function createInitialTimeAttackState(): TimeAttackState {
     timeBonusMultiplier: params.timeBonusMultiplier,
     bossesDefeated: 0,
     phase: "wave_active",
+    specialGaugeCharge: 0,
   };
 }
 
@@ -113,7 +115,7 @@ export type WaveResolution =
       cleared: boolean;
     };
 
-function buildBossState(
+export function buildBossState(
   afterBonus: TimeAttackState,
   level: Level,
   enmaNumber: number,

@@ -39,6 +39,7 @@ export type TimeAttackState = {
   phase: TimeAttackPhase;
   failReason?: "timeout" | "mistakes";
   timeMagicPenaltyAtQuestionIndex?: number;
+  specialGaugeCharge: number;
 };
 
 export const users = pgTable("users", {

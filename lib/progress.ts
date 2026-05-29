@@ -76,6 +76,7 @@ function parseTimeAttackStateForProgress(
     phase: raw.phase,
     failReason: raw.failReason === "mistakes" ? "mistakes" : undefined,
     timeMagicPenaltyAtQuestionIndex: raw.timeMagicPenaltyAtQuestionIndex,
+    specialGaugeCharge: raw.specialGaugeCharge ?? 0,
   };
 }
 

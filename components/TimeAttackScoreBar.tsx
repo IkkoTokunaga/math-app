@@ -37,29 +37,28 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
       maxMistakes = 3,
       heartRecovery = null,
       className = "",
-    },
+    }: TimeAttackScoreBarProps,
     ref,
   ) {
-    const maxScore = getWaveMaxScoreForState(state);
-    const liveScore = displayScore ?? state.waveScoreAccumulated;
-    const liveFillPercent =
-      maxScore > 0 ? Math.min(100, (liveScore / maxScore) * 100) : 0;
+    const liveScore = displayScore ?? state.specialGaugeCharge;
+    const liveFillPercent = Math.min(100, Math.max(0, liveScore));
     const attackDrainPercent =
       attackDrain && attackDrain.maxScore > 0
         ? Math.min(100, (attackDrain.score / attackDrain.maxScore) * 100)
         : 0;
-    const pulsing = attackDrain != null || charging || draining;
+    const isReady = liveFillPercent >= 100;
+    const pulsing = attackDrain != null || charging || draining || isReady;
 
     return (
       <div
-        className={`time-attack-gauge time-attack-gauge--attack ${pulsing ? "time-attack-gauge--pulse" : ""} ${charging ? "time-attack-gauge--charging" : ""} ${draining ? "time-attack-gauge--draining" : ""} ${className}`.trim()}
+        className={`time-attack-gauge time-attack-gauge--attack ${pulsing ? "time-attack-gauge--pulse" : ""} ${charging ? "time-attack-gauge--charging" : ""} ${draining ? "time-attack-gauge--draining" : ""} ${isReady ? "time-attack-gauge--ready" : ""} ${className}`.trim()}
       >
         <div className="time-attack-gauge__header">
-          <span>攻撃ゲージ</span>
+          <span>{isReady ? "🔥 ひっさつわざ OK! 🔥" : "ひっさつわざゲージ"}</span>
         </div>
         <div ref={ref} className="time-attack-gauge__track">
           <div
-            className="time-attack-gauge__fill time-attack-gauge__fill--attack"
+            className={`time-attack-gauge__fill time-attack-gauge__fill--attack ${isReady ? "time-attack-gauge__fill--ready" : ""}`}
             style={{ width: `${liveFillPercent}%` }}
           />
           {attackDrain != null && attackDrain.maxScore > 0 && (

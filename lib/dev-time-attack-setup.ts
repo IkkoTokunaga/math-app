@@ -69,6 +69,7 @@ export function createDevTimeAttackState(start: DevTimeAttackStart): TimeAttackS
     timeBonusMultiplier: params.timeBonusMultiplier,
     bossesDefeated,
     phase: "wave_active",
+    specialGaugeCharge: 0,
   };
 }
 

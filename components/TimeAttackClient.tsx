@@ -275,8 +275,9 @@ function TimeAttackClientInner({
   const [error, setError] = useState<string | null>(null);
   const [runningScore, setRunningScore] = useState(initialSession.timeAttackState.totalScore);
   const [gaugeDisplayScore, setGaugeDisplayScore] = useState(
-    initialSession.timeAttackState.waveScoreAccumulated,
+    initialSession.timeAttackState.specialGaugeCharge,
   );
+  const [isSpecialMoveActive, setIsSpecialMoveActive] = useState(false);
   const [gaugeLightAnimId, setGaugeLightAnimId] = useState(0);
   const [mascotLightAnimId, setMascotLightAnimId] = useState(0);
   const [gaugeLightFillRatio, setGaugeLightFillRatio] = useState(0);
@@ -1126,35 +1127,19 @@ function TimeAttackClientInner({
     }
   };
 
-  const dismissCorrectPopup = (waveComplete: boolean) => {
+  const dismissCorrectPopup = () => {
     setFeedback(null);
     setFeedbackType(null);
-
-    if (waveComplete) {
-      const advance = pendingAdvanceRef.current;
-      if (advance?.result.bossDefeated) {
-        return;
-      }
-      if (advance?.result.timeAttackState) {
-        applyWaveAdvanceState(advance.result.timeAttackState, advance.result.questions, {
-          preserveGaugeDisplay: true,
-        });
-        unlockQuestionInput();
-      }
-      return;
-    }
-
-    applyPendingQuestionState();
     unlockQuestionInput();
   };
 
-  const scheduleCorrectPopupDismiss = (waveComplete: boolean) => {
+  const scheduleCorrectPopupDismiss = () => {
     if (correctPopupTimerRef.current != null) {
       clearTimeout(correctPopupTimerRef.current);
     }
     correctPopupTimerRef.current = setTimeout(() => {
       correctPopupTimerRef.current = null;
-      dismissCorrectPopup(waveComplete);
+      dismissCorrectPopup();
     }, motionMs(CORRECT_POPUP_MS, 350));
   };
 
@@ -1184,41 +1169,130 @@ function TimeAttackClientInner({
         : await submitTimeAttackAnswerAction(sessionId, numericAnswer, elapsedSeconds);
 
       if (result.correct) {
-        const waveComplete = "waveComplete" in result && result.waveComplete;
+        const isSpecial = Boolean(result.isSpecialMove);
+        setIsSpecialMoveActive(isSpecial);
 
-        setFeedback("正解！");
-        setFeedbackType("success");
-
-        if (result.timeAttackState) {
-          const gaugeWaveScore = getGaugeWaveScore(result);
-          pendingGaugeTargetRef.current = gaugeWaveScore;
-          pendingTotalScoreRef.current = result.timeAttackState.totalScore;
-          const maxScore = getWaveMaxScoreForState(
-            waveComplete ? timeAttackState : result.timeAttackState,
-          );
-          setGaugeLightFillRatio(maxScore > 0 ? gaugeWaveScore / maxScore : 0);
-          if (!waveComplete) {
-            pendingQuestionStateRef.current = result.timeAttackState;
-          }
-        }
-
-        if (waveComplete) {
-          const hpAfter = result.bossDefeated
-            ? 0
-            : (result.timeAttackState?.oniHpRemaining ?? displayHp);
-          pendingAdvanceRef.current = {
-            sessionId,
-            waveMaxScore: getWaveMaxScoreForState(timeAttackState),
-            hpAfter,
-            result,
-          };
-          markDefeatLoading(result);
+        if (isSpecial) {
+          setFeedback("必殺技！");
+          setFeedbackType("success");
         } else {
-          pendingAdvanceRef.current = null;
+          setFeedback("正解！");
+          setFeedbackType("success");
         }
 
-        setGaugeLightAnimId((id) => id + 1);
-        scheduleCorrectPopupDismiss(waveComplete);
+        // 1. Update Special Move Gauge
+        if (result.timeAttackState) {
+          setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+        }
+
+        // 2. Play attack animation
+        await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
+
+        // 3. Projectile hits! Damage the Oni
+        setOniPhase("shaking");
+        setHpHit(true);
+        if (result.timeAttackState) {
+          setDisplayHp(result.timeAttackState.oniHpRemaining);
+        }
+
+        await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
+        setHpHit(false);
+
+        // 4. Update total score
+        if (result.timeAttackState) {
+          const defeatBonus = result.bossDefeated ? (result.defeatBonus ?? 0) : 0;
+          setRunningScore(result.timeAttackState.totalScore - defeatBonus);
+        }
+
+        // 5. Check if boss was defeated
+        if (result.bossDefeated && result.timeAttackState) {
+          setTimerPaused(true);
+          clearFeedbackPopup();
+
+          const isFinalClear = Boolean(result.cleared);
+          showDefeatPopup(isFinalClear ? "鬼、すべて撃破！" : "鬼撃破！");
+
+          setOniPhase("exploding");
+          await delay(
+            motionMs(
+              isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS,
+              isFinalClear ? 700 : 350,
+            ),
+          );
+          setOniPhase("hidden");
+
+          if (result.sessionEnded) {
+            await playDefeatBonusAward(result.defeatBonus ?? 0);
+            await delay(
+              motionMs(
+                isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS,
+                isFinalClear ? 900 : 400,
+              ),
+            );
+            clearFeedbackPopup();
+            redirectToResult(sessionId);
+            return;
+          }
+
+          // Transition to next boss
+          await playHeartRecovery(displayMistakeCount, result.timeAttackState.mistakeCount);
+
+          const isLv11Entrance = result.timeAttackState.currentLevel === 11;
+          const defeatBonus = result.defeatBonus ?? 0;
+
+          if (isLv11Entrance) {
+            setTimeAttackState(result.timeAttackState);
+            setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+            setQuestions(result.questions ?? []);
+            setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+
+            setLv11QuestionRevealed(false);
+            setLv11EntrancePlaying(true);
+          }
+
+          setAwaitingNextOni(true);
+          await delay(motionMs(80, 40));
+
+          syncBossDisplay(result.timeAttackState);
+          clearFeedbackPopup();
+
+          setRunningScore(result.timeAttackState.totalScore);
+          const defeatBonusPromise = playDefeatBonusAward(defeatBonus);
+
+          if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
+            playTimeAttackOniRoarSound();
+          }
+
+          setOniPhase("entering");
+          const enterPromise = waitForOniEnterComplete();
+          const entranceIntroPromise = isLv11Entrance
+            ? delay(50)
+            : delay(motionMs(ONI_ENTER_MS + ONI_SETTLE_MS, 300));
+
+          await Promise.all([enterPromise, entranceIntroPromise, defeatBonusPromise]);
+
+          if (isLv11Entrance) {
+            beginLv11EntranceAtBossEnter();
+            await waitForLv11QuestionReveal();
+          }
+
+          setAwaitingNextOni(false);
+          setQuestions(result.questions ?? []);
+          setTimeAttackState(result.timeAttackState);
+          setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+          setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+          unlockQuestionInput();
+          return;
+        }
+
+        // Regular correct answer, boss alive
+        if (result.timeAttackState) {
+          setTimeAttackState(result.timeAttackState);
+          setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+          setQuestions(result.questions ?? []);
+          setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+        }
+        scheduleCorrectPopupDismiss();
         return;
       }
 
@@ -1356,6 +1430,7 @@ function TimeAttackClientInner({
         fromRef={mascotRef}
         toRef={oniRef}
         onComplete={handleLightOrbComplete}
+        isSpecial={isSpecialMoveActive}
       />
 
       {alertType === "yellow" && (

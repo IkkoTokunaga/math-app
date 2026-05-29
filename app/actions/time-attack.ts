@@ -27,6 +27,9 @@ import {
   getBossLabel,
   isTimeMagicLevel,
   type TimeAttackState,
+  ENMA_STAGE_NORMAL,
+  ENMA_STAGE_DOUBLE_HP,
+  buildBossState,
 } from "@/lib/time-attack";
 import { shouldApplyTimeMagicPenaltyFromGauge } from "@/lib/time-attack-magic";
 import {
@@ -55,6 +58,7 @@ function parseTimeAttackState(raw: DbTimeAttackState | null): TimeAttackState {
     phase: raw.phase,
     failReason: raw.failReason === "mistakes" ? "mistakes" : undefined,
     timeMagicPenaltyAtQuestionIndex: raw.timeMagicPenaltyAtQuestionIndex,
+    specialGaugeCharge: raw.specialGaugeCharge ?? 0,
   };
 }
 
@@ -467,18 +471,14 @@ export async function submitTimeAttackAnswerAction(
       globalQuestionIndex: nextGlobalIndex,
     });
 
+    let nextQuestions = questions;
     if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
-      const waveResult = await completeWave(
-        sessionId,
-        updatedState,
-        updatedState.waveScoreAccumulated,
+      nextQuestions = generateTimeAttackQuestionsForOperation(
         operation,
+        updatedState.currentLevel,
+        WAVE_QUESTION_COUNT,
       );
-      return {
-        correct: false as const,
-        mistakeCount,
-        ...waveResult,
-      };
+      updatedState.waveQuestionIndex = 0;
     }
 
     await getDb()
@@ -486,6 +486,8 @@ export async function submitTimeAttackAnswerAction(
       .set({
         timeAttackState: serializeTimeAttackState(updatedState),
         totalScore: updatedState.totalScore,
+        questions: nextQuestions,
+        totalQuestions: WAVE_QUESTION_COUNT,
       })
       .where(eq(sessions.id, sessionId));
 
@@ -494,6 +496,7 @@ export async function submitTimeAttackAnswerAction(
       sessionEnded: false as const,
       mistakeCount,
       timeAttackState: updatedState,
+      questions: nextQuestions,
       waveComplete: false as const,
     };
   }
@@ -518,33 +521,178 @@ export async function submitTimeAttackAnswerAction(
     isFirstAttemptCorrect: true,
   });
 
-  const waveScoreAccumulated = state.waveScoreAccumulated + pointsEarned;
-  const totalScore = state.totalScore + pointsEarned;
+  // Calculate damage and special move charge
+  let damage = pointsEarned;
+  let isSpecialMove = false;
+  let chargeAdded = 0;
+  let nextSpecialGaugeCharge = state.specialGaugeCharge;
+
+  if (state.specialGaugeCharge >= 100) {
+    damage = pointsEarned * 3;
+    isSpecialMove = true;
+    nextSpecialGaugeCharge = 0;
+  } else {
+    chargeAdded = Math.floor(Math.random() * 11) + 10; // 10 to 20%
+    nextSpecialGaugeCharge = Math.min(100, state.specialGaugeCharge + chargeAdded);
+  }
+
+  const nextHp = Math.max(0, state.oniHpRemaining - damage);
   const nextWaveIndex = waveQuestionIndex + 1;
   const nextGlobalIndex = globalQuestionIndex + 1;
+  const totalScore = state.totalScore + pointsEarned;
 
   const updatedState: TimeAttackState = clearTimeMagicPenalty({
     ...state,
-    waveScoreAccumulated,
+    oniHpRemaining: nextHp,
+    waveScoreAccumulated: state.waveScoreAccumulated + pointsEarned,
     totalScore,
     waveQuestionIndex: nextWaveIndex,
     globalQuestionIndex: nextGlobalIndex,
+    specialGaugeCharge: nextSpecialGaugeCharge,
   });
 
-  if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
-    const waveResult = await completeWave(
-      sessionId,
-      updatedState,
-      waveScoreAccumulated,
-      operation,
-    );
-    return {
-      correct: true as const,
-      basePoints,
-      timeBonus,
-      pointsEarned,
-      ...waveResult,
+  // Check if Oni is defeated
+  if (nextHp <= 0) {
+    const defeatBonus = Math.floor(pointsEarned * 0.5);
+    const afterBonus: TimeAttackState = {
+      ...updatedState,
+      totalScore: totalScore + defeatBonus,
+      bossesDefeated: state.bossesDefeated + 1,
+      mistakeCount: Math.max(0, state.mistakeCount - 1),
     };
+
+    let nextQuestions = questions;
+
+    if (state.currentLevel < 9) {
+      const newLevel = (state.currentLevel + 1) as Level;
+      const enmaNumber = newLevel >= 9 ? ENMA_STAGE_NORMAL : 0;
+      const finalState = buildBossState(afterBonus, newLevel, enmaNumber);
+      nextQuestions = generateTimeAttackQuestionsForOperation(operation, newLevel, WAVE_QUESTION_COUNT);
+      finalState.waveQuestionIndex = 0;
+
+      await getDb()
+        .update(sessions)
+        .set({
+          level: newLevel,
+          questions: nextQuestions,
+          totalQuestions: WAVE_QUESTION_COUNT,
+          timeAttackState: serializeTimeAttackState(finalState),
+          totalScore: finalState.totalScore,
+        })
+        .where(eq(sessions.id, sessionId));
+
+      return {
+        correct: true as const,
+        basePoints,
+        timeBonus,
+        pointsEarned,
+        damageDealt: damage,
+        isSpecialMove,
+        chargeAdded,
+        bossDefeated: true as const,
+        defeatBonus,
+        cleared: false as const,
+        timeAttackState: finalState,
+        questions: nextQuestions,
+        sessionEnded: false as const,
+      };
+    } else if (state.currentLevel === 9) {
+      const finalState = buildBossState(afterBonus, 10, ENMA_STAGE_DOUBLE_HP);
+      nextQuestions = generateTimeAttackQuestionsForOperation(operation, 10, WAVE_QUESTION_COUNT);
+      finalState.waveQuestionIndex = 0;
+
+      await getDb()
+        .update(sessions)
+        .set({
+          level: 10,
+          questions: nextQuestions,
+          totalQuestions: WAVE_QUESTION_COUNT,
+          timeAttackState: serializeTimeAttackState(finalState),
+          totalScore: finalState.totalScore,
+        })
+        .where(eq(sessions.id, sessionId));
+
+      return {
+        correct: true as const,
+        basePoints,
+        timeBonus,
+        pointsEarned,
+        damageDealt: damage,
+        isSpecialMove,
+        chargeAdded,
+        bossDefeated: true as const,
+        defeatBonus,
+        cleared: false as const,
+        timeAttackState: finalState,
+        questions: nextQuestions,
+        sessionEnded: false as const,
+      };
+    } else if (state.currentLevel === 10) {
+      const finalState = buildBossState(afterBonus, 11, ENMA_STAGE_DOUBLE_HP);
+      nextQuestions = generateTimeAttackQuestionsForOperation(operation, 11, WAVE_QUESTION_COUNT);
+      finalState.waveQuestionIndex = 0;
+
+      await getDb()
+        .update(sessions)
+        .set({
+          level: 11,
+          questions: nextQuestions,
+          totalQuestions: WAVE_QUESTION_COUNT,
+          timeAttackState: serializeTimeAttackState(finalState),
+          totalScore: finalState.totalScore,
+        })
+        .where(eq(sessions.id, sessionId));
+
+      return {
+        correct: true as const,
+        basePoints,
+        timeBonus,
+        pointsEarned,
+        damageDealt: damage,
+        isSpecialMove,
+        chargeAdded,
+        bossDefeated: true as const,
+        defeatBonus,
+        cleared: false as const,
+        timeAttackState: finalState,
+        questions: nextQuestions,
+        sessionEnded: false as const,
+      };
+    } else {
+      // Cleared! (Level 11 defeated)
+      const clearedState: TimeAttackState = {
+        ...afterBonus,
+        currentLevel: 11,
+        enmaNumber: ENMA_STAGE_DOUBLE_HP,
+        phase: "cleared",
+      };
+      await finalizeTimeAttackClear(sessionId, clearedState);
+      return {
+        correct: true as const,
+        basePoints,
+        timeBonus,
+        pointsEarned,
+        damageDealt: damage,
+        isSpecialMove,
+        chargeAdded,
+        bossDefeated: true as const,
+        defeatBonus,
+        cleared: true as const,
+        timeAttackState: clearedState,
+        sessionEnded: true as const,
+      };
+    }
+  }
+
+  // Oni not defeated
+  let nextQuestions = questions;
+  if (nextWaveIndex >= WAVE_QUESTION_COUNT) {
+    nextQuestions = generateTimeAttackQuestionsForOperation(
+      operation,
+      updatedState.currentLevel,
+      WAVE_QUESTION_COUNT,
+    );
+    updatedState.waveQuestionIndex = 0;
   }
 
   await getDb()
@@ -552,6 +700,8 @@ export async function submitTimeAttackAnswerAction(
     .set({
       timeAttackState: serializeTimeAttackState(updatedState),
       totalScore,
+      questions: nextQuestions,
+      totalQuestions: WAVE_QUESTION_COUNT,
     })
     .where(eq(sessions.id, sessionId));
 
@@ -560,9 +710,13 @@ export async function submitTimeAttackAnswerAction(
     basePoints,
     timeBonus,
     pointsEarned,
+    damageDealt: damage,
+    isSpecialMove,
+    chargeAdded,
     sessionEnded: false as const,
-    waveComplete: false as const,
+    bossDefeated: false as const,
     timeAttackState: updatedState,
+    questions: nextQuestions,
   };
 }
 

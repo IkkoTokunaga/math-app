@@ -2146,6 +2146,46 @@ button.keypad-btn-submit:active:not(:disabled) {
   animation: gauge-pulse 0.55s ease;
 }
 
+@keyframes rainbow-sweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes ready-glow {
+  0% {
+    box-shadow: 0 0 12px rgb(255 120 180 / 0.5), 0 0 24px rgb(100 220 255 / 0.3);
+    border-color: rgb(255 244 163 / 0.5);
+  }
+  50% {
+    box-shadow: 0 0 22px rgb(255 244 163 / 0.9), 0 0 36px rgb(255 100 255 / 0.6);
+    border-color: rgb(255 100 255 / 0.9);
+  }
+  100% {
+    box-shadow: 0 0 12px rgb(255 120 180 / 0.5), 0 0 24px rgb(100 220 255 / 0.3);
+    border-color: rgb(255 244 163 / 0.5);
+  }
+}
+
+.time-attack-gauge--ready {
+  border: 2px solid rgb(255 244 163 / 0.8) !important;
+  background: rgb(0 0 0 / 0.45) !important;
+  animation: ready-glow 1.8s infinite ease-in-out !important;
+}
+
+.time-attack-gauge__fill--ready {
+  background: linear-gradient(90deg, #ff6b6b, #feca57, #1dd1a1, #10ac84, #54a0ff, #5f27cd, #ff6b6b) !important;
+  background-size: 400% 400% !important;
+  animation: rainbow-sweep 4s infinite linear !important;
+  box-shadow: 0 0 18px rgb(255 255 255 / 0.85), 0 0 28px rgb(255 220 100 / 0.65) !important;
+}
+
 .time-attack-gauge--charging .time-attack-gauge__fill--attack {
   filter: brightness(1.2);
   box-shadow: 0 0 16px rgb(255 255 255 / 0.75);

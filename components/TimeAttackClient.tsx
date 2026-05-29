@@ -1301,6 +1301,7 @@ function TimeAttackClientInner({
           if (result.timeAttackState) {
             const targetHp = result.timeAttackState.oniHpRemaining;
             const targetScore = result.timeAttackState.totalScore;
+            const targetGauge = result.timeAttackState.specialGaugeCharge;
 
             // Trigger the attack animation in the background asynchronously
             (async () => {
@@ -1323,11 +1324,15 @@ function TimeAttackClientInner({
               }
             })();
 
-            // Update state immediately for the next question
+            // Trigger gauge light charge animation (flies from correct popup to gauge)
+            pendingGaugeTargetRef.current = targetGauge;
+            setGaugeLightFillRatio(targetGauge / 100);
+            setGaugeLightAnimId((id: number) => id + 1);
+
+            // Update state immediately for the next question (except gauge score, which is updated via animation reach)
             setTimeAttackState(result.timeAttackState);
             setDisplayMistakeCount(result.timeAttackState.mistakeCount);
             setQuestions(result.questions ?? []);
-            setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
           }
 
           // Snappy popup dismiss for Time Attack
@@ -1482,6 +1487,7 @@ function TimeAttackClientInner({
         fromRef={feedbackPopupRef}
         toRef={attackGaugeRef}
         fillRatio={gaugeLightFillRatio}
+        attackStream
         onReachTarget={handleGaugeReach}
         onComplete={handleGaugeChargeComplete}
       />

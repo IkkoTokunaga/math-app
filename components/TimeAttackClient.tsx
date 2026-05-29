@@ -1608,6 +1608,25 @@ function TimeAttackClientInner({
           </div>
         </div>
       )}
+
+      {mascotSpecialActive && (
+        <div className="special-eye-cutin" aria-hidden="true">
+          <div className="special-eye-cutin__stripe">
+            <div className="special-eye-cutin__inner">
+              <div className="special-eye-cutin__image-wrap">
+                <img
+                  src={getMascotSrc(operation)}
+                  alt=""
+                  className="special-eye-cutin__mascot-eye"
+                />
+              </div>
+              <div className="special-eye-cutin__text-wrap">
+                <span className="special-eye-cutin__text">必殺技！</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

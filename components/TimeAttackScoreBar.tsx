@@ -54,7 +54,7 @@ export const TimeAttackScoreBar = forwardRef<HTMLDivElement, TimeAttackScoreBarP
         className={`time-attack-gauge time-attack-gauge--attack ${pulsing ? "time-attack-gauge--pulse" : ""} ${charging ? "time-attack-gauge--charging" : ""} ${draining ? "time-attack-gauge--draining" : ""} ${isReady ? "time-attack-gauge--ready" : ""} ${className}`.trim()}
       >
         <div className="time-attack-gauge__header">
-          <span>{isReady ? "🔥 ひっさつわざ OK! 🔥" : "ひっさつわざゲージ"}</span>
+          <span>{isReady ? "🔥 必殺技 OK! 🔥" : "必殺技ゲージ"}</span>
         </div>
         <div ref={ref} className="time-attack-gauge__track">
           <div

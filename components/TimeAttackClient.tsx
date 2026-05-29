@@ -86,6 +86,7 @@ function getMaxAnswerDigits(operation: Operation, level: TimeAttackState["curren
 }
 
 const CORRECT_POPUP_MS = 1000;
+const TIME_ATTACK_CORRECT_POPUP_MS = 250;
 const HEART_LOSS_PAUSE_MS = 220;
 const POISON_HEART_PAUSE_MS = 480;
 const HEART_RECOVER_EXPAND_MS = 320;
@@ -1143,6 +1144,16 @@ function TimeAttackClientInner({
     }, motionMs(CORRECT_POPUP_MS, 350));
   };
 
+  const scheduleTimeAttackCorrectPopupDismiss = () => {
+    if (correctPopupTimerRef.current != null) {
+      clearTimeout(correctPopupTimerRef.current);
+    }
+    correctPopupTimerRef.current = setTimeout(() => {
+      correctPopupTimerRef.current = null;
+      dismissCorrectPopup();
+    }, motionMs(TIME_ATTACK_CORRECT_POPUP_MS, 120));
+  };
+
   const submitAnswer = async () => {
     if (!sessionId || !timeAttackState || submitLockRef.current || !answer) {
       return;
@@ -1185,115 +1196,144 @@ function TimeAttackClientInner({
           setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
         }
 
-        // 2. Play attack animation
-        await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
+        if (result.bossDefeated) {
+          // 2. Play attack animation
+          await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
 
-        // 3. Projectile hits! Damage the Oni
-        setOniPhase("shaking");
-        setHpHit(true);
-        if (result.timeAttackState) {
-          setDisplayHp(result.timeAttackState.oniHpRemaining);
-        }
-
-        await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
-        setHpHit(false);
-
-        // 4. Update total score
-        if (result.timeAttackState) {
-          const defeatBonus = result.bossDefeated ? (result.defeatBonus ?? 0) : 0;
-          setRunningScore(result.timeAttackState.totalScore - defeatBonus);
-        }
-
-        // 5. Check if boss was defeated
-        if (result.bossDefeated && result.timeAttackState) {
-          setTimerPaused(true);
-          clearFeedbackPopup();
-
-          const isFinalClear = Boolean(result.cleared);
-          showDefeatPopup(isFinalClear ? "鬼、すべて撃破！" : "鬼撃破！");
-
-          setOniPhase("exploding");
-          await delay(
-            motionMs(
-              isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS,
-              isFinalClear ? 700 : 350,
-            ),
-          );
-          setOniPhase("hidden");
-
-          if (result.sessionEnded) {
-            await playDefeatBonusAward(result.defeatBonus ?? 0);
-            await delay(
-              motionMs(
-                isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS,
-                isFinalClear ? 900 : 400,
-              ),
-            );
-            clearFeedbackPopup();
-            redirectToResult(sessionId);
-            return;
+          // 3. Projectile hits! Damage the Oni
+          setOniPhase("shaking");
+          setHpHit(true);
+          if (result.timeAttackState) {
+            setDisplayHp(result.timeAttackState.oniHpRemaining);
           }
 
-          // Transition to next boss
-          await playHeartRecovery(displayMistakeCount, result.timeAttackState.mistakeCount);
+          await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
+          setHpHit(false);
 
-          const isLv11Entrance = result.timeAttackState.currentLevel === 11;
-          const defeatBonus = result.defeatBonus ?? 0;
+          // 4. Update total score
+          if (result.timeAttackState) {
+            const defeatBonusVal = result.defeatBonus ?? 0;
+            setRunningScore(result.timeAttackState.totalScore - defeatBonusVal);
+          }
 
-          if (isLv11Entrance) {
+          // 5. Check if boss was defeated
+          if (result.timeAttackState) {
+            setTimerPaused(true);
+            clearFeedbackPopup();
+
+            const isFinalClear = Boolean(result.cleared);
+            showDefeatPopup(isFinalClear ? "鬼、すべて撃破！" : "鬼撃破！");
+
+            setOniPhase("exploding");
+            await delay(
+              motionMs(
+                isFinalClear ? ONI_FINAL_CLEAR_EXPLODE_MS : ONI_EXPLODE_MS,
+                isFinalClear ? 700 : 350,
+              ),
+            );
+            setOniPhase("hidden");
+
+            if (result.sessionEnded) {
+              await playDefeatBonusAward(result.defeatBonus ?? 0);
+              await delay(
+                motionMs(
+                  isFinalClear ? FINAL_CLEAR_POPUP_MS : DEFEAT_MSG_MS,
+                  isFinalClear ? 900 : 400,
+                ),
+              );
+              clearFeedbackPopup();
+              redirectToResult(sessionId);
+              return;
+            }
+
+            // Transition to next boss
+            await playHeartRecovery(displayMistakeCount, result.timeAttackState.mistakeCount);
+
+            const isLv11Entrance = result.timeAttackState.currentLevel === 11;
+            const defeatBonus = result.defeatBonus ?? 0;
+
+            if (isLv11Entrance) {
+              setTimeAttackState(result.timeAttackState);
+              setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+              setQuestions(result.questions ?? []);
+              setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+
+              setLv11QuestionRevealed(false);
+              setLv11EntrancePlaying(true);
+            }
+
+            setAwaitingNextOni(true);
+            await delay(motionMs(80, 40));
+
+            syncBossDisplay(result.timeAttackState);
+            clearFeedbackPopup();
+
+            setRunningScore(result.timeAttackState.totalScore);
+            const defeatBonusPromise = playDefeatBonusAward(defeatBonus);
+
+            if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
+              playTimeAttackOniRoarSound();
+            }
+
+            setOniPhase("entering");
+            const enterPromise = waitForOniEnterComplete();
+            const entranceIntroPromise = isLv11Entrance
+              ? delay(50)
+              : delay(motionMs(ONI_ENTER_MS + ONI_SETTLE_MS, 300));
+
+            await Promise.all([enterPromise, entranceIntroPromise, defeatBonusPromise]);
+
+            if (isLv11Entrance) {
+              beginLv11EntranceAtBossEnter();
+              await waitForLv11QuestionReveal();
+            }
+
+            setAwaitingNextOni(false);
+            setQuestions(result.questions ?? []);
+            setTimeAttackState(result.timeAttackState);
+            setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+            setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+            unlockQuestionInput();
+            return;
+          }
+        } else {
+          // Regular correct answer: Non-blocking background animation
+          if (result.timeAttackState) {
+            const targetHp = result.timeAttackState.oniHpRemaining;
+            const targetScore = result.timeAttackState.totalScore;
+
+            // Trigger the attack animation in the background asynchronously
+            (async () => {
+              try {
+                // 2. Play attack animation
+                await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
+
+                // 3. Projectile hits! Damage the Oni
+                setOniPhase("shaking");
+                setHpHit(true);
+                setDisplayHp(targetHp);
+
+                await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
+                setHpHit(false);
+
+                // 4. Update total score after projectile hits
+                setRunningScore(targetScore);
+              } catch (err) {
+                console.error("Background attack animation error", err);
+              }
+            })();
+
+            // Update state immediately for the next question
             setTimeAttackState(result.timeAttackState);
             setDisplayMistakeCount(result.timeAttackState.mistakeCount);
             setQuestions(result.questions ?? []);
             setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
-
-            setLv11QuestionRevealed(false);
-            setLv11EntrancePlaying(true);
           }
 
-          setAwaitingNextOni(true);
-          await delay(motionMs(80, 40));
-
-          syncBossDisplay(result.timeAttackState);
-          clearFeedbackPopup();
-
-          setRunningScore(result.timeAttackState.totalScore);
-          const defeatBonusPromise = playDefeatBonusAward(defeatBonus);
-
-          if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
-            playTimeAttackOniRoarSound();
-          }
-
-          setOniPhase("entering");
-          const enterPromise = waitForOniEnterComplete();
-          const entranceIntroPromise = isLv11Entrance
-            ? delay(50)
-            : delay(motionMs(ONI_ENTER_MS + ONI_SETTLE_MS, 300));
-
-          await Promise.all([enterPromise, entranceIntroPromise, defeatBonusPromise]);
-
-          if (isLv11Entrance) {
-            beginLv11EntranceAtBossEnter();
-            await waitForLv11QuestionReveal();
-          }
-
-          setAwaitingNextOni(false);
-          setQuestions(result.questions ?? []);
-          setTimeAttackState(result.timeAttackState);
-          setDisplayMistakeCount(result.timeAttackState.mistakeCount);
-          setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
-          unlockQuestionInput();
+          // Snappy popup dismiss for Time Attack
+          scheduleTimeAttackCorrectPopupDismiss();
           return;
         }
-
-        // Regular correct answer, boss alive
-        if (result.timeAttackState) {
-          setTimeAttackState(result.timeAttackState);
-          setDisplayMistakeCount(result.timeAttackState.mistakeCount);
-          setQuestions(result.questions ?? []);
-          setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
-        }
-        scheduleCorrectPopupDismiss();
-        return;
       }
 
       await handleWrongAnswer(result);

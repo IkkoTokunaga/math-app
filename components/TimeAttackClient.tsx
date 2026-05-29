@@ -280,7 +280,7 @@ function TimeAttackClientInner({
     initialSession.timeAttackState.specialGaugeCharge,
   );
   const [isSpecialMoveActive, setIsSpecialMoveActive] = useState(false);
-  const [specialCutInActive, setSpecialCutInActive] = useState(false);
+  const [mascotSpecialActive, setMascotSpecialActive] = useState(false);
   const [gaugeLightAnimId, setGaugeLightAnimId] = useState(0);
   const [mascotLightAnimId, setMascotLightAnimId] = useState(0);
   const [gaugeLightFillRatio, setGaugeLightFillRatio] = useState(0);
@@ -1186,20 +1186,27 @@ function TimeAttackClientInner({
         setIsSpecialMoveActive(isSpecial);
 
         if (isSpecial) {
-          setSpecialCutInActive(true);
+          setFeedback("必殺技！");
+          setFeedbackType("success");
+          setMascotSpecialActive(true);
           await delay(motionMs(500, 200));
-          setSpecialCutInActive(false);
+          setMascotSpecialActive(false);
         } else {
           setFeedback("正解！");
           setFeedbackType("success");
         }
 
-        // 1. Update Special Move Gauge
-        if (result.timeAttackState) {
+        // 1. Update Special Move Gauge (Only if regular hit. Special hit updates after zoom)
+        if (result.timeAttackState && !isSpecial) {
           setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
         }
 
         if (result.bossDefeated) {
+          // Special move gauge resets now that we actually fire the special move
+          if (isSpecial && result.timeAttackState) {
+            setGaugeDisplayScore(result.timeAttackState.specialGaugeCharge);
+          }
+
           // 2. Play attack animation
           await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
 
@@ -1306,40 +1313,69 @@ function TimeAttackClientInner({
             const targetScore = result.timeAttackState.totalScore;
             const targetGauge = result.timeAttackState.specialGaugeCharge;
 
-            // Trigger the attack animation in the background asynchronously
-            (async () => {
-              try {
-                // 2. Play attack animation
-                await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
+            if (isSpecial) {
+              // 1. Trigger special attack animation in background
+              (async () => {
+                try {
+                  await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
+                  setOniPhase("shaking");
+                  setHpHit(true);
+                  setDisplayHp(targetHp);
+                  await delay(motionMs(ONI_SHAKE_MS, 150));
+                  setHpHit(false);
+                  setRunningScore(targetScore);
+                } catch (err) {
+                  console.error("Background special attack error", err);
+                }
+              })();
 
-                // 3. Projectile hits! Damage the Oni
-                setOniPhase("shaking");
-                setHpHit(true);
-                setDisplayHp(targetHp);
+              // 2. Instantly reset gauge display score
+              setGaugeDisplayScore(targetGauge);
 
-                await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
-                setHpHit(false);
+              // 3. Instantly advance question and unlock, clear popup
+              setTimeAttackState(result.timeAttackState);
+              setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+              setQuestions(result.questions ?? []);
 
-                // 4. Update total score after projectile hits
-                setRunningScore(targetScore);
-              } catch (err) {
-                console.error("Background attack animation error", err);
-              }
-            })();
+              setFeedback(null);
+              setFeedbackType(null);
+              unlockQuestionInput();
+            } else {
+              // Trigger the attack animation in the background asynchronously
+              (async () => {
+                try {
+                  // 2. Play attack animation
+                  await waitWithMotionFallback(playLightOrbAttack(), LIGHT_ORB_FLY_MS + 80);
 
-            // Trigger gauge light charge animation (flies from correct popup to gauge)
-            pendingGaugeTargetRef.current = targetGauge;
-            setGaugeLightFillRatio(targetGauge / 100);
-            setGaugeLightAnimId((id: number) => id + 1);
+                  // 3. Projectile hits! Damage the Oni
+                  setOniPhase("shaking");
+                  setHpHit(true);
+                  setDisplayHp(targetHp);
 
-            // Update state immediately for the next question (except gauge score, which is updated via animation reach)
-            setTimeAttackState(result.timeAttackState);
-            setDisplayMistakeCount(result.timeAttackState.mistakeCount);
-            setQuestions(result.questions ?? []);
+                  await delay(motionMs(300, 150));
+                  setHpHit(false);
+
+                  // 4. Update total score after projectile hits
+                  setRunningScore(targetScore);
+                } catch (err) {
+                  console.error("Background attack animation error", err);
+                }
+              })();
+
+              // Trigger gauge light charge animation (flies from correct popup to gauge)
+              pendingGaugeTargetRef.current = targetGauge;
+              setGaugeLightFillRatio(targetGauge / 100);
+              setGaugeLightAnimId((id: number) => id + 1);
+
+              // Update state immediately for the next question (except gauge score, which is updated via animation reach)
+              setTimeAttackState(result.timeAttackState);
+              setDisplayMistakeCount(result.timeAttackState.mistakeCount);
+              setQuestions(result.questions ?? []);
+
+              // Snappy popup dismiss for Time Attack
+              scheduleTimeAttackCorrectPopupDismiss();
+            }
           }
-
-          // Snappy popup dismiss for Time Attack
-          scheduleTimeAttackCorrectPopupDismiss();
           return;
         }
       }
@@ -1384,7 +1420,7 @@ function TimeAttackClientInner({
       <div className="time-attack-top relative z-20">
         <QuizMascot
           ref={mascotRef}
-          className="time-attack-top__mascot"
+          className={`time-attack-top__mascot ${mascotSpecialActive ? "time-attack-top__mascot--special" : ""}`}
           comment={waveMessage}
           onHomeClick={backToPlay}
           operation={operation}
@@ -1569,21 +1605,6 @@ function TimeAttackClientInner({
             >
               {feedback}
             </p>
-          </div>
-        </div>
-      )}
-
-      {specialCutInActive && (
-        <div className="special-cutin-overlay" aria-hidden="true">
-          <div className="special-cutin-stripe">
-            <div className="special-cutin-content">
-              <img
-                src={getMascotSrc(operation)}
-                alt="Mascot"
-                className="special-cutin-mascot"
-              />
-              <div className="special-cutin-text">必殺技！</div>
-            </div>
           </div>
         </div>
       )}

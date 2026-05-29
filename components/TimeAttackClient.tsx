@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   applyTimeMagicHeartLossAction,
   submitTimeAttackAnswerAction,
@@ -1609,7 +1610,7 @@ function TimeAttackClientInner({
         </div>
       )}
 
-      {mascotSpecialActive && (
+      {isClient && mascotSpecialActive && createPortal(
         <div className="special-eye-cutin" aria-hidden="true">
           <div className="special-eye-cutin__stripe">
             <div className="special-eye-cutin__inner">
@@ -1625,7 +1626,8 @@ function TimeAttackClientInner({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

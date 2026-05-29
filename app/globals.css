@@ -3889,7 +3889,7 @@ html.app-loading body {
   width: 320px;
   height: auto;
   top: -40px;
-  left: -130px;
+  left: -20px;
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9)) brightness(1.25);
   animation: eye-zoom-scroll 0.5s ease-out forwards;
 }

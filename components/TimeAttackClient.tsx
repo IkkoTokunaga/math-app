@@ -1440,6 +1440,7 @@ function TimeAttackClientInner({
           onPointsApplied={applyDefeatBonus}
           oniPhase={oniPhase}
           oniRef={oniRef}
+          isSpecial={isSpecialMoveActive}
           bossKey={`${arenaState.currentLevel}-${arenaState.enmaNumber}`}
           currentLevel={arenaState.currentLevel}
           operation={operation}

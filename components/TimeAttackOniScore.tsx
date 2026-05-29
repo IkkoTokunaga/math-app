@@ -28,6 +28,7 @@ type TimeAttackOniScoreProps = {
   onPointsApplied: () => void;
   oniPhase?: OniPhase;
   oniRef?: RefObject<HTMLDivElement | null>;
+  isSpecial?: boolean;
   bossKey?: string;
   currentLevel?: Level;
   operation?: Operation;
@@ -65,6 +66,7 @@ export function TimeAttackOniScore({
   onPointsApplied,
   oniPhase = "idle",
   oniRef,
+  isSpecial = false,
   bossKey = "oni",
   currentLevel = 1,
   operation = DEFAULT_OPERATION,
@@ -226,6 +228,16 @@ export function TimeAttackOniScore({
       className={`time-attack-top__oni time-attack-oni-score ${operation === "subtraction" ? "time-attack-oni-score--subtraction-op" : ""} ${enmaOp ? "time-attack-oni-score--enma-op" : ""} ${phaseClass}`.trim()}
     >
       {oniBody}
+      {oniPhase === "shaking" && isSpecial && (
+        <div className="oni-special-hit-rainbow" aria-hidden="true">
+          <span className="oni-special-hit-rainbow__ring" />
+          <span className="oni-special-hit-rainbow__flash" />
+          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--1">✦</span>
+          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--2">✦</span>
+          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--3">✦</span>
+          <span className="oni-special-hit-rainbow__sparkle oni-special-hit-rainbow__sparkle--4">✦</span>
+        </div>
+      )}
       {oniPhase === "exploding" && (
         <div className="oni-explosion" aria-hidden="true">
           <span className="oni-explosion__ring" />

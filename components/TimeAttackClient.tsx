@@ -608,9 +608,9 @@ function TimeAttackClientInner({
     };
   }, [defeatLoading, redirectHome]);
 
-  const syncBossDisplay = (state: TimeAttackState) => {
+  const syncBossDisplay = (state: TimeAttackState, options?: { startAtZeroHp?: boolean }) => {
     setArenaState(state);
-    setDisplayHp(state.oniHpRemaining);
+    setDisplayHp(options?.startAtZeroHp ? 0 : state.oniHpRemaining);
     setDisplayHpMax(state.oniHpMax);
   };
 
@@ -911,7 +911,7 @@ function TimeAttackClientInner({
 
     await delay(motionMs(80, 40));
 
-    syncBossDisplay(result.timeAttackState);
+    syncBossDisplay(result.timeAttackState, { startAtZeroHp: true });
     clearFeedbackPopup();
     if (result.timeAttackState) {
       setRunningScore(result.timeAttackState.totalScore - defeatBonus);
@@ -933,6 +933,10 @@ function TimeAttackClientInner({
     oniEnterDoneRef.current = null;
     setOniPhase("idle");
     await delay(motionMs(ONI_SETTLE_MS, 80));
+
+    // HP回復演出を開始
+    setDisplayHp(result.timeAttackState.oniHpRemaining);
+
     setAwaitingNextOni(false);
 
     if (!isLv11Entrance) {
@@ -1276,7 +1280,7 @@ function TimeAttackClientInner({
             setAwaitingNextOni(true);
             await delay(motionMs(80, 40));
 
-            syncBossDisplay(result.timeAttackState);
+            syncBossDisplay(result.timeAttackState, { startAtZeroHp: true });
             clearFeedbackPopup();
 
             setRunningScore(result.timeAttackState.totalScore);
@@ -1298,6 +1302,9 @@ function TimeAttackClientInner({
               beginLv11EntranceAtBossEnter();
               await waitForLv11QuestionReveal();
             }
+
+            // HP回復演出を開始
+            setDisplayHp(result.timeAttackState.oniHpRemaining);
 
             setAwaitingNextOni(false);
             setQuestions(result.questions ?? []);

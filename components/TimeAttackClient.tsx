@@ -41,6 +41,7 @@ import {
   DEFAULT_OPERATION,
   getCorrectAnswerForOperation,
   type Operation,
+  getMascotSrc,
 } from "@/lib/operations";
 import { getSubtractionTimeAttackMaxAnswerDigits } from "@/lib/subtraction-time-attack-questions";
 import { getTimeAttackMaxAnswerDigits } from "@/lib/time-attack-questions";
@@ -279,6 +280,7 @@ function TimeAttackClientInner({
     initialSession.timeAttackState.specialGaugeCharge,
   );
   const [isSpecialMoveActive, setIsSpecialMoveActive] = useState(false);
+  const [specialCutInActive, setSpecialCutInActive] = useState(false);
   const [gaugeLightAnimId, setGaugeLightAnimId] = useState(0);
   const [mascotLightAnimId, setMascotLightAnimId] = useState(0);
   const [gaugeLightFillRatio, setGaugeLightFillRatio] = useState(0);
@@ -1184,8 +1186,9 @@ function TimeAttackClientInner({
         setIsSpecialMoveActive(isSpecial);
 
         if (isSpecial) {
-          setFeedback("必殺技！");
-          setFeedbackType("success");
+          setSpecialCutInActive(true);
+          await delay(motionMs(500, 200));
+          setSpecialCutInActive(false);
         } else {
           setFeedback("正解！");
           setFeedbackType("success");
@@ -1566,6 +1569,21 @@ function TimeAttackClientInner({
             >
               {feedback}
             </p>
+          </div>
+        </div>
+      )}
+
+      {specialCutInActive && (
+        <div className="special-cutin-overlay" aria-hidden="true">
+          <div className="special-cutin-stripe">
+            <div className="special-cutin-content">
+              <img
+                src={getMascotSrc(operation)}
+                alt="Mascot"
+                className="special-cutin-mascot"
+              />
+              <div className="special-cutin-text">必殺技！</div>
+            </div>
           </div>
         </div>
       )}

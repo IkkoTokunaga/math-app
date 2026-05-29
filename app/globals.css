@@ -3773,3 +3773,89 @@ html.app-loading body {
   font-size: 1.25rem;
   line-height: 1;
 }
+
+/* Special Move Cut-in Overlay */
+.special-cutin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Diagonal stripe across the screen */
+.special-cutin-stripe {
+  position: absolute;
+  width: 150%;
+  height: 220px;
+  background: linear-gradient(135deg, rgba(255, 60, 100, 0.95), rgba(255, 175, 40, 0.95) 50%, rgba(120, 40, 255, 0.95));
+  border-top: 5px solid #fff;
+  border-bottom: 5px solid #fff;
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.6), 0 0 70px rgba(255, 40, 120, 0.5);
+  transform: rotate(-12deg) skewX(-12deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cutin-slide 0.48s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.special-cutin-content {
+  transform: skewX(12deg) rotate(12deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  width: 100%;
+}
+
+.special-cutin-mascot {
+  height: 240px;
+  width: auto;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 25px rgba(255, 175, 40, 0.6));
+  animation: cutin-mascot-bump 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+}
+
+.special-cutin-text {
+  font-family: "Outfit", "Noto Sans JP", "Klee One", sans-serif;
+  font-size: 3.8rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 0 18px #ff3c64, 0 0 35px #ffaf28;
+  letter-spacing: 0.3rem;
+  animation: cutin-text-slide 0.48s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes cutin-slide {
+  0% {
+    transform: rotate(-12deg) skewX(-12deg) translateX(-120%);
+  }
+  100% {
+    transform: rotate(-12deg) skewX(-12deg) translateX(0);
+  }
+}
+
+@keyframes cutin-mascot-bump {
+  0% {
+    transform: scale(0.5) rotate(-5deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.05) rotate(5deg);
+    opacity: 1;
+  }
+}
+
+@keyframes cutin-text-slide {
+  0% {
+    transform: translateX(120px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

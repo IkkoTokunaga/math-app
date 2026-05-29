@@ -3797,8 +3797,8 @@ html.app-loading body {
 
 /* Special Move Mascot Eye Cut-in */
 .special-eye-cutin {
-  position: fixed;
-  top: 18%; /* 画面上部（ヘッダー下付近） */
+  position: absolute;
+  top: 10px; /* 親コンテナの最上部付近（ヘッダー下） */
   left: 0;
   width: 100%;
   height: 90px;

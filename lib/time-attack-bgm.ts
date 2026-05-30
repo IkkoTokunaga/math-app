@@ -4,6 +4,11 @@ import { isPageHidden } from "@/lib/page-visibility";
 import { primeTimeAttackSounds } from "@/lib/time-attack-sounds";
 import { getBgmVolume } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
+import {
+  updateMediaSessionMetadata,
+  clearMediaSessionMetadata,
+  pauseMediaSessionPlaybackState,
+} from "@/lib/bgm-metadata";
 
 export const TIME_ATTACK_BGM_TRACKS = [
   "/sounds/bgm/zangyousenshi.mp3",
@@ -235,6 +240,7 @@ export function stopTimeAttackBgm(): void {
   currentTrack = null;
   pendingTrack = null;
   pausedForBackground = false;
+  clearMediaSessionMetadata();
 }
 
 export function pauseTimeAttackBgmForBackground(): void {
@@ -245,6 +251,7 @@ export function pauseTimeAttackBgmForBackground(): void {
 
   audio.pause();
   pausedForBackground = true;
+  pauseMediaSessionPlaybackState();
 }
 
 export function resumeTimeAttackBgmFromBackground(): void {
@@ -253,8 +260,12 @@ export function resumeTimeAttackBgmFromBackground(): void {
   }
 
   pausedForBackground = false;
-  void bgmAudio.play().catch(() => {
+  void bgmAudio.play().then(() => {
+    const bgmTitle = currentTrack === TIME_ATTACK_ENMA_LV10_BGM ? "タイムアタックBGM (エンマ戦)" : "タイムアタックBGM";
+    updateMediaSessionMetadata(bgmTitle);
+  }).catch(() => {
     pausedForBackground = true;
+    pauseMediaSessionPlaybackState();
   });
 }
 
@@ -298,6 +309,8 @@ export function playTimeAttackBgm(src: string): boolean {
       if (pendingTrack === src) {
         pendingTrack = null;
       }
+      const bgmTitle = src === TIME_ATTACK_ENMA_LV10_BGM ? "タイムアタックBGM (エンマ戦)" : "タイムアタックBGM";
+      updateMediaSessionMetadata(bgmTitle);
       if (isPageHidden()) {
         pauseTimeAttackBgmForBackground();
       }

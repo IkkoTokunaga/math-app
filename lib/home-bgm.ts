@@ -4,6 +4,11 @@ import { isPageHidden } from "@/lib/page-visibility";
 import { waitForAudioReady } from "@/lib/audio-ready";
 import { getBgmVolume } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
+import {
+  updateMediaSessionMetadata,
+  clearMediaSessionMetadata,
+  pauseMediaSessionPlaybackState,
+} from "@/lib/bgm-metadata";
 
 export const HOME_BGM_SRC = "/sounds/bgm/uchuyuei.mp3";
 
@@ -83,6 +88,7 @@ export function stopHomeBgm(): void {
   pendingPlay = false;
   awaitingUnmute = false;
   pausedForBackground = false;
+  clearMediaSessionMetadata();
 }
 
 export function pauseHomeBgmForBackground(): void {
@@ -93,6 +99,7 @@ export function pauseHomeBgmForBackground(): void {
 
   audio.pause();
   pausedForBackground = true;
+  pauseMediaSessionPlaybackState();
 }
 
 export function resumeHomeBgmFromBackground(): void {
@@ -103,8 +110,11 @@ export function resumeHomeBgmFromBackground(): void {
   pausedForBackground = false;
 
   if (bgmAudio.paused) {
-    void bgmAudio.play().catch(() => {
+    void bgmAudio.play().then(() => {
+      updateMediaSessionMetadata("ホームBGM");
+    }).catch(() => {
       pausedForBackground = true;
+      pauseMediaSessionPlaybackState();
     });
   }
 }
@@ -172,6 +182,7 @@ export function playHomeBgm(): void {
   void audio.play().then(
     () => {
       pendingPlay = false;
+      updateMediaSessionMetadata("ホームBGM");
       if (isPageHidden()) {
         pauseHomeBgmForBackground();
       }

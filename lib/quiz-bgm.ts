@@ -4,6 +4,11 @@ import { isPageHidden } from "@/lib/page-visibility";
 import { waitForAudioReady } from "@/lib/audio-ready";
 import { getBgmVolume } from "@/lib/bgm-volume";
 import { isSoundEnabled } from "@/lib/sound-settings";
+import {
+  updateMediaSessionMetadata,
+  clearMediaSessionMetadata,
+  pauseMediaSessionPlaybackState,
+} from "@/lib/bgm-metadata";
 
 export const QUIZ_BGM_SRC = "/sounds/bgm/quiz-bgm.mp3";
 
@@ -53,6 +58,7 @@ export function stopQuizBgm(): void {
 
   pendingPlay = false;
   pausedForBackground = false;
+  clearMediaSessionMetadata();
 }
 
 export function pauseQuizBgmForBackground(): void {
@@ -63,6 +69,7 @@ export function pauseQuizBgmForBackground(): void {
 
   audio.pause();
   pausedForBackground = true;
+  pauseMediaSessionPlaybackState();
 }
 
 export function resumeQuizBgmFromBackground(): void {
@@ -71,8 +78,11 @@ export function resumeQuizBgmFromBackground(): void {
   }
 
   pausedForBackground = false;
-  void bgmAudio.play().catch(() => {
+  void bgmAudio.play().then(() => {
+    updateMediaSessionMetadata("クイズBGM");
+  }).catch(() => {
     pausedForBackground = true;
+    pauseMediaSessionPlaybackState();
   });
 }
 
@@ -105,6 +115,7 @@ export function playQuizBgm(): void {
   void audio.play().then(
     () => {
       pendingPlay = false;
+      updateMediaSessionMetadata("クイズBGM");
       if (isPageHidden()) {
         pauseQuizBgmForBackground();
       }

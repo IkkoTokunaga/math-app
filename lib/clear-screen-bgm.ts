@@ -7,6 +7,11 @@ import { stopHomeBgm } from "@/lib/home-bgm";
 import { stopQuizBgm } from "@/lib/quiz-bgm";
 import { isSoundEnabled } from "@/lib/sound-settings";
 import { stopTimeAttackBgm } from "@/lib/time-attack-bgm";
+import {
+  updateMediaSessionMetadata,
+  clearMediaSessionMetadata,
+  pauseMediaSessionPlaybackState,
+} from "@/lib/bgm-metadata";
 
 export const CLEAR_SCREEN_BGM_SRC = "/sounds/bgm/bacteria.mp3";
 
@@ -53,6 +58,7 @@ export function stopClearScreenBgm(): void {
   bgmAudio = null;
   pendingPlay = false;
   pausedForBackground = false;
+  clearMediaSessionMetadata();
 }
 
 export function pauseClearScreenBgmForBackground(): void {
@@ -63,6 +69,7 @@ export function pauseClearScreenBgmForBackground(): void {
 
   audio.pause();
   pausedForBackground = true;
+  pauseMediaSessionPlaybackState();
 }
 
 export function resumeClearScreenBgmFromBackground(): void {
@@ -71,8 +78,11 @@ export function resumeClearScreenBgmFromBackground(): void {
   }
 
   pausedForBackground = false;
-  void bgmAudio.play().catch(() => {
+  void bgmAudio.play().then(() => {
+    updateMediaSessionMetadata("クリア画面BGM");
+  }).catch(() => {
     pausedForBackground = true;
+    pauseMediaSessionPlaybackState();
   });
 }
 
@@ -104,6 +114,7 @@ export function playClearScreenBgm(): void {
   void audio.play().then(
     () => {
       pendingPlay = false;
+      updateMediaSessionMetadata("クリア画面BGM");
       if (isPageHidden()) {
         pauseClearScreenBgmForBackground();
       }

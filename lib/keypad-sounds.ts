@@ -11,7 +11,6 @@ let backspaceBuffer: AudioBuffer | null = null;
 let backspaceOffset = 0;
 let decodePromise: Promise<void> | null = null;
 let soundsPrimed = false;
-let pipelineWarmed = false;
 
 function getOrCreateContext(): AudioContext | null {
   if (typeof window === "undefined") {
@@ -61,22 +60,26 @@ function findPlaybackOffset(buffer: AudioBuffer): number {
 }
 
 function warmAudioPipeline(ctx: AudioContext): void {
-  if (pipelineWarmed) {
+  if (ctx.state === "running") {
     return;
   }
 
-  pipelineWarmed = true;
-
-  const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  source.connect(getOutputGain(ctx));
-  source.start(ctx.currentTime);
+  try {
+    const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(getOutputGain(ctx));
+    source.start(ctx.currentTime);
+  } catch (e) {
+    console.warn("Failed to warm audio pipeline:", e);
+  }
 }
 
 function ensureContextRunning(ctx: AudioContext): void {
-  if (ctx.state === "suspended") {
-    void ctx.resume();
+  if (ctx.state !== "running") {
+    void ctx.resume().catch((err) => {
+      console.warn("Failed to resume AudioContext:", err);
+    });
   }
 }
 
@@ -306,5 +309,4 @@ export function resetKeypadSoundsForTests(): void {
   backspaceOffset = 0;
   decodePromise = null;
   soundsPrimed = false;
-  pipelineWarmed = false;
 }

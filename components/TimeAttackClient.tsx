@@ -1217,9 +1217,7 @@ function TimeAttackClientInner({
           // 3. Projectile hits! Damage the Oni
           setOniPhase("shaking");
           setHpHit(true);
-          if (result.timeAttackState) {
-            setDisplayHp(result.timeAttackState.oniHpRemaining);
-          }
+          setDisplayHp(0);
 
           await delay(motionMs(isSpecial ? ONI_SHAKE_MS : 300, 150));
           setHpHit(false);

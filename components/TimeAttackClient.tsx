@@ -1105,6 +1105,9 @@ function TimeAttackClientInner({
     }
 
     applyPendingQuestionState();
+    if (result.questions) {
+      setQuestions(result.questions);
+    }
     unlockQuestionInput();
   };
 

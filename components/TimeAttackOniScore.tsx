@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useIsClient } from "@/lib/use-is-client";
 import type { OniPhase } from "@/components/MascotLightOrb";
@@ -74,13 +74,22 @@ export function TimeAttackOniScore({
   meta = null,
   onEnterAnimationComplete,
 }: TimeAttackOniScoreProps) {
-  const targetRef = useRef<HTMLParagraphElement>(null);
+  const targetRef = useRef<HTMLDivElement>(null);
   const processedAnimIdRef = useRef(0);
   const [flying, setFlying] = useState(false);
-  const [flyStyle, setFlyStyle] = useState<React.CSSProperties>({});
+  const [flyStyle, setFlyStyle] = useState<CSSProperties>({});
   const [popping, setPopping] = useState(false);
+  const [pulse, setPulse] = useState(false);
   const displayScore = useAnimatedScore(score);
   const isClient = useIsClient();
+
+  useEffect(() => {
+    if (score > 0) {
+      setPulse(true);
+      const timer = setTimeout(() => setPulse(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [score]);
 
   const flyBadge =
     isClient && flying && flyLabel != null
@@ -91,7 +100,7 @@ export function TimeAttackOniScore({
               {
                 ...flyStyle,
                 ["--fly-duration" as string]: `${flyDurationMs}ms`,
-              } as React.CSSProperties
+              } as CSSProperties
             }
             aria-hidden="true"
           >
@@ -201,13 +210,19 @@ export function TimeAttackOniScore({
   }, [animId, flyDelayMs, flyDurationMs, getFlyFromElement, onPointsApplied, pointsEarned]);
 
   const scoreEl = (
-    <p
+    <div
       ref={targetRef}
-      className={`time-attack-oni-score__points ${popping ? "time-attack-oni-score__points--pop" : ""}`}
-      aria-live="polite"
+      className={`neon-scoreboard ${pulse ? "neon-scoreboard--pulse" : ""}`}
+      aria-label={`合計得点: ${score}点`}
     >
-      {displayScore}点
-    </p>
+      <span className="neon-scoreboard__label">SCORE</span>
+      <div className="neon-scoreboard__score-wrap">
+        <span className="neon-scoreboard__score">
+          {displayScore.toLocaleString("ja-JP")}
+        </span>
+        <span className="neon-scoreboard__unit">点</span>
+      </div>
+    </div>
   );
 
   const bossImage = getBossImagePresentation(currentLevel, operation);

@@ -1,5 +1,6 @@
 import type { Level } from "@/lib/questions";
 import {
+  calculateDefeatBonus,
   calculateOniMaxHp,
   calculateWaveMaxScore,
   WAVE_QUESTION_COUNT,
@@ -22,6 +23,7 @@ export type TimeAttackState = {
   waveQuestionIndex: number;
   globalQuestionIndex: number;
   waveScoreAccumulated: number;
+  bossScoreAccumulated: number;
   totalScore: number;
   timeLimitSeconds: number;
   timeBonusMultiplier: number;
@@ -75,6 +77,7 @@ export function createInitialTimeAttackState(): TimeAttackState {
     waveQuestionIndex: 0,
     globalQuestionIndex: 0,
     waveScoreAccumulated: 0,
+    bossScoreAccumulated: 0,
     totalScore: 0,
     timeLimitSeconds: params.timeLimitSeconds,
     timeBonusMultiplier: params.timeBonusMultiplier,
@@ -156,14 +159,17 @@ export function applyWaveDamage(state: TimeAttackState, waveScore: number): Wave
       state: {
         ...next,
         oniHpRemaining: remainingHp,
+        bossScoreAccumulated: (state.bossScoreAccumulated ?? 0) + waveScore,
       },
     };
   }
 
-  const defeatBonus = Math.floor(waveScore * 0.5);
+  const totalBossScore = (state.bossScoreAccumulated ?? 0) + waveScore;
+  const defeatBonus = calculateDefeatBonus(totalBossScore);
   const afterBonus: TimeAttackState = {
     ...next,
     oniHpRemaining: 0,
+    bossScoreAccumulated: 0,
     totalScore: next.totalScore + defeatBonus,
     bossesDefeated: state.bossesDefeated + 1,
     mistakeCount: Math.max(0, state.mistakeCount - 1),

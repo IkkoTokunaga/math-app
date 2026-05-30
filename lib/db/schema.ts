@@ -32,6 +32,7 @@ export type TimeAttackState = {
   waveQuestionIndex: number;
   globalQuestionIndex: number;
   waveScoreAccumulated: number;
+  bossScoreAccumulated: number;
   totalScore: number;
   timeLimitSeconds: number;
   timeBonusMultiplier: number;

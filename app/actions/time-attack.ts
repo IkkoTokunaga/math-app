@@ -33,6 +33,7 @@ import {
 } from "@/lib/time-attack";
 import { shouldApplyTimeMagicPenaltyFromGauge } from "@/lib/time-attack-magic";
 import {
+  calculateDefeatBonus,
   calculateTimeAttackQuestionScore,
   MAX_MISTAKES,
   WAVE_QUESTION_COUNT,
@@ -51,6 +52,7 @@ function parseTimeAttackState(raw: DbTimeAttackState | null): TimeAttackState {
     waveQuestionIndex: raw.waveQuestionIndex,
     globalQuestionIndex: raw.globalQuestionIndex ?? 0,
     waveScoreAccumulated: raw.waveScoreAccumulated,
+    bossScoreAccumulated: raw.bossScoreAccumulated ?? 0,
     totalScore: raw.totalScore,
     timeLimitSeconds: raw.timeLimitSeconds,
     timeBonusMultiplier: raw.timeBonusMultiplier,
@@ -479,6 +481,7 @@ export async function submitTimeAttackAnswerAction(
         WAVE_QUESTION_COUNT,
       );
       updatedState.waveQuestionIndex = 0;
+      updatedState.waveScoreAccumulated = 0;
     }
 
     await getDb()
@@ -545,6 +548,7 @@ export async function submitTimeAttackAnswerAction(
     ...state,
     oniHpRemaining: nextHp,
     waveScoreAccumulated: state.waveScoreAccumulated + pointsEarned,
+    bossScoreAccumulated: (state.bossScoreAccumulated ?? 0) + pointsEarned,
     totalScore,
     waveQuestionIndex: nextWaveIndex,
     globalQuestionIndex: nextGlobalIndex,
@@ -553,9 +557,11 @@ export async function submitTimeAttackAnswerAction(
 
   // Check if Oni is defeated
   if (nextHp <= 0) {
-    const defeatBonus = Math.floor(pointsEarned * 0.5);
+    const defeatBonus = calculateDefeatBonus(updatedState.bossScoreAccumulated);
     const afterBonus: TimeAttackState = {
       ...updatedState,
+      waveScoreAccumulated: 0,
+      bossScoreAccumulated: 0,
       totalScore: totalScore + defeatBonus,
       bossesDefeated: state.bossesDefeated + 1,
       mistakeCount: Math.max(0, state.mistakeCount - 1),
@@ -693,6 +699,7 @@ export async function submitTimeAttackAnswerAction(
       WAVE_QUESTION_COUNT,
     );
     updatedState.waveQuestionIndex = 0;
+    updatedState.waveScoreAccumulated = 0;
   }
 
   await getDb()

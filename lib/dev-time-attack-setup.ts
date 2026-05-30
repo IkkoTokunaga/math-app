@@ -64,6 +64,7 @@ export function createDevTimeAttackState(start: DevTimeAttackStart): TimeAttackS
     waveQuestionIndex: 0,
     globalQuestionIndex: 0,
     waveScoreAccumulated: 0,
+    bossScoreAccumulated: 0,
     totalScore: 0,
     timeLimitSeconds: params.timeLimitSeconds,
     timeBonusMultiplier: params.timeBonusMultiplier,

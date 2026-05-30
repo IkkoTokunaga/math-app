@@ -918,10 +918,6 @@ function TimeAttackClientInner({
     }
     const defeatBonusPromise = playDefeatBonusAward(defeatBonus);
 
-    if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
-      playTimeAttackOniRoarSound();
-    }
-
     setOniPhase("entering");
     if (isLv11Entrance) {
       beginLv11EntranceAtBossEnter();
@@ -936,6 +932,9 @@ function TimeAttackClientInner({
 
     // HP回復演出を開始
     setDisplayHp(result.timeAttackState.oniHpRemaining);
+    if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
+      playTimeAttackOniRoarSound();
+    }
 
     setAwaitingNextOni(false);
 
@@ -1284,10 +1283,6 @@ function TimeAttackClientInner({
             setRunningScore(result.timeAttackState.totalScore);
             const defeatBonusPromise = playDefeatBonusAward(defeatBonus);
 
-            if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
-              playTimeAttackOniRoarSound();
-            }
-
             setOniPhase("entering");
             const enterPromise = waitForOniEnterComplete();
             const entranceIntroPromise = isLv11Entrance
@@ -1303,6 +1298,9 @@ function TimeAttackClientInner({
 
             // HP回復演出を開始
             setDisplayHp(result.timeAttackState.oniHpRemaining);
+            if (!isEnmaBoss(result.timeAttackState.currentLevel)) {
+              playTimeAttackOniRoarSound();
+            }
 
             setAwaitingNextOni(false);
             setQuestions(result.questions ?? []);

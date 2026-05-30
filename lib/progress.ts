@@ -69,6 +69,7 @@ function parseTimeAttackStateForProgress(
     waveQuestionIndex: raw.waveQuestionIndex,
     globalQuestionIndex: raw.globalQuestionIndex ?? 0,
     waveScoreAccumulated: raw.waveScoreAccumulated,
+    bossScoreAccumulated: raw.bossScoreAccumulated,
     totalScore: raw.totalScore,
     timeLimitSeconds: raw.timeLimitSeconds,
     timeBonusMultiplier: raw.timeBonusMultiplier,
